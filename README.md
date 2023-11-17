@@ -6,7 +6,8 @@ TODOS:
 - write report
 
 ### Dataset Ideas:
-- ?
+- https://www.kaggle.com/datasets/ruslankl/european-union-lgbt-survey-2012?select=LGBT_Survey_TransgenderSpecificQuestions.csv
+- www.lgbtdata.com/data.html
 
 ### Regression methods Ideas:
 - 1st model from ML2 course: ?

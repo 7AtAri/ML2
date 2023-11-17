@@ -1,0 +1,152 @@
+---
+title: "Report on Regression Project for Machine Learning 2"
+header-includes:
+  - \usepackage[ngerman]{babel}
+  - \DeclareUnicodeCharacter{308}{oe}  
+author: "Maluna Menke, Ari (Sara) Wahl"
+date: "`r Sys.Date()`"
+
+output:
+  #html_document: 
+  pdf_document:
+    
+    toc: true
+    toc_depth: 6
+  start-page: 2
+---
+
+\pagenumbering{gobble}
+\newpage
+\pagenumbering{arabic} 
+\centering
+\raggedright
+\newpage
+
+---
+
+```{r setup, include=FALSE}
+params <- list(html=knitr::is_html_output())
+knitr::opts_chunk$set(echo = params$html)
+rm(list = ls(all.names = TRUE)) # reset the environment
+source("Setup.R")
+```
+
+*[PetFinder.my](https://www.petfinder.my) Adoption Prediction* challenge. "PetFinder.my has been Malaysia's leading animal welfare platform since 2008, with a database of more than 150,000 animals"[[1]](#1).
+
+
+```{r election study overview, include=FALSE}
+# str(election_study) # kurzer Einblick in Daten und bzgl. Datentypen
+# sum(is.na(election_study)==TRUE) # Die Summe der NAs im Datensatz
+```
+
+```{r categorical variables frequencies, fig.width=10, fig.height=8}
+
+
+
+# this can be used to includ pictures in the main text: ![](plots/tsne-2000.png)
+```
+
+
+### 2. Descriptive Analysis of the Dataset
+
+```{r, corr plot, echo=FALSE}
+
+#pairs(election_study)
+#plot(election_study) 
+
+#corr_mat=cor(election_study, method="s") #create Spearman correlation matrix
+
+#corrplot(corr_mat, method = "color",
+#     type = "upper", order = "hclust", 
+#     tl.col = "black") 
+```
+
+
+Summary:
+
+```{r deskriptive Analyse, echo=FALSE}
+# Factorisierung kategorialer Variablen:
+#election_study$vote<-factor(election_study$vote, labels= #c("Cons","Labour", "Liberal"))
+#election_study$gender<-factor(election_study$gender, labels= #c("female","male"))
+
+# Summary der Daten:
+# summary(election_study) 
+#describe(election_study) # schöner, aber leider viel größer
+```
+
+### 3. Modellierung der Parteiwahl durch ein geeignetes Regressionsmodell
+
+
+
+#### 3.1 Hypothesen, die dem Regressionsmodell zugrunde liegen
+
+##### 3.1.1 Hypothesen und Signifikanzniveau
+\
+
+
+##### 3.1.2 Hypothesen bezüglich der Variablen
+\
+In unser Modell lassen wir nun folgende, mithilfe sachlogischer Zusammenhänge erarbeiteter und in der deskriptiven Analyse erarbeiteten, Hypothesen einfließen. Indem wir die entgegengesetzt lautenden Nullhypothesen in unserem Regressionsmodell prüfen und, falls unsere Hypothesen zutreffen, die Nullhypothesen gegebenenfalls zum gewählten 5% Signifikanzniveaz verwerfen können. Unsere Hypothesen lauten:\
+
+
+##### 3.1.3 Hypothesen bezüglich der Interaktion zwischen den Variablen
+\
+Die deskriptive Analyse lässt außerdem folgende **Interaktionsterme** vermuten, da es einen (systematischen) Zusammenhang zwischen diesen Merkmalen zu geben scheint. Hier lauten die diesbezüglichen Hypothesen:
+\
+
+##### 3.1.2 Kodierung
+\
+In unserem multinomialen Modell ist die Referenzkategorie der Responsevariablen *vote* die konservative Wahlentscheidung.
+
+
+
+```{r step optimiertes Regressionsmodell, include=FALSE}
+# zum Vergleich ein Modell auf Basis aller Variablen
+# mit allen Interaktionstermen zwischen jeweils 2 Variablen:
+# model <- multinom(vote ~ (age + household + ...)^2)
+# model_best <- step(model) # Optimierung des vollen Modells mit 
+```
+
+
+```{r print model with stargazer, echo=FALSE}
+
+# stargazer(model, type = "text") # Modell ausgeben mit stargazer
+```
+
+
+\
+Das optimierte Modell weist nochmal ein etwas besseres AIC auf
+
+```{r Signifikanz der Modelle, include= FALSE}
+# lrtest(model_best) # erarbeitetes Modell ist besser als Nullmodell?
+```
+
+Mithilfe eines Likelihood-Ratio Tests wird überprüft welches Modell das bessere ist.
+```{r Vergleich der Modelle, echo=FALSE}
+
+# lrtest(model_best, model) # restringiertes Modell und optimiertes Modell mit mehr IA-Termen
+
+```
+Das optimierte Modell ist signifikant besser als das erarbeitete zum festgelegten Signifikanzniveau,
+die Nullhypothese des LR-Tests, dass das optimierte Modell nicht besser ist als das komplexere, kann verworfen werden. Wir stellen außerdem fest: Beide Modelle weisen einen signifikanten Erklärungsgehalt auf, sie sind besser als das Nullmodell.
+
+### 4. Interpretation 
+
+```{r coefficients, echo=FALSE}
+# exp(coef(mnl_election_study_best))
+```
+
+
+```{r pseudo R^2, echo= FALSE}
+# PseudoR2(mnl_election_study_best, which=c("McFadden", "CoxSnell", "Nagelkerke"))
+```
+Das Ergebnis des Pseudo-R-Quadrats liegt in einem Bereich mittlerer Modellgüte.
+
+### 5. Final Discussion
+
+
+
+### 6. References
+
+> <a id="id_1">[1]</a> <https://www.kaggle.com/competitions/petfinder-adoption-prediction/overview>
+

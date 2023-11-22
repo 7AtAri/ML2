@@ -7,6 +7,7 @@ TODOS:
 
 ### Dataset Ideas:
 - https://www.kaggle.com/datasets/ruslankl/european-union-lgbt-survey-2012?select=LGBT_Survey_TransgenderSpecificQuestions.csv
+- https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/FXXLTS
 - www.lgbtdata.com/data.html
 
 ### Regression methods Ideas:

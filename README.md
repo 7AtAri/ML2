@@ -19,7 +19,9 @@ easily read into R as a data frame.
 - data into three parts: 60% training data, 20% validation data and 20% test data
 
 ### Dataset Ideas:
-- https://www.kaggle.com/datasets/ruslankl/european-union-lgbt-survey-2012?select=LGBT_Survey_TransgenderSpecificQuestions.csv
+
+- https://www.kaggle.com/datasets/maddalenamariano/eu-lgbti-survey-2020
+- https://www.kaggle.com/datasets/ruslankl/european-union-lgbt-survey-2012?select=LGBT_Survey_TransgenderSpecificQuestions.csv -> not suited for task?
 - https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/FXXLTS
 - www.lgbtdata.com/data.html
 

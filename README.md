@@ -23,8 +23,9 @@ easily read into R as a data frame.
 - https://www.kaggle.com/datasets/vencerlanz09/lgbt-tweets
 - https://www.kaggle.com/datasets/maddalenamariano/eu-lgbti-survey-2020 -> may not be suited for task (aggregated observations)
 - https://www.kaggle.com/datasets/ruslankl/european-union-lgbt-survey-2012?select=LGBT_Survey_TransgenderSpecificQuestions.csv -> not suited for task?
-- https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/FXXLTS
+- https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/FXXLTS  (weird format)
 - www.lgbtdata.com/data.html
+- https://socialjusticesexuality.com/projects/ (sav format + some conversion error that seems harder to fix)
 
 ### Regression / Classification methods Ideas:
 - 1st model from ML2 course: ?

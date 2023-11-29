@@ -48,6 +48,10 @@ Your two ML methods should be from the following list, one must be from ML2.
 
 Note that two bullet points should be chosen, so for example ridge regression and the lasso count as two variants of one method.
 
+for classification:
+Most Interpretable: Logistic Regression, Naive Bayes, and Linear Discriminant Analysis are often considered highly interpretable.
+Moderately Interpretable: Decision Trees, especially shallow ones, and Generalized Additive Models provide a good balance between interpretability and complexity.
+Moderate to Low Interpretable: Support Vector Machines and Support Vector Regression, as well as ensemble methods like Random Forests or Gradient Boosting, can be less interpretable, especially as model complexity increases.
 
 ### Report: as pdf
 

@@ -6,7 +6,7 @@ TODOS:
 - write report ("Any section where you have used AI software should be referenced")
 
 ## email:
- information on or before Friday 8th December. Include inn the email:
+ information on or before **Friday 8th December**. Include in the email:
  
 - which students are in your group,
 - where you have found the data,
@@ -19,9 +19,13 @@ easily read into R as a data frame.
 - data into three parts: 60% training data, 20% validation data and 20% test data
 
 ### Dataset Ideas:
-- https://www.kaggle.com/datasets/ruslankl/european-union-lgbt-survey-2012?select=LGBT_Survey_TransgenderSpecificQuestions.csv
-- https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/FXXLTS
+
+- https://www.kaggle.com/datasets/vencerlanz09/lgbt-tweets
+- https://www.kaggle.com/datasets/maddalenamariano/eu-lgbti-survey-2020 -> may not be suited for task (aggregated observations)
+- https://www.kaggle.com/datasets/ruslankl/european-union-lgbt-survey-2012?select=LGBT_Survey_TransgenderSpecificQuestions.csv -> not suited for task?
+- https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/FXXLTS  (weird format)
 - www.lgbtdata.com/data.html
+- https://socialjusticesexuality.com/projects/ (sav format + some conversion error that seems harder to fix)
 
 ### Regression / Classification methods Ideas:
 - 1st model from ML2 course: ?
@@ -46,6 +50,7 @@ Note that two bullet points should be chosen, so for example ridge regression an
 
 ### Report: as pdf
 
+**deadline: 9th of january**
  project report will include:
  
 - a short description of your data,

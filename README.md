@@ -6,7 +6,7 @@ TODOS:
 - write report ("Any section where you have used AI software should be referenced")
 
 ## email:
- information on or before Friday 8th December. Include inn the email:
+ information on or before **Friday 8th December**. Include in the email:
  
 - which students are in your group,
 - where you have found the data,
@@ -50,6 +50,7 @@ Note that two bullet points should be chosen, so for example ridge regression an
 
 ### Report: as pdf
 
+**deadline: 9th of january**
  project report will include:
  
 - a short description of your data,

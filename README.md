@@ -27,6 +27,7 @@ easily read into R as a data frame.
 - https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/FXXLTS  (weird format)
 - www.lgbtdata.com/data.html
 - https://socialjusticesexuality.com/projects/ (sav format + some conversion error that seems harder to fix)
+- https://www.cdc.gov/healthyyouth/data/yrbs/data.htm
 
 ### Regression / Classification methods Ideas:
 - 1st model from ML2 course: ?

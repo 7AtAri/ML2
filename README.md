@@ -20,10 +20,10 @@ easily read into R as a data frame.
 
 ### Dataset Ideas:
 
-- https://www.kaggle.com/datasets/keremkurt/diversity-equity-and-inclusion-measures-dataset
-- https://www.kaggle.com/datasets/vencerlanz09/lgbt-tweets
-- https://www.kaggle.com/datasets/maddalenamariano/eu-lgbti-survey-2020 -> may not be suited for task (aggregated observations)
-- https://www.kaggle.com/datasets/ruslankl/european-union-lgbt-survey-2012?select=LGBT_Survey_TransgenderSpecificQuestions.csv -> not suited for task?
+- https://www.kaggle.com/datasets/keremkurt/diversity-equity-and-inclusion-measures-dataset                                                              --simulated data
+- https://www.kaggle.com/datasets/vencerlanz09/lgbt-tweets                                                                                               --good for nlp, not that much for this task
+- https://www.kaggle.com/datasets/maddalenamariano/eu-lgbti-survey-2020 -> may not be suited for task (aggregated observations)                          --aggreagates
+- https://www.kaggle.com/datasets/ruslankl/european-union-lgbt-survey-2012?select=LGBT_Survey_TransgenderSpecificQuestions.csv -> not suited for task?   --aggregates
 - https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/FXXLTS  (weird format)
 - www.lgbtdata.com/data.html
 - https://socialjusticesexuality.com/projects/ (sav format + some conversion error that seems harder to fix)

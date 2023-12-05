@@ -16,10 +16,13 @@ TODOS:
 easily read into R as a data frame.
 
 ## specifics:
-- data into three parts: 60% training data, 20% validation data and 20% test data
+- we have to split the data into three parts: 60% training data, 20% validation data and 20% test data
 
-### Dataset Ideas:
+### Dataset choice:
 
+- https://www.cdc.gov/healthyyouth/data/yrbs/data.htm
+
+### Dataset ideas:
 - https://www.kaggle.com/datasets/keremkurt/diversity-equity-and-inclusion-measures-dataset                                                              --simulated data
 - https://www.kaggle.com/datasets/vencerlanz09/lgbt-tweets                                                                                               --good for nlp, not that much for this task
 - https://www.kaggle.com/datasets/maddalenamariano/eu-lgbti-survey-2020 -> may not be suited for task (aggregated observations)                          --aggreagates
@@ -27,11 +30,14 @@ easily read into R as a data frame.
 - https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/FXXLTS  (weird format)
 - www.lgbtdata.com/data.html
 - https://socialjusticesexuality.com/projects/ (sav format + some conversion error that seems harder to fix)
-- https://www.cdc.gov/healthyyouth/data/yrbs/data.htm
+
+### Target variable
+
+-> risk of suicide score aggregated among q25-q29 variables (questions related to suicide) of the dataset
 
 ### Regression / Classification methods Ideas:
-- 1st model from ML2 course: ?
-- 2nd model: ?
+- 1st model from ML2 course: naive bayes ?
+- 2nd model from ML2 course: SVM or LDA ?
 
 Your two ML methods should be from the following list, one must be from ML2.
 

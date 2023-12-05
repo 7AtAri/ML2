@@ -1,5 +1,5 @@
 ---
-title: "Projectreport for Machine Learning 2"
+title: "Projectreport Machine Learning 2"
 header-includes:
   - \usepackage[english]{babel}
   - \DeclareUnicodeCharacter{308}{oe}  
@@ -53,7 +53,80 @@ It is a national survey conducted by CDC (Center for Disease Control and Prevent
 #### 2.1 Preprocessing of the dataset
 \
 
+
+```{r summary, include = FALSE}
+# possible summaries of the data:
+# summary(RISK) 
+# describe(RISK) # more detail
+```
+
+```{r check and delete useless variables, include=FALSE}
+all(RISK$site==RISK$site[1])
+RISK<-RISK %>%select(-site, -orig_rec, -q4,-q5) # delete variable site, orig_rec, q4, q5
+# RISK_qn<-RISK_qn %>%select(-site, -orig_rec) 
+```
+
+To preprocess the dataset, we first ran a summary on our dataset. The number of NAs seems to depend very much on the question. The variable "orig_rec" only contained NAs and has therefore been removed, as well as the variable "site" which only contained "XX" entries. Variables q4 and q5 are already aggregated in "raceeth" and have also been deleted.
+The variable "record" seems to be an ID for the observations. This has to be considered later. 
+
+
+#### 2.2 Missing Data
+
+```{r variables overview, include=FALSE}
+na_ratio<-sum(is.na(RISK)==TRUE)/(dim(RISK)[1]*dim(RISK)[2])# ratio of NAs among all datapoints
+print(na_ratio*100) # % percentage of NAs in data
+sum(is.na(RISK)==TRUE) # sum of NAs in dataset
+```
+\
+There are around 19% NAs in the dataset. We will first exclude all the observations with NAs in the target related variables q25 to q29. Since we want to build our target variable on these questions, the target variable cannot be empty. For better results we do not want to impute the target variable. The amount of available data should be enough to just exclude these observations.
+
+```{r remove observations with NAs in q25-q29, include=FALSE}
+RISK <- RISK %>% filter(!is.na(q25) | !is.na(q26) | !is.na(q27) | !is.na(q28) | !is.na(q29))
+
+na_ratio<-sum(is.na(RISK)==TRUE)/(dim(RISK)[1]*dim(RISK)[2])# ratio of NAs among all datapoints
+print(na_ratio*100) # % percentage of NAs in data
+sum(is.na(RISK)==TRUE) # sum of NAs in dataset
+```
+
+What if we just excluded every NA in the dataset? We will try and see if this is a viable option, since this would not just be quick and easy, but we would also just have "real" answers. The exclusion of NAs leads to a severe reduction in the number of observations. The original data consisted of 17138 observations while the reduced dataframe only has 4334 observations. 
+\
+
+```{r check exclude NAs, include=FALSE}
+RISK_no_NAs <- na.omit(RISK)
+summary(RISK_no_NAs)
+```
+
+We need to assess the loss of information foremost in relation to our target variable. I seems like we still have a comparable ratio of observations for the categories in relation to the variables q25 to q29. Most changes are only minor. 
+
+```{r Tables for Missingness in q28, include=FALSE}
+table(RISK_no_NAs$q28)
+table(RISK$q28)
+
+table(RISK_no_NAs$q28)/4334
+table(RISK$q28)/17138
+sum(is.na(RISK$q28)==TRUE)/17138
+```
+
+#### 2.2.2 Omitting NAs vs Data Imputation
+\
+If we can really omit the NAs or if it may be necessary to impute the missing datapoints, depends on the type of missingness. If data is missing completely at random (MCAR), we can omit the NAs, if it is just missing at random (MAR) we would rather impute the data. To find out if we can just omit the data, an MCAR test was applied. 
+It resulted in a p-value of 1, which means we cannot say for sure, that the data is not missing completely at random. We can assume that no imputation is necessary, but omitting the NAs is fine.
+
+```{r MCAR test, include=FALSE}
+library(naniar)
+result <- mcar_test(RISK)
+print(result)
+```
+
+
+#### 2.3 Reducing and balancing the dataset to 2000 observations
+
+#### 2.4 Naming and Factorizing the variables
+\
+
 ```{r name variables, include=FALSE}
+# source("naming_and_factorizing.R") # exclude this in source file!
+
 
 if (!("age" %in% colnames(RISK))) {
   RISK <- RISK%>%
@@ -309,25 +382,7 @@ RISK$marijuana_synth_30d<-factor(RISK$marijuana_synth_30d,ordered = TRUE, labels
 
 Then, the categorical variables are factorized. For ordninary variables, the factors are ordered as well.
 
-
-
-```{r summary, include = FALSE}
-# possible summaries of the data:
-# summary(RISK) 
-# describe(RISK) # more detail
-```
-
-```{r check and delete useless variables, include=FALSE}
-all(RISK$site==RISK$site[1])
-RISK<-RISK %>%select(-site, -orig_rec, -q4,-q5) # delete variable site, orig_rec, q4, q5
-# RISK_qn<-RISK_qn %>%select(-site, -orig_rec) 
-```
-
-To preprocess the dataset, we first ran a summary on our dataset. The number of NAs seems to depend very much on the question. The variable "orig_rec" only contained NAs and has therefore been removed, as well as the variable "site" which only contained "XX" entries. Variables q4 and q5 are already aggregated in "raceeth" and have also been deleted.
-The variable "record" seems to be an ID for the observations. This has to be considered later. 
-
-
-#### 2.2 Simple Synopsis of the Dataset
+#### 2.5 Simple Synopsis of the Dataset
 
 ```{r study overview, include=FALSE}
 str(RISK) # short overview on datatypes etc.
@@ -344,21 +399,23 @@ datatypes:
 - continuous variables:
 
 
-#### 2.3 Data Imputation
-
-```{r variables overview, include=FALSE}
-na_ratio<-sum(is.na(RISK)==TRUE)/(dim(RISK)[1]*dim(RISK)[2])# ratio of NAs among all datapoints
-print(na_ratio*100) # % percentage of NAs in data
-sum(is.na(RISK)==TRUE) # sum of NAs in dataset
-```
-
-#### 2.4 Reducing and balancing the dataset to 2000 observations
-
-#### 2.5 Target Variable
+#### 2.6 Target Variable
 \
 As a target variable, we decided to calculate a score from 5 questions that reflects the suicide risk of the person (observation) in question. This score is aggregated with a rule based approach according to the accompanying Data User Guide.[[2]](#2).
 
-### 3. Splitting the Dataset
+### 3. Additional Data Preparation
+
+#### 3.1 Feature Reduction
+\
+Since our dataset has lots of variables, we decided to start by excluding some variables depending on the estimated feature importance.
+
+#### 3.1.1 Correlations 
+
+
+#### 3.1.2 Feature Importance Algorithm
+
+
+#### 3.2 Splitting the Data
 \
 According to the project requirements we split our data in 60% Training, 20% Validation and 20% Testing Data. 
 

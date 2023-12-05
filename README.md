@@ -9,7 +9,7 @@ TODOS:
  information on or before **Friday 8th December**. Include in the email:
  
 - which students are in your group,
-- where you have found the data,
+- where you have found the data -> CDC (https://www.cdc.gov/healthyyouth/data/yrbs/data.htm)
 - a simple synopsis of the dataset should be included such as the number of observations, the variables with their data type (nominal, ordinal, discrete or continuous).
 - your chosen ML methods.
 - Do not attach the data, but do have the file available to send, if requested, in a form that can be

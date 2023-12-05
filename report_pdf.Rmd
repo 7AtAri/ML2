@@ -183,6 +183,42 @@ if (!("tried_stop_tobacco_12m" %in% colnames(RISK))) {
   RISK <- RISK%>%
     rename(tried_stop_tobacco_12m = q39)}
 
+if (!("alcohol_age" %in% colnames(RISK))) {
+  RISK <- RISK%>%
+    rename(alcohol_age = q40)}
+
+if (!("alcohol_use_30d" %in% colnames(RISK))) {
+  RISK <- RISK%>%
+    rename(alcohol_use_30d = q41)}
+
+if (!("alcohol_binging_30d" %in% colnames(RISK))) {
+  RISK <- RISK%>%
+    rename(alcohol_binging_30d = q42)}
+
+if (!("drinks_in_row_30d" %in% colnames(RISK))) {
+  RISK <- RISK%>%
+    rename(drinks_in_row_30d = q43)}
+
+if (!("alcohol_source_30d" %in% colnames(RISK))) {
+  RISK <- RISK%>%
+    rename(alcohol_source_30d = q44)}
+
+if (!("marijuana" %in% colnames(RISK))) {
+  RISK <- RISK%>%
+    rename(marijuana = q45)}
+
+if (!("marijuana_age" %in% colnames(RISK))) {
+  RISK <- RISK%>%
+    rename(marijuana_age = q46)}
+
+if (!("marijuana_30d" %in% colnames(RISK))) {
+  RISK <- RISK%>%
+    rename(marijuana_30d = q47)}
+
+if (!("marijuana_synth_30d" %in% colnames(RISK))) {
+  RISK <- RISK%>%
+    rename(marijuana_synth_30d= q48)}
+
 ```
 
 First, the variables were named instead of encoded with the questions number. 
@@ -250,6 +286,24 @@ RISK$smokeless_tobacco_30d<-factor(RISK$smokeless_tobacco_30d, ordered = TRUE,la
 RISK$cigar_use_30d<-factor(RISK$cigar_use_30d, ordered = TRUE,labels= c("0", "1 or 2", "3 to 5", "6 to 9", "10 to 19", "20 to 29", "all 30 days"))
 
 RISK$tried_stop_tobacco_12m<-factor(RISK$tried_stop_tobacco_12m, labels= c("Did not use", "Yes", "No"))
+
+RISK$alcohol_age<-factor(RISK$alcohol_age,ordered = TRUE, labels= c("never tried","8 or younger", "9 or 10", "11 or 12", "13 or 14", "15 or 16", "17 or older"))
+
+RISK$alcohol_use_30d<-factor(RISK$alcohol_use_30d, ordered = TRUE,labels= c("0", "1 or 2", "3 to 5", "6 to 9", "10 to 19", "20 to 29", "all 30 days"))
+
+RISK$alcohol_binging_30d<-factor(RISK$alcohol_binging_30d,ordered = TRUE, labels= c("0",  "1", "2" , "3 to 5","6 to 9", "10 to 19", "20 or more days"))
+
+RISK$drinks_in_row_30d<-factor(RISK$drinks_in_row_30d,ordered = TRUE, labels= c("did not drink", "1 or 2", "3", "4", "5", "6 or 7", "8 or 9", "10 or more drinks"))
+
+RISK$alcohol_source_30d<-factor(RISK$alcohol_source_30d, labels= c("no drink", "store","restaurant/bar/club", "public event","gave_someone_money", "someone gave me", "store/family_stolen",  "other"))
+
+RISK$marijuana<-factor(RISK$marijuana,ordered = TRUE, labels= c("0",  "1 or 2" , "3 to 9", "10 to 19", "20 to 39", "40 to 99", "100 times or more"))
+
+RISK$marijuana_age<-factor(RISK$marijuana_age,ordered = TRUE, labels= c("never tried","8 or younger", "9 or 10", "11 or 12", "13 or 14", "15 or 16", "17 or older"))
+
+RISK$marijuana_30d<-factor(RISK$marijuana_30d,ordered = TRUE, labels= c("0",  "1 or 2" , "3 to 9", "10 to 19", "20 to 39", "40 times or more"))
+
+RISK$marijuana_synth_30d<-factor(RISK$marijuana_synth_30d,ordered = TRUE, labels= c("0",  "1 or 2" , "3 to 9", "10 to 19", "20 to 39", "40 times or more"))
 
 ```
 

@@ -1,16 +1,18 @@
 # ---- Load needed libraries -----------------------------------------------------
 
-# for example:
 
+library(readr)
+library(inspectdf)
+library(corrplot)
+library(ggplot2)
+library(Hmisc)
+library(dplyr)
+
+# for example:
 # library(jsonlite)
-# library(readr)
-# library(corrplot)
-# library(ggplot2)
 # library(stringr)
 # library(plyr)
-# library(dplyr)
 # library(psych)
-# library(inspectdf)
 # library(skimr)
 # library(RColorBrewer)
 # library(forcats)
@@ -29,10 +31,11 @@ rm(list = ls(all.names = TRUE))
 
 # ---- Data import ------------------------------------------------------------
 
-# example
 
-# Use only the train data because test data does not include AdoptionSpeed
-# petdata <- read_csv("petdata/train/train.csv", show_col_types = FALSE)
+# import as dataframe
+RISK <- read_csv("datasets/National YRBS Datasets/XXHq.csv")
+
+RISK_qn <- read_csv("datasets/National YRBS Datasets/XXHqn.csv")
 
 # breed_lab <- subset(read_csv("petdata/PetFinder-BreedLabels.csv",
 #                             show_col_types = FALSE), select = -c(Type))

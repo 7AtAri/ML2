@@ -38,6 +38,16 @@ RISK <- read_csv("datasets/National YRBS Datasets/XXHq.csv")
 
 RISK_qn <- read_csv("datasets/National YRBS Datasets/XXHqn.csv")
 
+RISK <- RISK %>% 
+  filter(!is.na(q25) & !is.na(q26) & !is.na(q27) & !is.na(q28) & !is.na(q29)) %>% 
+  mutate(suicidal_class = ifelse(!is.na(q29) & q29 > 1,   5,
+                          ifelse(!is.na(q28) & q28 > 1,   5,
+                          ifelse(!is.na(q27) & q27 == 1,  4,
+                          ifelse(!is.na(q26) & q26 == 1,  3,
+                          ifelse(!is.na(q25) & q25 == 1,  2,
+                                                          1))))))
+head(RISK)
+
 # breed_lab <- subset(read_csv("petdata/PetFinder-BreedLabels.csv",
 #                             show_col_types = FALSE), select = -c(Type))
 # color_lab <- read_csv("petdata/PetFinder-ColorLabels.csv",

@@ -115,72 +115,71 @@ RISK_imp <- missRanger(RISK, pmm.k = 200, num.trees = 500, sample.fraction = 1)
 As a target variable, we decided to calculate a score from 5 questions that reflects the suicide risk of the person (observation) in question. This score is aggregated with a rule based approach. 
 
 ```{r creating the target variable, include= FALSE}
-RISK_imp <- RISK_imp %>% 
-  mutate(suicidal_class = ifelse(q29 > 1,   5,
-                          ifelse(q28 > 1,   5,
-                          ifelse(q27 == 1,  4,
-                          ifelse(q26 == 1,  3,
+RISK_imp_num<-RISK_imp
+RISK_imp_num$q25 <- as.numeric(RISK_imp_num$q25)
+RISK_imp_num$q26 <- as.numeric(RISK_imp_num$q26)
+RISK_imp_num$q27 <- as.numeric(RISK_imp_num$q27)
+RISK_imp_num$q28 <- as.numeric(RISK_imp_num$q28)
+RISK_imp_num$q29 <- as.numeric(RISK_imp_num$q29)
+RISK_imp_s <- RISK_imp_num %>% 
+  mutate(suicidal_class = ifelse(q29 > 1,   3,
+                          ifelse(q28 > 1,   3,
+                          ifelse(q27 == 1,  3,
+                          ifelse(q26 == 1,  2,
                           ifelse(q25 == 1,  2,
                                             1))))))
 
-RISK_imp[, c("q25", "q26", "q27", "q28", "q29")] <- NULL  # removing the columns related to the target variable
+RISK_imp_s[, c("q25", "q26", "q27", "q28", "q29")] <- NULL  # removing the columns related to the target variable
 ```
 
 \ 
 After creating the target variable we need to exclude the variables q25 to q29, that were used for creating it, from our dataset. 
 
+
+
 #### 2.4 Reducing and balancing the dataset to 2000 observations
 \
-Now we need to reduce our data to the maximum allowed size of 2000 observations. To ensure the best possible data quality, we want to ensure that our dataset is balanced. Intuitively, we are considering if it is best to still use as much of the non-imputed data for our smaller dataset as possible, before filling it up with imputed data, since non-imputed data is usually of better quality. On the other hand the data seemingly shows patterns in the missingness so there are reasons to just do a stratified sampling over the imputed data as well.
+Now we need to reduce our data to the maximum allowed size of 2000 observations. To ensure the best possible data quality, we want to ensure that our dataset is balanced. Intuitively, we are considering if it is best to still use as much of the non-imputed data for our smaller dataset as possible, before filling it up with imputed data, since non-imputed data is usually of better quality. On the other hand the data seemingly shows patterns in the missingness so there are reasons to just do a stratified sampling over the imputed data as well. To do a proper statified sampling we need to identify the stratification variables. Therefore we will calculate the correlations with the target variable and see which variables are highly correlated to our target variable. These will then as well as the target variable be used as stratification variables.
 
 ```{r stratified sampling, include = FALSE}
+# this code snipped was produced with the help of AI
+# *
+# preprocessing for stratification:
+RISK_num <- as.data.frame(lapply(RISK_imp_s, as.numeric)) # convert all variables to numeric
+corr_mat=cor(RISK_num, method="s") # correlation matrix
+target_corr <- corr_mat[, "suicidal_class"] # get correlations with respect to the target variable
+# df with variable names and their correlation values:
+corr_data <- data.frame(
+  var = names(target_corr),
+  corr = target_corr
+)
 
+# Sort the data frame by correlation values
+sorted_corr_data <- corr_data[order(-corr_data$corr), ]
 
+# stratification variable vector:
+strat_vars <- sorted_corr_data[abs(sorted_corr_data$corr) > 0.25,] 
+# select all correlations as possible strata (pos&neg) bigger than 0.25
 
-```
+# all possible stratum columns
+# strat_df<-RISK_imp_s[, strat_vars$var] 
 
+# replicate stratum size
+# stratum_sizes <- rep(2000, length(strat_vars$var))
 
+# only use target as stratum:
+strat_df<-RISK_imp_s[, "suicidal_class"]
 
-```{r}
+# sample for 2000 observations:
+sample_obj <- strata(strat_df[order("suicidal_class")], size = 2000, method = "srswor")
 
-# original class proportions
-class_proportions <- table(original_df$target_var) / nrow(original_df)
+# draw the stratified sample
+RISK_2000 <- getdata(RISK_imp_s, sample_obj)
 
-# Calculate the desired number of observations for each class in the smaller dataset
-desired_sample_size <- 2000  # Total desired sample size
-sample_sizes <- round(class_proportions * desired_sample_size)
-
-# Create an empty dataframe to store the smaller balanced dataset
-smaller_df <- data.frame()
-
-# Iterate through each class and perform stratified sampling
-for (class in names(sample_sizes)) {
-  # Subset observations belonging to the current class
-  class_subset <- original_df[original_df$target_var == class, ]
-  
-  # Check if there are enough non-imputed observations for this class
-  if (nrow(class_subset) >= sample_sizes[class]) {
-    # If there are enough, randomly select 'sample_sizes[class]' observations
-    sampled_obs <- class_subset[sample(1:nrow(class_subset), size = sample_sizes[class]), ]
-  } else {
-    # If there are not enough, include all non-imputed observations for this class
-    sampled_obs <- class_subset
-  }
-  
-  # Append the selected observations to the smaller dataset
-  smaller_df <- rbind(smaller_df, sampled_obs)
-}
-
-# Ensure that the smaller dataset contains exactly 2000 observations (if needed)
-if (nrow(smaller_df) > desired_sample_size) {
-  smaller_df <- smaller_df[sample(1:nrow(smaller_df), size = desired_sample_size), ]
-}
-
-# Now 'smaller_df' contains your smaller balanced dataset with non-imputed data
+# clean up:
+# rm()  # remove unnecessary variables in the environment
 
 ```
-
-
 
 
 #### 2.5 Simple Synopsis of the Dataset

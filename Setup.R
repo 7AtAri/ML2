@@ -12,6 +12,8 @@ library(mice)
 library(dplyr)
 library(missRanger)
 library(skimr)
+library(SamplingStrata)
+
 
 
 # for example:
@@ -195,9 +197,6 @@ RISK$q7orig<-factor(RISK$q7orig)
 
 
 # ---- helper functions ------------------------------------------------------
-
-
-
 
 
 # ---- Clean up the environment -----------------------------------------------

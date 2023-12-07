@@ -162,10 +162,6 @@ rm(RISK, RISK_imp_num, RISK_imp, sample_obj, strat_df)  # remove unnecessary var
 ```
 
 
-```{r}
-describe(RISK_2000_5)
-str(RISK_2000_5$suicidal_class)
-```
 
 #### 2.5 Simple Synopsis of the Dataset
 
@@ -175,6 +171,7 @@ useless_cols<-c("ID_unit", "Prob" )  # add all the columns we do not need
 RISK_2000_5 <- RISK_2000_5[, -which(colnames(RISK_2000_5) %in% useless_cols)] # subset 
 variable_types <- skim(RISK_2000_5) # get the variable types
 summary(variable_types) # summary on variable types
+# run lines below seperately again to show: (command+enter)
 table(variable_types$factor.ordered) # summary on factor variables
 variable_types[variable_types$skim_type=="numeric",]
 ```

@@ -8,7 +8,6 @@ library(ggplot2)
 library(Hmisc)
 library(naniar)
 library(mice)
-# library(missForest)
 library(dplyr)
 library(missRanger)
 library(skimr)
@@ -41,11 +40,8 @@ rm(list = ls(all.names = TRUE))
 # ---- Data import ------------------------------------------------------------
 
 # import as dataframe
-
-
 RISK <- read_csv("datasets/National YRBS Datasets/XXHq.csv",show_col_types = FALSE)
 
-# RISK_qn <- read_csv("datasets/National YRBS Datasets/XXHqn.csv")
 
 
 # ---- Deleting redundant/unnecessary variables ------------------------------------------
@@ -57,12 +53,7 @@ RISK$q4<-NULL # aggregated in raceeth
 RISK$q5<-NULL # aggregated in raceeth
 RISK$record<-NULL # id column
 
-# RISK <- subset(RISK, select = c("site", "orig_rec", "q4","q5") ) # get rid of useless variables
-
-
-# head(RISK)
-
-# describe(RISK)
+# RISK <- subset(RISK, select = - c("site", "orig_rec", "q4","q5") ) # get rid of useless variables
 
 
 
@@ -171,6 +162,15 @@ RISK$q6orig<-factor(RISK$q6orig)
 RISK$q7orig<-factor(RISK$q7orig)
 
 
+
+
+
+
+# ---- maybe still useful, please do not delete: 
+# -----------------------------------------------------------------------------
+
+
+
 # ---- creating the target variable -------
 # now is done in the main rmarkdown file.
 # this is the old version
@@ -184,10 +184,35 @@ RISK$q7orig<-factor(RISK$q7orig)
 #                          ifelse(!is.na(q25) & q25 == 1,  2,
 #                                                         1))))))
 
+# ----- stratified sampling with more than 1 strata variable -----------------
+
+# preprocessing for stratification:
+# RISK_num <- as.data.frame(lapply(RISK_imp_s, as.numeric)) # convert all variables to numeric
+# corr_mat=cor(RISK_num, method="s") # correlation matrix
+# target_corr <- corr_mat[, "suicidal_class"] # get correlations with respect to the target variable
+# df with variable names and their correlation values:
+# corr_data <- data.frame(
+#  var = names(target_corr),
+#  corr = target_corr
+#)
+
+# Sort the data frame by correlation values
+# sorted_corr_data <- corr_data[order(-corr_data$corr), ]
+
+# stratification variable vector:
+# strat_vars <- sorted_corr_data[abs(sorted_corr_data$corr) > 0.25,] 
+# select all correlations as possible strata (pos & neg) bigger than 0.25
+
+# all possible stratum columns
+# strat_df<-RISK_imp_s[, strat_vars$var] 
+
+# replicate stratum size
+# stratum_sizes <- rep(2000, length(strat_vars$var))
+
 # ---- Example: Merge labels and add data to df ------------
 
 
-# Add the sentiment score and maginitude to the petdata
+# Add the sentiment score and magnitude to the petdata
 # petdata <- merge(petdata, sentiment_df, by = "PetID",
 #                 all.x = TRUE, sort = FALSE)
 

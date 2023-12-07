@@ -130,6 +130,8 @@ RISK_imp_s5 <- RISK_imp_num %>%
                                             1))))))
 
 RISK_imp_s5[, c("q25", "q26", "q27", "q28", "q29")] <- NULL  # removing the columns related to the target variable
+
+RISK_imp_s5$suicidal_class<-factor(RISK_imp_s5$suicidal_class, ordered = TRUE)  # factorize the target variable
 ```
 
 \ 
@@ -144,28 +146,6 @@ Now we need to reduce our data to the maximum allowed size of 2000 observations.
 ```{r stratified sampling, include = FALSE}
 # this code snipped was produced with the help of AI
 # *
-# preprocessing for stratification:
-# RISK_num <- as.data.frame(lapply(RISK_imp_s, as.numeric)) # convert all variables to numeric
-# corr_mat=cor(RISK_num, method="s") # correlation matrix
-# target_corr <- corr_mat[, "suicidal_class"] # get correlations with respect to the target variable
-# df with variable names and their correlation values:
-# corr_data <- data.frame(
-#  var = names(target_corr),
-#  corr = target_corr
-#)
-
-# Sort the data frame by correlation values
-# sorted_corr_data <- corr_data[order(-corr_data$corr), ]
-
-# stratification variable vector:
-# strat_vars <- sorted_corr_data[abs(sorted_corr_data$corr) > 0.25,] 
-# select all correlations as possible strata (pos & neg) bigger than 0.25
-
-# all possible stratum columns
-# strat_df<-RISK_imp_s[, strat_vars$var] 
-
-# replicate stratum size
-# stratum_sizes <- rep(2000, length(strat_vars$var))
 
 # only use target as stratum:
 strat_df<-RISK_imp_s5[, "suicidal_class"]
@@ -177,29 +157,38 @@ sample_obj <- strata(strat_df[order("suicidal_class")], size = 2000, method = "s
 RISK_2000_5 <- getdata(RISK_imp_s5, sample_obj)
 # *
 # clean up:
-# rm()  # remove unnecessary variables in the environment
+rm(RISK, RISK_imp_num, RISK_imp, sample_obj, strat_df)  # remove unnecessary variables in the environment
 
 ```
 
+
+```{r}
+describe(RISK_2000_5)
+str(RISK_2000_5$suicidal_class)
+```
 
 #### 2.5 Simple Synopsis of the Dataset
 
 ```{r study overview, include=FALSE}
 # str(RISK) # 
-variable_types <- skim(RISK_imp) # to info for get the variables
+useless_cols<-c("ID_unit", "Prob" )  # add all the columns we do not need
+RISK_2000_5 <- RISK_2000_5[, -which(colnames(RISK_2000_5) %in% useless_cols)] # subset 
+variable_types <- skim(RISK_2000_5) # get the variable types
 summary(variable_types) # summary on variable types
-summary(variable_types$factor.ordered) # summary on factor variables
+table(variable_types$factor.ordered) # summary on factor variables
+variable_types[variable_types$skim_type=="numeric",]
 ```
 \
-number of observations:
-number of variables:
+number of observations: 2000 
+number of variables: 100
 
 datatypes:
-- nominal variables:
-- ordinal variables:
-(numeric variables:)
-- discrete variables:
-- continuous variables:
+factor: 96
+- nominal variables: 29
+- ordinal variables: 67
+numeric variables: 4
+- discrete variables: 96 (here all factor variables)
+- continuous variables: 4 (here all numeric variables)
 
 
 

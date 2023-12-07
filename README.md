@@ -1,5 +1,7 @@
 # ML2 Project
 
+stratified sampling package resource: https://cran.r-project.org/web/packages/StratifiedSampling/StratifiedSampling.pdf
+
 TODOS:
 - find dataset (between 500 and 2000 observations, at least 5 predictor variables and an outcome variable -> supervised)
 - compare 2 ML methods (1 method must be from the ML2 course) in R

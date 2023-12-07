@@ -8,7 +8,7 @@
 # current working directory
 # print(current_directory)
 
-# write.csv(RISK_2000, file="../RISK_2000.csv",  row.names = FALSE)
+write.csv(RISK_2000_5, file="../RISK_2000_5.csv",  row.names = FALSE)
 
 
 

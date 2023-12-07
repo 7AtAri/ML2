@@ -121,15 +121,15 @@ RISK_imp_num$q26 <- as.numeric(RISK_imp_num$q26)
 RISK_imp_num$q27 <- as.numeric(RISK_imp_num$q27)
 RISK_imp_num$q28 <- as.numeric(RISK_imp_num$q28)
 RISK_imp_num$q29 <- as.numeric(RISK_imp_num$q29)
-RISK_imp_s <- RISK_imp_num %>% 
-  mutate(suicidal_class = ifelse(q29 > 1,   3,
-                          ifelse(q28 > 1,   3,
-                          ifelse(q27 == 1,  3,
-                          ifelse(q26 == 1,  2,
+RISK_imp_s5 <- RISK_imp_num %>% 
+  mutate(suicidal_class = ifelse(q29 > 1,   5, # 3
+                          ifelse(q28 > 1,   5, # 3
+                          ifelse(q27 == 1,  4, # 3
+                          ifelse(q26 == 1,  3, # 2
                           ifelse(q25 == 1,  2,
                                             1))))))
 
-RISK_imp_s[, c("q25", "q26", "q27", "q28", "q29")] <- NULL  # removing the columns related to the target variable
+RISK_imp_s5[, c("q25", "q26", "q27", "q28", "q29")] <- NULL  # removing the columns related to the target variable
 ```
 
 \ 
@@ -145,21 +145,21 @@ Now we need to reduce our data to the maximum allowed size of 2000 observations.
 # this code snipped was produced with the help of AI
 # *
 # preprocessing for stratification:
-RISK_num <- as.data.frame(lapply(RISK_imp_s, as.numeric)) # convert all variables to numeric
-corr_mat=cor(RISK_num, method="s") # correlation matrix
-target_corr <- corr_mat[, "suicidal_class"] # get correlations with respect to the target variable
+# RISK_num <- as.data.frame(lapply(RISK_imp_s, as.numeric)) # convert all variables to numeric
+# corr_mat=cor(RISK_num, method="s") # correlation matrix
+# target_corr <- corr_mat[, "suicidal_class"] # get correlations with respect to the target variable
 # df with variable names and their correlation values:
-corr_data <- data.frame(
-  var = names(target_corr),
-  corr = target_corr
-)
+# corr_data <- data.frame(
+#  var = names(target_corr),
+#  corr = target_corr
+#)
 
 # Sort the data frame by correlation values
-sorted_corr_data <- corr_data[order(-corr_data$corr), ]
+# sorted_corr_data <- corr_data[order(-corr_data$corr), ]
 
 # stratification variable vector:
-strat_vars <- sorted_corr_data[abs(sorted_corr_data$corr) > 0.25,] 
-# select all correlations as possible strata (pos&neg) bigger than 0.25
+# strat_vars <- sorted_corr_data[abs(sorted_corr_data$corr) > 0.25,] 
+# select all correlations as possible strata (pos & neg) bigger than 0.25
 
 # all possible stratum columns
 # strat_df<-RISK_imp_s[, strat_vars$var] 
@@ -168,14 +168,14 @@ strat_vars <- sorted_corr_data[abs(sorted_corr_data$corr) > 0.25,]
 # stratum_sizes <- rep(2000, length(strat_vars$var))
 
 # only use target as stratum:
-strat_df<-RISK_imp_s[, "suicidal_class"]
+strat_df<-RISK_imp_s5[, "suicidal_class"]
 
 # sample for 2000 observations:
 sample_obj <- strata(strat_df[order("suicidal_class")], size = 2000, method = "srswor")
 
 # draw the stratified sample
-RISK_2000 <- getdata(RISK_imp_s, sample_obj)
-
+RISK_2000_5 <- getdata(RISK_imp_s5, sample_obj)
+# *
 # clean up:
 # rm()  # remove unnecessary variables in the environment
 

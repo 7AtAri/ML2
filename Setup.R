@@ -1,18 +1,19 @@
 # ---- Load needed libraries -----------------------------------------------------
 
 
-library(readr)
-library(inspectdf)
-library(corrplot)
-library(ggplot2)
-library(Hmisc)
-library(naniar)
-library(mice)
-library(dplyr)
-library(missRanger)
-library(skimr)
-library(SamplingStrata)
-library(sampling)
+library(readr) # for reading the data
+library(inspectdf) # for inspecting the variables
+library(corrplot) # for correlationplots
+library(ggplot2) # for plotting
+library(Hmisc) 
+library(naniar) 
+library(mice) # for MCAR test
+library(dplyr) # for data transformation
+library(missRanger) # for imputation
+library(skimr) # for types of variables
+library(SamplingStrata) # for sampling
+library(sampling) # for sampling
+library(e1071) # for svm
 
 
 

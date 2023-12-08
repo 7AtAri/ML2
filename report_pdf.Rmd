@@ -147,15 +147,10 @@ Now we need to reduce our data to the maximum allowed size of 2000 observations.
 ```{r stratified sampling, include = FALSE}
 # this code snipped was produced with the help of AI
 # *
-
-# only use target as stratum:
-strat_df<-RISK_imp_s5[, "suicidal_class"]
-
-# sample for 2000 observations:
-sample_obj <- strata(strat_df[order("suicidal_class")], size = 2000, method = "srswor")
-
-# draw the stratified sample
+size_per_class <- rep(400, times = 5) # 400 samples from each of 5 classes, adjust as needed
+sample_obj <- strata(RISK_imp_s5, stratanames = "suicidal_class", size = size_per_class, method = "srswor")
 RISK_2000_5 <- getdata(RISK_imp_s5, sample_obj)
+
 # *
 # clean up:
 # rm(RISK, RISK_imp_num, RISK_imp, sample_obj, strat_df)  # remove unnecessary variables in the environment
@@ -168,7 +163,7 @@ RISK_2000_5 <- getdata(RISK_imp_s5, sample_obj)
 
 ```{r study overview, include=FALSE}
 # str(RISK) # 
-useless_cols<-c("ID_unit", "Prob" )  # add all the columns we do not need
+useless_cols<-c("ID_unit", "Prob", "Stratum" )  # add all the columns we do not need
 RISK_2000_5 <- RISK_2000_5[, -which(colnames(RISK_2000_5) %in% useless_cols)] # subset 
 variable_types <- skim(RISK_2000_5) # get the variable types
 summary(variable_types) # summary on variable types

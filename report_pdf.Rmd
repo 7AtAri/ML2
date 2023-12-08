@@ -100,14 +100,7 @@ We test the target related variables q25 to q29 for potential pattern(s) in the 
 result <- mcar_test(RISK[, c("q25", "q26", "q27", "q28", "q29")])
 print(result)
 ```
-Because of this we will impute the missing data. To ensure a good imputation, we need to impute our NAs before reducing the dataset to 2000 observations. To run the imputation properly we need to factorize our nominal and ordinal variables first.
-
-
-```{r imputing, include= FALSE}
-set.seed(0)
-# the categorical variables are factorized in the setup.R file
-RISK_imp <- missRanger(RISK, pmm.k = 200, num.trees = 500, sample.fraction = 1)
-```
+Because of this we will use a rule base approach to create the target variable and impute the predictive variables afterwards. To ensure a good imputation, we need to impute our NAs before reducing the dataset to 2000 observations. To run the imputation properly we need to factorize our nominal and ordinal variables first.
 
 
 #### 2.3 Target Variable
@@ -115,13 +108,13 @@ RISK_imp <- missRanger(RISK, pmm.k = 200, num.trees = 500, sample.fraction = 1)
 As a target variable, we decided to calculate a score from 5 questions that reflects the suicide risk of the person (observation) in question. This score is aggregated with a rule based approach. 
 
 ```{r creating the target variable, include= FALSE}
-RISK_imp_num<-RISK_imp
-RISK_imp_num$q25 <- as.numeric(RISK_imp_num$q25)
-RISK_imp_num$q26 <- as.numeric(RISK_imp_num$q26)
-RISK_imp_num$q27 <- as.numeric(RISK_imp_num$q27)
-RISK_imp_num$q28 <- as.numeric(RISK_imp_num$q28)
-RISK_imp_num$q29 <- as.numeric(RISK_imp_num$q29)
-RISK_imp_s5 <- RISK_imp_num %>% 
+RISK_num<-RISK
+RISK_num$q25 <- as.numeric(RISK_num$q25)
+RISK_num$q26 <- as.numeric(RISK_num$q26)
+RISK_num$q27 <- as.numeric(RISK_num$q27)
+RISK_num$q28 <- as.numeric(RISK_num$q28)
+RISK_num$q29 <- as.numeric(RISK_num$q29)
+RISK_s5 <- RISK_num %>% 
   mutate(suicidal_class = ifelse(q29 > 1,   5, # 3
                           ifelse(q28 > 1,   5, # 3
                           ifelse(q27 == 1,  4, # 3
@@ -129,17 +122,25 @@ RISK_imp_s5 <- RISK_imp_num %>%
                           ifelse(q25 == 1,  2,
                                             1))))))
 
-RISK_imp_s5[, c("q25", "q26", "q27", "q28", "q29")] <- NULL  # removing the columns related to the target variable
+RISK_s5[, c("q25", "q26", "q27", "q28", "q29")] <- NULL  # removing the columns related to the target variable
 
-RISK_imp_s5$suicidal_class<-factor(RISK_imp_s5$suicidal_class, ordered = TRUE)  # factorize the target variable
+RISK_s5$suicidal_class<-factor(RISK_s5$suicidal_class, ordered = TRUE)  # factorize the target variable
 ```
 
 \ 
 After creating the target variable we need to exclude the variables q25 to q29, that were used for creating it, from our dataset. 
 
+#### 2.4 Imputation
 
 
-#### 2.4 Reducing and balancing the dataset to 2000 observations
+```{r imputing, include= FALSE}
+set.seed(0)
+# the categorical variables are factorized in the setup.R file
+RISK_imp_s5 <- missRanger(RISK_s5, pmm.k = 200, num.trees = 500, sample.fraction = 1)
+```
+
+
+#### 2.5 Reducing and balancing the dataset to 2000 observations
 \
 Now we need to reduce our data to the maximum allowed size of 2000 observations. To ensure the best possible data quality, we want to ensure that our dataset is balanced. Intuitively, we are considering if it is best to still use as much of the non-imputed data for our smaller dataset as possible, before filling it up with imputed data, since non-imputed data is usually of better quality. On the other hand the data seemingly shows patterns in the missingness so there are reasons to just do a stratified sampling over the imputed data as well. To do a proper statified sampling we need to identify the stratification variables. Therefore we will calculate the correlations with the target variable and see which variables are highly correlated to our target variable. These will then as well as the target variable be used as stratification variables.
 
@@ -157,13 +158,13 @@ sample_obj <- strata(strat_df[order("suicidal_class")], size = 2000, method = "s
 RISK_2000_5 <- getdata(RISK_imp_s5, sample_obj)
 # *
 # clean up:
-rm(RISK, RISK_imp_num, RISK_imp, sample_obj, strat_df)  # remove unnecessary variables in the environment
+# rm(RISK, RISK_imp_num, RISK_imp, sample_obj, strat_df)  # remove unnecessary variables in the environment
 
 ```
 
 
 
-#### 2.5 Simple Synopsis of the Dataset
+#### 2.6 Simple Synopsis of the Dataset
 
 ```{r study overview, include=FALSE}
 # str(RISK) # 

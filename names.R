@@ -1,16 +1,15 @@
 
 # ------ saving the new df ---------------
 
-# library(readr)
+library(readr)
 
 # current_directory <- getwd()
 
 # current working directory
 # print(current_directory)
 
+# write.csv(RISK_imp_s5, file="../RISK_imp_s5.csv",  row.names = FALSE)
 write.csv(RISK_2000_5, file="../RISK_2000_5.csv",  row.names = FALSE)
-
-
 
 
 library(dplyr)

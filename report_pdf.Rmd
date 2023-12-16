@@ -36,7 +36,7 @@ source("Setup.R")
 
 ### 1. Introduction
 
-Our general idea was to work with LGBT-related data. This was not as easy as expected, since it seems there are not a lot of datasets openly available that have that kind of information. Finally, we found a US survey by the CDC, that regularly monitors the countries youth in a lot of dimensions, but among other questions also asks for sexual experiences and identification.   
+Our general idea was to work with LGBT-related data. This was not as easy as expected, since it seems there are not a lot of datasets openly available that have that kind of information. Finally, we found a US survey by the CDC, that regularly monitors the country's youth in a lot of dimensions, but among other questions also asks for sexual experiences and identification.   
 
 ### 2. The Dataset
 \
@@ -45,7 +45,7 @@ Our general idea was to work with LGBT-related data. This was not as easy as exp
 - Youth health behaviors and conditions: sexual, injury and violence, bullying, diet and physical activity, obesity, and mental health, including suicide
 - Substance use behaviors: electronic vapor product and tobacco product use, alcohol use, and other drug use
 - Student experiences: parental monitoring, school connectedness, unstable housing, and exposure to community violence [[1]](#1).
-It is a national survey conducted by CDC (Center for Disease Control and Prevention) and includes high school students from both private and public schools within the U.S. Data is collected from 1991 through 2021, we are only using the most recent data from 2021 though. If you want to learn more about the data there is an accompanying Data User Guide.[[2]](#2).
+It is a national survey conducted by the CDC (Center for Disease Control and Prevention) and includes high school students from both private and public schools within the U.S. Data is collected from 1991 through 2021, we are only using the most recent data from 2021. If you want to learn more about the data there is an accompanying Data User Guide.[[2]](#2).
 
 
 #### 2.1 Preprocessing of the dataset
@@ -57,7 +57,7 @@ It is a national survey conducted by CDC (Center for Disease Control and Prevent
 # describe(RISK) # more detail
 ```
 
-To preprocess the dataset, we first ran a summary on our dataset. The number of NAs seems to depend very much on the question. The variable "orig_rec" only contained NAs and has therefore been removed, as well as the variable "site" which only contained "XX" entries. Variables q4 and q5 are already aggregated in "raceeth" and have also been deleted.
+To preprocess the dataset, we first ran a summary of our dataset. The number of NAs seems to depend very much on the question. The variable "orig_rec" only contained NAs and has therefore been removed, as well as the variable "site" which only contained "XX" entries. Variables q4 and q5 are already aggregated in "raceeth" and have also been deleted.
 The variable "record" seems to be an ID for the observations. This has to be considered later. 
 
 #### 2.2 Missing Data
@@ -68,9 +68,9 @@ print(na_ratio*100) # % percentage of NAs in data
 sum(is.na(RISK)==TRUE) # sum of NAs in dataset
 ```
 \
-We will first exclude all the observations with NAs in all the target related variables q25 to q29. Since we want to build our target variable on these questions, the target variable cannot all be empty. The amount of data available should be enough to just exclude these observations. After removing the observations that have NAs in all the variables, that are used to create our target variable, we still have around 13.7% NAs in the dataset.
+We will first exclude all the observations with NAs in all the target-related variables q25 to q29. Since we want to build our target variable on these questions, the target variable cannot all be empty. The amount of data available should be enough to just exclude these observations. After removing the observations that have NAs in all the variables, that are used to create our target variable, we still have around 13.7% NAs in the dataset.
 \
-What if we had just excluded every NA in the dataset? We will try and see if this is a viable option, since this would not just be quick and easy, but we would also just have "real" answers. The exclusion of NAs leads to a severe reduction in the number of observations. The original data consisted of 17232 observations, after reducing the target related NAs only, we have 11753 observations left. If we omit all NAs, the reduced dataframe still has 4334 observations.
+What if we had just excluded every NA in the dataset? We will try and see if this is a viable option, since this woul not just be quick and easy, but we would also just have "real" answers. The exclusion of NAs leads to a severe reduction in the number of observations. The original data consisted of 17232 observations, after reducing the target-related NAs only, we have 11753 observations left. If we omit all NAs, the reduced dataframe still has 4334 observations.
 \
 
 ```{r check exclude NAs, include=FALSE}
@@ -78,7 +78,7 @@ RISK_no_NAs <- na.omit(RISK)
 summary(RISK_no_NAs)
 ```
 
-In this case need to assess the loss of information foremost in relation to our target variable. The important question is if there is a pattern to the missingness in our data, not just, but especially with regard to our target variable.
+In this case need to assess the loss of information foremost about our target variable. The important question is if there is a pattern to the missingness in our data, not just, but especially about our target variable.
 
 ```{r Tables for Missingness in q28, include=FALSE}
 table(RISK_no_NAs$q28)
@@ -91,21 +91,21 @@ sum(is.na(RISK$q28)==TRUE)/17138
 
 #### 2.2.2 Omitting NAs vs Data Imputation
 \
-If we can really omit the NAs or if it may be necessary to impute the missing datapoints, depends on the type of missingness. If data is missing completely at random (MCAR), we can omit the NAs, if it is just missing at random (MAR) we would rather impute the data. If the data is missing not at random (MNAR), it would be a quite difficult problem, because we cannot easily impute the missing data then. To find out if we can just omit the data, an MCAR test was applied. 
+If we can omit the NAs or if it may be necessary to impute the missing data points, depends on the type of missingness. If data is missing completely at random (MCAR), we can omit the NAs, if it is just missing at random (MAR) we would rather impute the data. If the data is missing not at random (MNAR), it would be a quite difficult problem because we cannot easily impute the missing data then. To find out if we can just omit the data, an MCAR test was applied. 
 \
-We test the target related variables q25 to q29 for potential pattern(s) in the missing data. This results in a p-value of 0, which means we can say for sure, that the data is not missing completely at random. Just omitting all NAs could be problematic and lead to bias.
+We test the target-related variables q25 to q29 for potential pattern(s) in the missing data. This results in a p-value of 0, which means we can say for sure, that the data is not missing completely at random. Just omitting all NAs could be problematic and lead to bias.
 \
 
 ```{r MCAR test for target columns}
 result <- mcar_test(RISK[, c("q25", "q26", "q27", "q28", "q29")])
 print(result)
 ```
-Because of this we will use a rule base approach to create the target variable and impute the predictive variables afterwards. To ensure a good imputation, we need to impute our NAs before reducing the dataset to 2000 observations. To run the imputation properly we need to factorize our nominal and ordinal variables first.
+Because of this, we will use a rule base approach to create the target variable and impute the predictive variables afterwards. To ensure a good imputation, we need to impute our NAs before reducing the dataset to 2000 observations. To run the imputation properly we need to factorize our nominal and ordinal variables first.
 
 
 #### 2.3 Target Variable
 \
-As a target variable, we decided to calculate a score from 5 questions that reflects the suicide risk of the person (observation) in question. This score is aggregated with a rule based approach. 
+As a target variable, we decided to calculate a score from 5 questions that reflect the suicide risk of the person (observation) in question. This score is aggregated with a rule-based approach. 
 
 ```{r creating the target variable, include= FALSE}
 RISK_num<-RISK
@@ -128,7 +128,7 @@ RISK_s5$suicidal_class<-factor(RISK_s5$suicidal_class, ordered = TRUE)  # factor
 ```
 
 \ 
-After creating the target variable we need to exclude the variables q25 to q29, that were used for creating it, from our dataset. 
+After creating the target variable we need to exclude the variables q25 to q29, which were used for creating it, from our dataset. 
 
 #### 2.4 Imputation
 
@@ -142,7 +142,7 @@ RISK_imp_s5 <- missRanger(RISK_s5, pmm.k = 200, num.trees = 500, sample.fraction
 
 #### 2.5 Reducing and balancing the dataset to 2000 observations
 \
-Now we need to reduce our data to the maximum allowed size of 2000 observations. To ensure the best possible data quality, we want to ensure that our dataset is balanced. Intuitively, we are considering if it is best to still use as much of the non-imputed data for our smaller dataset as possible, before filling it up with imputed data, since non-imputed data is usually of better quality. On the other hand the data seemingly shows patterns in the missingness so there are reasons to just do a stratified sampling over the imputed data as well. To do a proper statified sampling we need to identify the stratification variables. Therefore we will calculate the correlations with the target variable and see which variables are highly correlated to our target variable. These will then as well as the target variable be used as stratification variables.
+We need to reduce our data to the maximum allowed size of 2000 observations. To ensure the best possible data quality, we want to ensure that our dataset is balanced. Intuitively, we are considering if it is best to still use as much of the non-imputed data for our smaller dataset as possible, before filling it up with imputed data, since non-imputed data is usually of better quality. On the other hand the data seemingly shows patterns in the missingness so there are reasons to just do a stratified sampling over the imputed data as well. To do a proper statified sampling we need to identify the stratification variables. Therefore we will calculate the correlations with the target variable and see which variables are highly correlated to our target variable. These will then as well as the target variable be used as stratification variables.
 
 ```{r stratified sampling, include = FALSE}
 # this code snipped was produced with the help of AI
@@ -150,7 +150,6 @@ Now we need to reduce our data to the maximum allowed size of 2000 observations.
 size_per_class <- rep(400, times = 5) # 400 samples from each of 5 classes, adjust as needed
 sample_obj <- strata(RISK_imp_s5, stratanames = "suicidal_class", size = size_per_class, method = "srswor")
 RISK_2000_5 <- getdata(RISK_imp_s5, sample_obj)
-
 # *
 # clean up:
 # rm(RISK, RISK_imp_num, RISK_imp, sample_obj, strat_df)  # remove unnecessary variables in the environment
@@ -161,10 +160,11 @@ RISK_2000_5 <- getdata(RISK_imp_s5, sample_obj)
 
 #### 2.6 Simple Synopsis of the Dataset
 
-```{r study overview, include=FALSE}
-# str(RISK) # 
-useless_cols<-c("ID_unit", "Prob", "Stratum" )  # add all the columns we do not need
-RISK_2000_5 <- RISK_2000_5[, -which(colnames(RISK_2000_5) %in% useless_cols)] # subset 
+
+
+```{r RISK_2000_5 load and inspect, include=FALSE}
+source("Setup_RISK.R")
+
 variable_types <- skim(RISK_2000_5) # get the variable types
 summary(variable_types) # summary on variable types
 # run lines below seperately again to show: (command+enter)
@@ -184,16 +184,33 @@ numeric variables: 4
 - continuous variables: 4 (here all numeric variables)
 
 
-
 ### 3. Additional Data Preparation
 
-#### 3.1 Feature Reduction
+question: it would introduce information leakage to reduce the features before splitting the data, correct?
+
+#### 3.1 Splitting the Data
+\
+According to the project requirements we split our data in 60% Training, 20% Validation and 20% Testing Data. 
+
+
+```{r splitting the data, include=FALSE}
+# https://cran.r-project.org/web/packages/splitTools/vignettes/splitTools.html
+inds <- partition(RISK_2000_5$suicidal_class, p = c(train = 0.6, valid = 0.2, test = 0.2))
+RISK_train <- RISK_2000_5[inds$train, ]
+RISK_valid <- RISK_2000_5[inds$valid, ]
+RISK_test <- RISK_2000_5[inds$test, ]
+
+
+```
+
+
+#### 3.2 Feature Reduction
 \
 Since our dataset has lots of variables, we decided to start by excluding some variables depending on the estimated feature importance.
 
-#### 3.1.1 Correlations 
+#### 3.2.1 Correlations 
 \ 
-See Chapter 2
+Unfortunately at this point we have to many variables to do a pairs plot or correlation plot with a visually usable outcome. We will therefore perform a correlation analysis only with respect to the target variable and in numeric format instead of any visual plot.
 
 ```{r, corr plot, echo=FALSE}
 
@@ -205,15 +222,36 @@ See Chapter 2
 #corrplot(corr_mat, method = "color",
 #     type = "upper", order = "hclust", 
 #     tl.col = "black") 
+
+# preprocessing for correlations:
+RISK_num <- as.data.frame(lapply(RISK_2000_5, as.numeric)) # convert all variables to numeric
+corr_mat=cor(RISK_num, method="s") # correlation matrix
+target_corr <- corr_mat[, "suicidal_class"] # get correlations with respect to the target variable
+# df with variable names and their correlation values:
+corr_data <- data.frame(
+  var = names(target_corr),
+  corr = target_corr
+)
+
+# Sort the data frame by correlation values
+sorted_corr_data <- corr_data[order(-corr_data$corr), ]
+
+# stratification variable vector:
+corr_vars <- sorted_corr_data[abs(sorted_corr_data$corr) > 0.25,] 
+# select all correlations as possible strata (pos & neg) bigger than 0.25
+
+# all highly correlated columns
+RISK_red_vars<-RISK_2000_5[, corr_vars$var] 
+
 ```
 
 
 
-#### 3.1.2 Feature Importance Algorithm
+#### 3.2.2 Feature Importance Algorithm
 
 
 
-#### 3.2 Naming the variables and the factor levels
+#### 3.3 Naming the variables and the factor levels
 \
 This is an optional step. It can lead to a better readability of our data frame though.
 
@@ -225,11 +263,6 @@ This is an optional step. It can lead to a better readability of our data frame 
 ```
 
 For an easy understanding of their values, the variables and levels are named according to their content.
-
-
-#### 3.3 Splitting the Data
-\
-According to the project requirements we split our data in 60% Training, 20% Validation and 20% Testing Data. 
 
 
 
@@ -248,7 +281,7 @@ SVM and GAMs
 
 #### 4.1 Short Mathematical Overview on the used Methods
 \
-todo: can someone please add this section?
+todo
 
 
 #### 4.2 Fitting process

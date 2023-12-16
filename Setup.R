@@ -13,7 +13,6 @@ library(missRanger) # for imputation
 library(skimr) # for types of variables
 library(SamplingStrata) # for sampling
 library(sampling) # for sampling
-library(e1071) # for svm
 
 
 

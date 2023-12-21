@@ -101,6 +101,14 @@ result <- mcar_test(RISK[, c("q25", "q26", "q27", "q28", "q29")])
 print(result)
 ```
 Because of this, we will use a rule base approach to create the target variable and impute the predictive variables afterwards. To ensure a good imputation, we need to impute our NAs before reducing the dataset to 2000 observations. To run the imputation properly we need to factorize our nominal and ordinal variables first.
+```{r analyse missingness, include=FALSE}
+plot_missing(RISK[1:20])
+plot_missing(RISK[20:40])
+plot_missing(RISK[40:60])
+plot_missing(RISK[60:80])
+plot_missing(RISK[80:100])
+plot_missing(RISK)
+```
 
 
 #### 2.3 Target Variable
@@ -170,6 +178,7 @@ summary(variable_types) # summary on variable types
 # run lines below seperately again to show: (command+enter)
 table(variable_types$factor.ordered) # summary on factor variables
 variable_types[variable_types$skim_type=="numeric",]
+# introduce(RISK_2000_5)
 ```
 \
 number of observations: 2000 
@@ -186,25 +195,42 @@ numeric variables: 4
 
 ### 3. Additional Data Preparation
 
-question: it would introduce information leakage to reduce the features before splitting the data, correct?
+question: would it introduce information leakage to reduce the features before splitting the data?
 
-#### 3.1 Splitting the Data
-\
-According to the project requirements we split our data in 60% Training, 20% Validation and 20% Testing Data. 
+```{r check for constant or near zero variance features and eliminate them, include=FALSE}
+# ** this codeblock was done using AI **
+# check if there are constant features
+constantFeatures <- sapply(RISK_2000_5, function(x) {
+    if(is.factor(x) || is.character(x)) {
+        return(length(unique(x)) == 1)
+    } else {
+        return(var(x, na.rm = TRUE) == 0)
+    }
+})
 
+constantFeatureNames <- names(RISK_2000_5)[constantFeatures]
 
-```{r splitting the data, include=FALSE}
-# https://cran.r-project.org/web/packages/splitTools/vignettes/splitTools.html
-inds <- partition(RISK_2000_5$suicidal_class, p = c(train = 0.6, valid = 0.2, test = 0.2))
-RISK_train <- RISK_2000_5[inds$train, ]
-RISK_valid <- RISK_2000_5[inds$valid, ]
-RISK_test <- RISK_2000_5[inds$test, ]
+# Print constant features
+print(constantFeatureNames)
 
+# Check for near-zero variance features
+nzvFeatures <- nearZeroVar(RISK_2000_5, saveMetrics = TRUE)
+nzvFeatureNames <- names(RISK_2000_5)[nzvFeatures$nzv]
+if(any(nzvFeatures$nzv)) {
+    print("Near-zero variance features found:")
+    print(names(RISK_2000_5)[nzvFeatures$nzv])
+} else {
+    print("No near-zero variance features.")
+}
 
+# Remove near-zero variance features
+RISK_reduced <- RISK_2000_5[, !names(RISK_2000_5) %in% nzvFeatureNames]
+
+# ** end of AI produced code block **
 ```
 
 
-#### 3.2 Feature Reduction
+#### 3.1 Feature Reduction
 \
 Since our dataset has lots of variables, we decided to start by excluding some variables depending on the estimated feature importance.
 
@@ -213,7 +239,7 @@ Since our dataset has lots of variables, we decided to start by excluding some v
 Unfortunately at this point we have to many variables to do a pairs plot or correlation plot with a visually usable outcome. We will therefore perform a correlation analysis only with respect to the target variable and in numeric format instead of any visual plot.
 
 ```{r, corr plot, echo=FALSE}
-
+# plot_correlation(RISK_2000_5)
 #pairs(RISK) # -> non numeric arguments included
 #plot(RISK) 
 
@@ -224,7 +250,7 @@ Unfortunately at this point we have to many variables to do a pairs plot or corr
 #     tl.col = "black") 
 
 # preprocessing for correlations:
-RISK_num <- as.data.frame(lapply(RISK_2000_5, as.numeric)) # convert all variables to numeric
+RISK_num <- as.data.frame(lapply(RISK_reduced, as.numeric)) # convert all variables to numeric
 corr_mat=cor(RISK_num, method="s") # correlation matrix
 target_corr <- corr_mat[, "suicidal_class"] # get correlations with respect to the target variable
 # df with variable names and their correlation values:
@@ -232,6 +258,8 @@ corr_data <- data.frame(
   var = names(target_corr),
   corr = target_corr
 )
+ 
+rm(RISK_num) # not needed any more
 
 # Sort the data frame by correlation values
 sorted_corr_data <- corr_data[order(-corr_data$corr), ]
@@ -240,19 +268,119 @@ sorted_corr_data <- corr_data[order(-corr_data$corr), ]
 corr_vars <- sorted_corr_data[abs(sorted_corr_data$corr) > 0.25,] 
 # select all correlations as possible strata (pos & neg) bigger than 0.25
 
-# all highly correlated columns
-RISK_red_vars<-RISK_2000_5[, corr_vars$var] 
+
+# all variables highly correlated with target variable
+RISK_red<-RISK_reduced[, corr_vars$var] 
+# correlations of these
+plot_correlation(RISK_red)
+```
+
+
+```{r}
+print(corr_vars)
+```
+
+The 18 variables with high correlations (>0.25) with our target variable are:
+q93                 
+q85                     
+q45           
+q35          
+q36               
+q39                  
+q64                 
+q46               
+q20                   
+q30                     
+q24                     
+q19                       
+q98                       
+q34 
+q41
+q43
+q44
+q47
+
+
+#### 3.3 Splitting the Data
+\
+According to the project requirements we split our data in 60% Training, 20% Validation and 20% Testing Data. 
+
+
+```{r splitting the data, include=FALSE}
+# https://cran.r-project.org/web/packages/splitTools/vignettes/splitTools.html
+inds <- partition(RISK_red$suicidal_class, p = c(train = 0.8, test = 0.2))
+
+# since we cross-validate for HPO and RFE, we will combine the test and val dataset
+RISK_train <- RISK_red[inds$train, ]
+
+RISK_test <- RISK_red[inds$test, ]
+
+```
+
+
+#### 3.4 Feature Selection Algorithm
+
+```{r , include=FALSE}
+# http://topepo.github.io/caret/recursive-feature-elimination.html
+# scaling / normalizing the data for svm
+
+# scale features that are numeric
+numeric_cols <- sapply(RISK_train, is.numeric)
+# scale only numeric columns
+scaled_num_cols <- RISK_train[, numeric_cols]
+scaled_num_cols <- as.data.frame(scale(scaled_num_cols))
+
+# Combine scaled features with non-numeric data
+other_cols <- RISK_train[, !numeric_cols]
+scaledRISK_train <- cbind(scaled_num_cols, other_cols)
+
+rfe_control <- rfeControl(functions = caretFuncs,
+                      method = "cv",
+                      number = 5)
+svm_grid <- expand.grid(sigma = c(0.001, 0.01, 0.1),
+                       C = c(1, 10, 100))
+                       #gamma = c(0.01, 0.1, 1),
+                       #kernel = c("radial", "linear", "polynomial"),   #kernels
+                       #degree = c(2, 3))  # of the polynomial kernel
+
+train_control <- trainControl(method = "cv", number = 5, search = "grid")
+          
+set.seed(123)
+svmModel <- train(suicidal_class ~ ., data = scaledRISK_train, 
+                  method = "svmRadial", # svmRadial uses e1071 under the hood
+                  tuneGrid = svm_grid, 
+                  trControl = train_control)
+
+```
+
+```{r}
+# feature elimination:
+
+# Convert factors to dummy variables (one-hot encoding)
+dummy_vars <- model.matrix(~ . - 1, data = scaledRISK_train[, 1:82])
+
+# Bind the numeric variables back to the dummy variables
+# numeric_vars <- scaledRISK_train[sapply(scaledRISK_train, is.numeric)]
+processed_data <- as.data.frame(dummy_vars)
 
 ```
 
 
 
-#### 3.2.2 Feature Importance Algorithm
-
-
+```{r}
+rfe_out <- rfe(x = processed_data, 
+                  y = scaledRISK_train$suicidal_class,
+                  sizes = c(30,20,10),
+                  rfeControl = rfe_control,
+                  method = "svmRadial",  # Use svmRadial, but grid includes others
+                  tuneGrid = svm_grid,
+                  trControl = train_control)
+print(rfe_out)
+```
 
 #### 3.3 Naming the variables and the factor levels
 \
+For an easy understanding of their values, the variables and levels are named according to their content.
 This is an optional step. It can lead to a better readability of our data frame though.
 
 ```{r naming variables, include=FALSE}
@@ -262,7 +390,7 @@ This is an optional step. It can lead to a better readability of our data frame 
 # maybe only after the feature reduction step
 ```
 
-For an easy understanding of their values, the variables and levels are named according to their content.
+
 
 
 

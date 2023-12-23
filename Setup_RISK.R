@@ -3,8 +3,9 @@ library(readr) # for reading the data
 library(splitTools)
 library(dplyr) # for data transformation
 library(e1071) # for svm
-library(caret) # for recursive feature elimination
+# library(caret) # for recursive feature elimination
 library(kernlab)
+library(FSelector) # for feature selection with mutual information
 
 # ---- clean the workspace: ------------------------------------
 

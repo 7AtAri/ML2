@@ -304,7 +304,7 @@ q47
 #### 3.3 Splitting the Data
 \
 According to the project requirements we split our data in 60% Training, 20% Validation and 20% Testing Data. 
-
+Since we want to do a cross validation we will split into 80% Training and 20% Testing Data.
 
 ```{r splitting the data, include=FALSE}
 # https://cran.r-project.org/web/packages/splitTools/vignettes/splitTools.html
@@ -320,65 +320,68 @@ RISK_test <- RISK_red[inds$test, ]
 
 #### 3.4 Feature Selection Algorithm
 
-```{r , include=FALSE}
-# http://topepo.github.io/caret/recursive-feature-elimination.html
-# scaling / normalizing the data for svm
 
-# scale features that are numeric
-numeric_cols <- sapply(RISK_train, is.numeric)
-# scale only numeric columns
-scaled_num_cols <- RISK_train[, numeric_cols]
-scaled_num_cols <- as.data.frame(scale(scaled_num_cols))
 
-# Combine scaled features with non-numeric data
-other_cols <- RISK_train[, !numeric_cols]
-scaledRISK_train <- cbind(scaled_num_cols, other_cols)
+#### 3.4.1 Feature selection with chi^2
 
-rfe_control <- rfeControl(functions = caretFuncs,
-                      method = "cv",
-                      number = 5)
-svm_grid <- expand.grid(sigma = c(0.001, 0.01, 0.1),
-                       C = c(1, 10, 100))
-                       #gamma = c(0.01, 0.1, 1),
-                       #kernel = c("radial", "linear", "polynomial"),   #kernels
-                       #degree = c(2, 3))  # of the polynomial kernel
+```{r chi^2 feature selection, include=FALSE}
+# data
+data<-RISK_2000_5
+# Target variable
+target_variable <- RISK_2000_5$suicidal_class
 
-train_control <- trainControl(method = "cv", number = 5, search = "grid")
-          
-set.seed(123)
-svmModel <- train(suicidal_class ~ ., data = scaledRISK_train, 
-                  method = "svmRadial", # svmRadial uses e1071 under the hood
-                  tuneGrid = svm_grid, 
-                  trControl = train_control)
+# Initialize an empty data frame to store chi-squared results
+chi_squared_results <- data.frame(Variable = character(), Chi_squared = numeric(), P_value = numeric(), stringsAsFactors = FALSE)
 
-```
+# Loop through all variables
+for (var in names(data)) {
+    if (var != "suicidal_class") { 
+        # Compute the chi-squared test
+        test_result <- chisq.test(table(data[[var]], target_variable))
+        
+        # Store the results
+        chi_squared_results <- rbind(chi_squared_results, data.frame(Variable = var, Chi_squared = test_result$statistic, P_value = test_result$p.value))
+    }
+}
 
-```{r}
-# feature elimination:
+# Sort by p-value to find the most significant variables
+significant_vars <- chi_squared_results %>% arrange(P_value) %>% filter(P_value < 0.05) # You can adjust the threshold as needed
 
-# Convert factors to dummy variables (one-hot encoding)
-dummy_vars <- model.matrix(~ . - 1, data = scaledRISK_train[, 1:82])
-
-# Bind the numeric variables back to the dummy variables
-# numeric_vars <- scaledRISK_train[sapply(scaledRISK_train, is.numeric)]
-processed_data <- as.data.frame(dummy_vars)
+# Print the significant variables
+print(significant_vars)
 
 ```
 
 
+#### 3.4.2 Information gain for feature selection
 
-```{r}
-rfe_out <- rfe(x = processed_data, 
-                  y = scaledRISK_train$suicidal_class,
-                  sizes = c(30,20,10),
-                  rfeControl = rfe_control,
-                  method = "svmRadial",  # Use svmRadial, but grid includes others
-                  tuneGrid = svm_grid,
-                  trControl = train_control)
-print(rfe_out)
+
+```{r mutual information, include=FALSE}
+
+# compute information gain
+scores <- information.gain(suicidal_class ~ ., RISK_2000_5)
+
+# sort the features regarding their information gain
+sorted_scores <- scores[order(-scores$attr_importance), ]
+
+# select top 20 features
+top_20_features <- head(sorted_scores, 20)
+
+# Get the names of all features (excluding the target variable 'suicidal_class')
+feature_names <- setdiff(names(RISK_2000_5), "suicidal_class")
+
+# Match the sorted scores with the correct feature names
+top_20_feature_names <- feature_names[order(-scores$attr_importance)[1:20]]
+
+# Create a named vector for the top 20 features and their scores
+named_top_20_features <- setNames(top_20_features , top_20_feature_names)
+
+print(named_top_20_features )
 ```
 
-#### 3.3 Naming the variables and the factor levels
+
+
+#### 3.5 Naming the variables and the factor levels
 \
 For an easy understanding of their values, the variables and levels are named according to their content.
 This is an optional step. It can lead to a better readability of our data frame though.
@@ -397,14 +400,13 @@ This is an optional step. It can lead to a better readability of our data frame 
 
 ### 4. Machine Learning Models
 
-choice of models:
-PCA with visual for first 2 or 3 dimensions...
--> not linearly seperable
--> chose models that are good in seperating non-linear relationships
+
+-> not linearly separable
+-> chose models that are good in separating non-linear relationships
 -> chose model preferably from ML2 (at least 1)
 -> chose a model preferable with results that can be visualized 
 
-SVM and GAMs 
+SVM and Naive Bayes
 
 
 #### 4.1 Short Mathematical Overview on the used Methods
@@ -422,6 +424,36 @@ https://www.datacamp.com/tutorial/support-vector-machines-r
 fit = svm(suicidal_class ~ ., data = RISK_2000_5, scale = FALSE, kernel = "radial", cost = 5)
 ```
 
+
+
+```{r , include=FALSE}
+# scaling / normalizing the data for svm
+
+# scale features that are numeric
+numeric_cols <- sapply(RISK_train, is.numeric)
+# scale only numeric columns
+scaled_num_cols <- RISK_train[, numeric_cols]
+scaled_num_cols <- as.data.frame(scale(scaled_num_cols))
+
+# Combine scaled features with non-numeric data
+other_cols <- RISK_train[, !numeric_cols]
+scaledRISK_train <- cbind(scaled_num_cols, other_cols)
+
+svm_grid <- expand.grid(sigma = c(0.001, 0.01, 0.1),
+                       C = c(1, 10, 100))
+                       #gamma = c(0.01, 0.1, 1),
+                       #kernel = c("radial", "linear", "polynomial"),   #kernels
+                       #degree = c(2, 3))  # of the polynomial kernel
+
+train_control <- trainControl(method = "cv", number = 5, search = "grid")
+          
+set.seed(123)
+svmModel <- train(suicidal_class ~ ., data = scaledRISK_train, 
+                  method = "svmRadial", # svmRadial uses e1071 under the hood
+                  tuneGrid = svm_grid, 
+                  trControl = train_control)
+
+```
 
 
 

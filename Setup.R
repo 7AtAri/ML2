@@ -1,4 +1,5 @@
 # ---- Load needed libraries -----------------------------------------------------
+install.packages("caret")
 
 
 library(readr) # for reading the data
@@ -14,6 +15,12 @@ library(skimr) # for types of variables
 library(SamplingStrata) # for sampling
 library(sampling) # for sampling
 library(DataExplorer)
+library(splitTools)
+library(kernlab)
+library(FSelector)
+library(rJava)
+library(caret)
+
 
 
 # for example:

@@ -412,7 +412,7 @@ Since we want to do a cross validation we will split into 80% Training and 20% T
 
 ```{r splitting the data, include=FALSE}
 # import as dataframe
-# RISK_red <- read_csv("RISK_res.csv", show_col_types = FALSE)
+# RISK_red <- read_csv("RISK_red.csv", show_col_types = FALSE)
 
 # https://cran.r-project.org/web/packages/splitTools/vignettes/splitTools.html
 inds <- partition(RISK_red$suicidal_class, p = c(train = 0.8, test = 0.2))
@@ -453,11 +453,18 @@ For our SVM approach, we will try different kernels as hyperparameters.
 svm in R tutorial + nice visualization:
 https://www.datacamp.com/tutorial/support-vector-machines-r
 
+<<<<<<< HEAD
 ```{r svm, include=FALSE, eval=FALSE}
 
 fit = svm(suicidal_class ~ ., data = RISK_2000_5, scale = FALSE, kernel = "radial", cost = 5)
 ```
+=======
+#```{r svm}
+>>>>>>> fa4ac6633a760713c8d02d0da186746631e85990
 
+#fit = svm(suicidal_class ~ ., data = RISK_2000_5, scale = FALSE, kernel = "radial", cost = 5)
+#```
+# Error in eval(expr, p) : object 'RISK_2000_5' not found
 
 
 ```{r , include=FALSE, eval=FALSE}
@@ -473,20 +480,6 @@ scaled_num_cols <- as.data.frame(scale(scaled_num_cols))
 other_cols <- RISK_train[, !numeric_cols]
 scaledRISK_train <- cbind(scaled_num_cols, other_cols)
 
-svm_grid <- expand.grid(sigma = c(0.001, 0.01, 0.1),
-                       C = c(1, 10, 100))
-                       #gamma = c(0.01, 0.1, 1),
-                       #kernel = c("radial", "linear", "polynomial"),   #kernels
-                       #degree = c(2, 3))  # of the polynomial kernel
-
-train_control <- trainControl(method = "cv", number = 5, search = "grid")
-          
-set.seed(123)
-svmModel <- train(suicidal_class ~ ., data = scaledRISK_train, 
-                  method = "svmRadial", # svmRadial uses e1071 under the hood
-                  tuneGrid = svm_grid, 
-                  trControl = train_control)
-
 ```
 
 
@@ -499,8 +492,83 @@ try different available kernels and other hyperparameters
 and cross validate 
 
 ```{r , include=FALSE}
+# This is already HPO 
+svm_grid <- expand.grid(sigma = c(0.001, 0.01, 0.1),
+                       C = c(1, 10, 100))
+                       #gamma = c(0.01, 0.1, 1),
+                       #kernel = c("radial", "linear", "polynomial"),   #kernels
+                       #degree = c(2, 3))  # of the polynomial kernel
+
+# linear kernel
+C <- c(1, 10, 100)
+
+grid_linear <- expand.grid(.C = C)
+
+# radial basis function kernel
+grid_radial <- expand.grid(.C = C, 
+                           .sigma = c(0.001, 0.01, 0.1))
+
+# polynomial kernel
+grid_poly <- expand.grid(.degree = c(2, 3, 4),
+                         .scale = c(0.1, 1, 10),
+                         .C = C)
+
+
+train_control <- trainControl(method = "cv", number = 5, search = "grid")
+          
+train_svm <- function(kernel, grid) {
+    cat(paste("Training with", kernel, "kernel started using", grid, "...\n"))
+
+    # Train the model
+    train(suicidal_class ~ ., data = scaledRISK_train,
+                   method = kernel,
+                   tuneGrid = grid, 
+                   trControl = train_control)
+    cat(paste("Training with kernel", kernel, "done.\n"))
+}
+# Train models for each kernel
+model_linear <- train_svm("svmLinear", grid_linear)
+model_radial <- train_svm("svmRadial", grid_radial)
+model_poly <- train_svm("svmPoly", grid_poly)
+
+# Output the best models and their performance
+models <- list(linear = model_linear, radial = model_radial, polynomial = model_poly)
 
 ```
+
+Given the list of all resulting models, coming from the HPO of the SVM, we extract the best model for further inspection and results.
+
+```{r , include=FALSE}
+# Function to extract the best accuracy from each model
+extract_best_accuracy <- function(model) {
+    max_accuracy <- max(model$results$Accuracy)
+    return(max_accuracy)
+}
+
+# Apply the function to each model and collect accuracies
+model_accuracies <- sapply(models, extract_best_accuracy)
+
+# Identify the model with the highest accuracy
+best_model_name <- names(which.max(model_accuracies))
+best_model <- models[[best_model_name]]
+
+# Extract the best hyperparameters
+best_hyperparameters <- best_model$bestTune
+
+# Print the best hyperparameters
+cat(paste("Best hyperparameters for the model with", best_model_name, "kernel and HP", colnames(best_hyperparameters), "=", best_hyperparameters))
+
+
+# Print the name and details of the best model
+print(paste("Best performing model is:", best_model_name))
+print(best_model)
+
+# Print the best model's name and its details
+print(paste("Best model is:", best_model_name))
+print(best_model)
+model <- best_model
+```
+
 
 
 ```{r print model with stargazer, echo=FALSE}

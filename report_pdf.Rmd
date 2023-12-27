@@ -101,7 +101,7 @@ result <- mcar_test(RISK[, c("q25", "q26", "q27", "q28", "q29")])
 print(result)
 ```
 Because of this, we will use a rule base approach to create the target variable and impute the predictive variables afterwards. To ensure a good imputation, we need to impute our NAs before reducing the dataset to 2000 observations. To run the imputation properly we need to factorize our nominal and ordinal variables first.
-```{r analyse missingness, include=FALSE}
+```{r analyse missingness, include=FALSE, eval=FALSE}
 plot_missing(RISK[1:20])
 plot_missing(RISK[20:40])
 plot_missing(RISK[40:60])
@@ -115,7 +115,7 @@ plot_missing(RISK)
 \
 As a target variable, we decided to calculate a score from 5 questions that reflect the suicide risk of the person (observation) in question. This score is aggregated with a rule-based approach. 
 
-```{r creating the target variable, include= FALSE}
+```{r creating the target variable, include= FALSE, eval=FALSE}
 RISK_num<-RISK
 RISK_num$q25 <- as.numeric(RISK_num$q25)
 RISK_num$q26 <- as.numeric(RISK_num$q26)
@@ -141,7 +141,7 @@ After creating the target variable we need to exclude the variables q25 to q29, 
 #### 2.4 Imputation
 
 
-```{r imputing, include= FALSE}
+```{r imputing, include= FALSE, eval=FALSE}
 set.seed(0)
 # the categorical variables are factorized in the setup.R file
 RISK_imp_s5 <- missRanger(RISK_s5, pmm.k = 200, num.trees = 500, sample.fraction = 1)
@@ -152,7 +152,7 @@ RISK_imp_s5 <- missRanger(RISK_s5, pmm.k = 200, num.trees = 500, sample.fraction
 \
 We need to reduce our data to the maximum allowed size of 2000 observations. To ensure the best possible data quality, we want to ensure that our dataset is balanced. Intuitively, we are considering if it is best to still use as much of the non-imputed data for our smaller dataset as possible, before filling it up with imputed data, since non-imputed data is usually of better quality. On the other hand the data seemingly shows patterns in the missingness so there are reasons to just do a stratified sampling over the imputed data as well. To do a proper statified sampling we need to identify the stratification variables. Therefore we will calculate the correlations with the target variable and see which variables are highly correlated to our target variable. These will then as well as the target variable be used as stratification variables.
 
-```{r stratified sampling, include = FALSE}
+```{r stratified sampling, include = FALSE, eval=FALSE}
 # this code snipped was produced with the help of AI
 # *
 size_per_class <- rep(400, times = 5) # 400 samples from each of 5 classes, adjust as needed
@@ -239,7 +239,7 @@ Since our dataset has lots of variables, we decided to start by excluding some v
 \ 
 Unfortunately at this point we have to many variables to do a pairs plot or correlation plot with a visually usable outcome. We will therefore perform a correlation analysis only with respect to the target variable and in numeric format instead of any visual plot.
 
-```{r, corr plot, echo=FALSE}
+```{r, corr plot, echo=FALSE, include=FALSE}
 # plot_correlation(RISK_2000_5)
 #pairs(RISK) # -> non numeric arguments included
 #plot(RISK) 
@@ -278,11 +278,12 @@ rm(sorted_corr_data, corr_data)
 ```
 
 
-```{r}
+```{r correlations with the target, include=FALSE}
 print(corr_vars)
 ```
 
 The 18 variables with high correlations (>0.25) with our target variable are:
+\
 q93                 
 q85                     
 q45           
@@ -305,7 +306,7 @@ q47
 
 
 #### 3.1.2 Feature Selection Algorithm
-
+\
 Since the data still has a lot of variables, we need to use a feature selection technique to reduce the features before using a machine learning method. We chose to use model agnostic methods, because the feature selection should be valid for all methods that are later compared. In an earlier step the variables most correlated with the target variable were already identified. Unfortunately this captures only linear monotonous relationships in the data and does not work well for our nominal categorical features. 
 
 [maybe delete chi^2 test + text]
@@ -313,7 +314,7 @@ We will also use a Chi^2 test between our variables and our target variable to a
 
 To capture non-linear relationships as well, information gain between the target and the predictor variables is measured as well. The variables with high information gain with respect to the target variable are kept, because they can contribute more in predicting the target variable.
 
-#### 3.1.3 Feature selection with chi^2
+#### 3.1.3 Feature Selection with Chi^2
 
 ```{r chi^2 feature selection, include=FALSE}
 # data
@@ -344,7 +345,7 @@ rm(target_variable, var, data, chi_squared_results, test_result)
 ```
 
 
-#### 3.1.4 Information gain for feature selection
+#### 3.1.4 Information Gain for Feature Selection
 
 
 ```{r mutual information, include=FALSE}
@@ -371,12 +372,12 @@ print(named_top_20_features)
 rm(scores, sorted_scores, top_20_feature_names, top_20_features, feature_names)
 ```
 
-#### 3.1.5 Domain knowledge for final feature selection
+#### 3.1.5 Domain Knowledge for Final Feature Selection
 
 ```{r difference between correlation and information gain feature selection, echo=FALSE}
 setdiff(names(named_top_20_features), corr_vars$var)
 ```
-
+\
 Let's see what those variables actually stand for. "q7orig" and "q6orig" cannot be found in the data manual and will therefore be discarded. According to the data manual, "PSUs consist of counties, groups of smaller adjacent counties, or sub-areas of very large counties. “PSU” indicates the PSU the school the student attends was assigned to." (p.14). It is possible, that the district/locality of a school plays a role in the risk of suicide. For example for queer students in a very religious place. Q22 is the variable that describes physical dating violence. Therefore q22 is also a valid choice as a predictor variable for our suicidal score target variable. Q40 encodes the range of age when a student first got into contact with drinking alcohol. This might be an indicator for a negligent social surrounding if someone is exposed to an alcoholic drink in an early age and therefore also could be a valid predictor variable in our case. 
 
 ```{r setup final reduced dataframe, include=FALSE}
@@ -392,7 +393,7 @@ RISK_red<-RISK_reduced[,final_vars]
 
 
 
-#### 3.2 Naming the variables and the factor levels
+#### 3.2 Naming the Variables 
 \
 For an easy understanding of their values, the variables and levels are named according to their content.
 This is an optional step. It can lead to a better readability of our data frame though.
@@ -427,34 +428,39 @@ rm(inds, RISK_2000_5, variable_types)
 
 
 ### 4. Machine Learning Models
-
-
--> not linearly separable
--> chose models that are good in separating non-linear relationships
--> chose model preferably from ML2 (at least 1)
--> chose a model preferable with results that can be visualized 
-
-SVM and Naive Bayes
-
+\
+In the following, we compare two Supervised Learning methods on our reduced YOUTH AT RISK dataset to predict our suicidal_class target variable. Because we want to be able to also capture non-linear relationships in our data, we chose Support Vector Machines and Naive Bayes.
 
 #### 4.1 Short Mathematical Overview on the used Methods
 \
-todo
+
+
+#### 4.1.1 Naive Bayes Classification
+\ 
+Naive Bayes Classifiers differs from a theoretically ideal Bayes Classification by assuming the independence of predictor variables. 
+
+
+
+#### 4.1.2 Support Vector Machines (SVM)
+\ 
+The name Support Vecor Machines already describes some elements of this method. A certain number of data points will define the (linear) boundary between two classification regions, these are called the support vectors. The support vectors are the datapoints (observations) that lie closest to our desicion boundary. The boundary in two dimensional space is a line, in three dimensions a plane and in more than three dimensional space a hyperplane. For our dataset, we need a multidimensional hyperplane. The number of dimensions depend on the number of our predictior variables. We need to find the hyperplane, that seperate our data into the classes of our target variable best. The best hyperplane is the one that maximizes the margin between the support vectors of the different classes. The margin is a strip on each of the boundaries sides. In the case of a hard classifier this strip does not contain any points. But we will have a soft classifier with the cost C as a hyperparameter. The cost C describes a budget that we allow for points within the margin or on the other side of the boundary. Depending on the position of the point, the amount it attributes to the total cost changes. A point on the correct side of the margin will not attribute to the total cost at all. If it is in the margin, but on the correct side of the boundry it will attribute between zero and one, if on the wrong side of the boundry but within the margin it will attribute with one to two and if on the wrong side of the margin it will cost more than two.
+
+For our SVM approach, we will try different kernels as hyperparameters.
 
 
 #### 4.2 Fitting process
-
+\
 svm in R tutorial + nice visualization:
 https://www.datacamp.com/tutorial/support-vector-machines-r
 
-```{r svm}
+```{r svm, include=FALSE, eval=FALSE}
 
 fit = svm(suicidal_class ~ ., data = RISK_2000_5, scale = FALSE, kernel = "radial", cost = 5)
 ```
 
 
 
-```{r , include=FALSE}
+```{r , include=FALSE, eval=FALSE}
 # scaling / normalizing the data for svm
 
 # scale features that are numeric
@@ -486,6 +492,7 @@ svmModel <- train(suicidal_class ~ ., data = scaledRISK_train,
 
 
 #### 4.3 Hyperparameter Optimization
+\
 
 for SVM:
 try different available kernels and other hyperparameters
@@ -538,7 +545,7 @@ if one model performs better, is this improvement significant to a usual signifi
 compare training/validation and testing curves...
 
 ### 6. Visual Representation
-
+\
 Dimensionality Reduction Techniques: Sometimes, it's helpful to use dimensionality reduction techniques (like PCA) to identify the most significant variables or components and then focus the GAM analysis and visualization on these.
 
 

@@ -1,5 +1,5 @@
 # ---- Load needed libraries -----------------------------------------------------
-install.packages("caret")
+#install.packages("caret")
 
 
 library(readr) # for reading the data
@@ -20,7 +20,6 @@ library(kernlab)
 library(FSelector)
 library(rJava)
 library(caret)
-
 
 
 # for example:

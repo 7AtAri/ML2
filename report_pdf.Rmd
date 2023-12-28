@@ -3,6 +3,7 @@ title: "Projectreport Machine Learning 2"
 header-includes:
   - \usepackage[english]{babel}
   - \DeclareUnicodeCharacter{308}{oe}  
+  #- \usepackage{bbm}
 author: "Maluna Menke, Ari (Sara) Wahl, Pavlo Kravets"
 date: "`r Sys.Date()`"
 
@@ -35,11 +36,13 @@ source("Setup.R")
 ```
 
 ### 1. Introduction
+\
 
 Our general idea was to work with LGBT-related data. This was not as easy as expected, since it seems there are not a lot of datasets openly available that have that kind of information. Finally, we found a US survey by the CDC, that regularly monitors the country's youth in a lot of dimensions, but among other questions also asks for sexual experiences and identification.   
 
 ### 2. The Dataset
 \
+
 "The *[Youth Risk Behavior Survey (YRBS)](https://www.cdc.gov/healthyyouth/data/yrbs/data.htm)* measures health-related behaviors and experiences that can lead to death and disability among youth and adults.[...] Some of the health-related behaviors and experiences monitored are:
 - Student demographics: sex, sexual identity, race and ethnicity, and grade
 - Youth health behaviors and conditions: sexual, injury and violence, bullying, diet and physical activity, obesity, and mental health, including suicide
@@ -68,6 +71,7 @@ print(na_ratio*100) # % percentage of NAs in data
 sum(is.na(RISK)==TRUE) # sum of NAs in dataset
 ```
 \
+
 We will first exclude all the observations with NAs in all the target-related variables q25 to q29. Since we want to build our target variable on these questions, the target variable cannot all be empty. The amount of data available should be enough to just exclude these observations. After removing the observations that have NAs in all the variables, that are used to create our target variable, we still have around 13.7% NAs in the dataset.
 \
 What if we had just excluded every NA in the dataset? We will try and see if this is a viable option, since this woul not just be quick and easy, but we would also just have "real" answers. The exclusion of NAs leads to a severe reduction in the number of observations. The original data consisted of 17232 observations, after reducing the target-related NAs only, we have 11753 observations left. If we omit all NAs, the reduced dataframe still has 4334 observations.
@@ -91,6 +95,7 @@ sum(is.na(RISK$q28)==TRUE)/17138
 
 #### 2.2.2 Omitting NAs vs Data Imputation
 \
+
 If we can omit the NAs or if it may be necessary to impute the missing data points, depends on the type of missingness. If data is missing completely at random (MCAR), we can omit the NAs, if it is just missing at random (MAR) we would rather impute the data. If the data is missing not at random (MNAR), it would be a quite difficult problem because we cannot easily impute the missing data then. To find out if we can just omit the data, an MCAR test was applied. 
 \
 We test the target-related variables q25 to q29 for potential pattern(s) in the missing data. This results in a p-value of 0, which means we can say for sure, that the data is not missing completely at random. Just omitting all NAs could be problematic and lead to bias.
@@ -113,6 +118,7 @@ plot_missing(RISK)
 
 #### 2.3 Target Variable
 \
+
 As a target variable, we decided to calculate a score from 5 questions that reflect the suicide risk of the person (observation) in question. This score is aggregated with a rule-based approach. 
 
 ```{r creating the target variable, include= FALSE, eval=FALSE}
@@ -150,6 +156,7 @@ RISK_imp_s5 <- missRanger(RISK_s5, pmm.k = 200, num.trees = 500, sample.fraction
 
 #### 2.5 Reducing and balancing the dataset to 2000 observations
 \
+
 We need to reduce our data to the maximum allowed size of 2000 observations. To ensure the best possible data quality, we want to ensure that our dataset is balanced. Intuitively, we are considering if it is best to still use as much of the non-imputed data for our smaller dataset as possible, before filling it up with imputed data, since non-imputed data is usually of better quality. On the other hand the data seemingly shows patterns in the missingness so there are reasons to just do a stratified sampling over the imputed data as well. To do a proper statified sampling we need to identify the stratification variables. Therefore we will calculate the correlations with the target variable and see which variables are highly correlated to our target variable. These will then as well as the target variable be used as stratification variables.
 
 ```{r stratified sampling, include = FALSE, eval=FALSE}
@@ -181,6 +188,7 @@ variable_types[variable_types$skim_type=="numeric",]
 # introduce(RISK_2000_5)
 ```
 \
+
 number of observations: 2000 
 number of variables: 100
 
@@ -233,10 +241,12 @@ rm(nzvFeatures, constantFeatureNames, constantFeatures, nzvFeatureNames)
 
 #### 3.1 Feature Reduction
 \
+
 Since our dataset has lots of variables, we decided to start by excluding some variables depending on the estimated feature importance.
 
 #### 3.1.1 Correlations 
 \ 
+
 Unfortunately at this point we have to many variables to do a pairs plot or correlation plot with a visually usable outcome. We will therefore perform a correlation analysis only with respect to the target variable and in numeric format instead of any visual plot.
 
 ```{r, corr plot, echo=FALSE, include=FALSE}
@@ -307,6 +317,7 @@ q47
 
 #### 3.1.2 Feature Selection Algorithm
 \
+
 Since the data still has a lot of variables, we need to use a feature selection technique to reduce the features before using a machine learning method. We chose to use model agnostic methods, because the feature selection should be valid for all methods that are later compared. In an earlier step the variables most correlated with the target variable were already identified. Unfortunately this captures only linear monotonous relationships in the data and does not work well for our nominal categorical features. 
 
 [maybe delete chi^2 test + text]
@@ -378,6 +389,7 @@ rm(scores, sorted_scores, top_20_feature_names, top_20_features, feature_names)
 setdiff(names(named_top_20_features), corr_vars$var)
 ```
 \
+
 Let's see what those variables actually stand for. "q7orig" and "q6orig" cannot be found in the data manual and will therefore be discarded. According to the data manual, "PSUs consist of counties, groups of smaller adjacent counties, or sub-areas of very large counties. “PSU” indicates the PSU the school the student attends was assigned to." (p.14). It is possible, that the district/locality of a school plays a role in the risk of suicide. For example for queer students in a very religious place. Q22 is the variable that describes physical dating violence. Therefore q22 is also a valid choice as a predictor variable for our suicidal score target variable. Q40 encodes the range of age when a student first got into contact with drinking alcohol. This might be an indicator for a negligent social surrounding if someone is exposed to an alcoholic drink in an early age and therefore also could be a valid predictor variable in our case. 
 
 ```{r setup final reduced dataframe, include=FALSE}
@@ -395,6 +407,7 @@ RISK_red<-RISK_reduced[,final_vars]
 
 #### 3.2 Naming the Variables 
 \
+
 For an easy understanding of their values, the variables and levels are named according to their content.
 This is an optional step. It can lead to a better readability of our data frame though.
 
@@ -407,6 +420,7 @@ rm(significant_vars, corr_vars, named_top_20_features, RISK_reduced)
 
 #### 3.3 Splitting the Data
 \
+
 According to the project requirements we split our data in 60% Training, 20% Validation and 20% Testing Data. 
 Since we want to do a cross validation we will split into 80% Training and 20% Testing Data.
 
@@ -437,37 +451,29 @@ In the following, we compare two Supervised Learning methods on our reduced YOUT
 
 #### 4.1.1 Naive Bayes Classification
 \ 
+
 Naive Bayes Classifiers differs from a theoretically ideal Bayes Classification by assuming the independence of predictor variables. 
 
 
 
 #### 4.1.2 Support Vector Machines (SVM)
 \ 
-The name Support Vecor Machines already describes some elements of this method. A certain number of data points will define the (linear) boundary between two classification regions, these are called the support vectors. The support vectors are the datapoints (observations) that lie closest to our desicion boundary. The boundary in two dimensional space is a line, in three dimensions a plane and in more than three dimensional space a hyperplane. For our dataset, we need a multidimensional hyperplane. The number of dimensions depend on the number of our predictior variables. We need to find the hyperplane, that seperate our data into the classes of our target variable best. The best hyperplane is the one that maximizes the margin between the support vectors of the different classes. The margin is a strip on each of the boundaries sides. In the case of a hard classifier this strip does not contain any points. But we will have a soft classifier with the cost C as a hyperparameter. The cost C describes a budget that we allow for points within the margin or on the other side of the boundary. Depending on the position of the point, the amount it attributes to the total cost changes. A point on the correct side of the margin will not attribute to the total cost at all. If it is in the margin, but on the correct side of the boundry it will attribute between zero and one, if on the wrong side of the boundry but within the margin it will attribute with one to two and if on the wrong side of the margin it will cost more than two.
 
-For our SVM approach, we will try different kernels as hyperparameters.
+The name Support Vector Machines already describes some elements of this method. A certain number of data points will define the (linear) boundary between two classification regions, these are called the support vectors. The support vectors are the datapoints (observations) that lie closest to our decision boundary. The boundary in two dimensional space is a line, in three dimensions a plane and in more than three dimensional space a hyperplane. For our dataset, we need a multidimensional hyperplane. The number of dimensions depend on the number of our predictor variables. We need to find the hyperplane, that separate our data into the classes of our target variable best. The best hyperplane is the one that maximizes the margin between the support vectors of the different classes. The margin is a strip on each of the boundaries sides. In the case of a hard classifier this strip does not contain any points. But we will have a soft classifier with the cost C as a hyperparameter. This cost C describes a budget that we allow for points within the margin or on the other side of the boundary. Depending on the position of the point, the amount it attributes to the total cost changes. A point on the correct side of the margin will not attribute to the total cost at all. If it is in the margin, but on the correct side of the boundary it will attribute between zero and one, if on the wrong side of the boundary but within the margin it will attribute with one to two and if on the wrong side of the margin it will cost more than two.
+Mathematically we need to maximize the Margin M with respect to $\alpha_{0}, \alpha_{i}$ and $\epsilon_{i}$ in the following objective function:
+$$y_{i}\left(\alpha_{0}+\sum_{j=1}^{n} \alpha_{i} K(x_{i}, x_{j})\right ) \ge M(1-\epsilon_{i})$$  The following constraints are given: $\sum_{i=1}^{n} \alpha_{i}^{2}=1$ , $\epsilon_{i} \ge 0$ and $\sum_{i=1}^{n} \epsilon_{i} < C$ with C $\ge 0$ and $i=1,...,n$
+For our SVM approach, we will try different kernels K as hyperparameters.
 
 
-#### 4.2 Fitting process
+#### 4.2 Preprocessing for SVM 
 \
+
 svm in R tutorial + nice visualization:
 https://www.datacamp.com/tutorial/support-vector-machines-r
 
-<<<<<<< HEAD
-```{r svm, include=FALSE, eval=FALSE}
-
-fit = svm(suicidal_class ~ ., data = RISK_2000_5, scale = FALSE, kernel = "radial", cost = 5)
-```
-=======
-#```{r svm}
->>>>>>> fa4ac6633a760713c8d02d0da186746631e85990
-
-#fit = svm(suicidal_class ~ ., data = RISK_2000_5, scale = FALSE, kernel = "radial", cost = 5)
-#```
-# Error in eval(expr, p) : object 'RISK_2000_5' not found
 
 
-```{r , include=FALSE, eval=FALSE}
+```{r scaling and normalizing, include=FALSE}
 # scaling / normalizing the data for svm
 
 # scale features that are numeric
@@ -484,14 +490,14 @@ scaledRISK_train <- cbind(scaled_num_cols, other_cols)
 
 
 
-#### 4.3 Hyperparameter Optimization
+#### 4.3 SVM Fitting and Hyperparameter Optimization
 \
 
 for SVM:
 try different available kernels and other hyperparameters
 and cross validate 
 
-```{r , include=FALSE}
+```{r svm, include=FALSE, eval= FALSE}
 # This is already HPO 
 svm_grid <- expand.grid(sigma = c(0.001, 0.01, 0.1),
                        C = c(1, 10, 100))
@@ -538,7 +544,7 @@ models <- list(linear = model_linear, radial = model_radial, polynomial = model_
 
 Given the list of all resulting models, coming from the HPO of the SVM, we extract the best model for further inspection and results.
 
-```{r , include=FALSE}
+```{r evaluation, include=FALSE, eval=FALSE}
 # Function to extract the best accuracy from each model
 extract_best_accuracy <- function(model) {
     max_accuracy <- max(model$results$Accuracy)

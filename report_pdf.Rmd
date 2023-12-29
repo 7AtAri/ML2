@@ -461,9 +461,16 @@ Naive Bayes Classifiers differs from a theoretically ideal Bayes Classification 
 
 The name Support Vector Machines already describes some elements of this method. A certain number of data points will define the (linear) boundary between two classification regions, these are called the support vectors. The support vectors are the datapoints (observations) that lie closest to our decision boundary. The boundary in two dimensional space is a line, in three dimensions a plane and in more than three dimensional space a hyperplane. For our dataset, we need a multidimensional hyperplane. The number of dimensions depend on the number of our predictor variables. We need to find the hyperplane, that separate our data into the classes of our target variable best. The best hyperplane is the one that maximizes the margin between the support vectors of the different classes. The margin is a strip on each of the boundaries sides. In the case of a hard classifier this strip does not contain any points. But we will have a soft classifier with the cost C as a hyperparameter. This cost C describes a budget that we allow for points within the margin or on the other side of the boundary. Depending on the position of the point, the amount it attributes to the total cost changes. A point on the correct side of the margin will not attribute to the total cost at all. If it is in the margin, but on the correct side of the boundary it will attribute between zero and one, if on the wrong side of the boundary but within the margin it will attribute with one to two and if on the wrong side of the margin it will cost more than two.
 Mathematically we need to maximize the Margin M with respect to $\alpha_{0}, \alpha_{i}$ and $\epsilon_{i}$ in the following objective function:
-$$y_{i}\left(\alpha_{0}+\sum_{j=1}^{n} \alpha_{i} K(x_{i}, x_{j})\right ) \ge M(1-\epsilon_{i})$$  The following constraints are given: $\sum_{i=1}^{n} \alpha_{i}^{2}=1$ , $\epsilon_{i} \ge 0$ and $\sum_{i=1}^{n} \epsilon_{i} < C$ with C $\ge 0$ and $i=1,...,n$
-For our SVM approach, we will try different kernels K as hyperparameters.
+$$y_{i}\left(\alpha_{0}+\sum_{j=1}^{n} \alpha_{i} K(\mathbf x_{i}, \mathbf x_{j})\right ) \ge M(1-\epsilon_{i})$$  The following constraints are given: $\sum_{i=1}^{n} \alpha_{i}^{2}=1$ , $\epsilon_{i} \ge 0$ and $\sum_{i=1}^{n} \epsilon_{i} < C$ with C $\ge 0$ and $i=1,...,n$
+\
 
+For our SVM approach, we will try different kernels K as hyperparameters:
+
+\
+A linear Kernel $$ K(u,v) = \langle \mathbf u, \mathbf v \rangle = \sum_{j=1}^{p}u_{j}v_{j}$$
+a polynomial Kernel $$ K(u,v) = (c + \langle \mathbf u, \mathbf v \rangle)^{d}, \ with \ d > 1$$
+\
+and a radial Kernel $$ K(u,v)= \exp \left(-\gamma \sum_{i=1}^{p}(u_{i}-v_{i} \right)$$
 
 #### 4.2 Preprocessing for SVM 
 \

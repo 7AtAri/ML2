@@ -1,3 +1,7 @@
+# ------- set seed to ensure reproducability --------------------------
+
+set.seed(0)  # set the seed
+
 # ----libraries ------------------------------------------
 library(readr) # for reading the data
 library(splitTools)

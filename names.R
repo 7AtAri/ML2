@@ -1,3 +1,6 @@
+# ------- set seed to ensure reproducability --------------------------
+
+set.seed(0)  # set the seed
 
 # ------ saving the new df ---------------
 

@@ -1,3 +1,7 @@
+# ------- set seed to ensure reproducability --------------------------
+
+set.seed(0)  # set the seed
+
 # ---- Load needed libraries -----------------------------------------------------
 #install.packages("caret")
 

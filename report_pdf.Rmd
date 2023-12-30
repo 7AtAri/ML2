@@ -28,7 +28,7 @@ output:
 params <- list(html=knitr::is_html_output())
 knitr::opts_chunk$set(echo = params$html)
 rm(list = ls(all.names = TRUE)) # reset the environment
-
+set.seed(0)  # set the seed
 #names(RISK)
 
 source("Setup.R")
@@ -155,6 +155,7 @@ We need to reduce our data to the maximum allowed size of 2000 observations. To 
 ```{r stratified sampling, include = FALSE}
 # this code snipped was produced with the help of AI
 # *
+set.seed(0)  # set the seed
 size_per_class <- rep(400, times = 5) # 400 samples from each of 5 classes, adjust as needed
 sample_obj <- strata(RISK_imp_s5, stratanames = "suicidal_class", size = size_per_class, method = "srswor")
 RISK_2000_5 <- getdata(RISK_imp_s5, sample_obj)
@@ -198,6 +199,7 @@ numeric variables: 4
 question: would it introduce information leakage to reduce the features before splitting the data?
 
 ```{r check for constant or near zero variance features and eliminate them, include=FALSE}
+
 # ** this codeblock was done using AI **
 # check if there are constant features
 constantFeatures <- sapply(RISK_2000_5, function(x) {
@@ -348,6 +350,7 @@ rm(target_variable, var, data, chi_squared_results, test_result)
 
 
 ```{r mutual information, include=FALSE}
+set.seed(0)  # set the seed
 
 # compute information gain
 scores <- information.gain(suicidal_class ~ ., RISK_2000_5)
@@ -412,7 +415,7 @@ Since we want to do a cross validation we will split into 80% Training and 20% T
 ```{r splitting the data, include=FALSE}
 # import as dataframe
 # RISK_red <- read_csv("RISK_red.csv", show_col_types = FALSE)
-
+set.seed(0)  # set the seed
 # https://cran.r-project.org/web/packages/splitTools/vignettes/splitTools.html
 inds <- partition(RISK_red$suicidal_class, p = c(train = 0.8, test = 0.2))
 
@@ -475,6 +478,8 @@ https://www.datacamp.com/tutorial/support-vector-machines-r
 We scale the data as part of pre-processing. Scaling transforms the data to have unit variance, further contributing to uniformity across different scales and improving algorithm performance.
 
 ```{r , include=FALSE}
+set.seed(0)  # set the seed to shuffle
+
 # scaling / normalizing the data for svm
 
 scaleDataset <- function(dataset){
@@ -510,10 +515,12 @@ Additional to scaling we also use centering as a part of preprocessing. Centerin
 ##### 4.3.2 HPO of SVM
 For the SVM we examine three distinct kernel types - linear, radial, and polynomial - each characterized by unique parameters, in addition to the common cost parameter.
 
-
 Kernel and the cost parameter C have a significantly impact on the model's performance and need to be tuned carefully.
 
-```{r , include=FALSE}
+```{r svm hpo, include=FALSE}
+
+set.seed(0)  # set the seed
+
 # linear kernel
 C <- c(0.0001, 0.001, 0.1, 1)
 
@@ -551,7 +558,7 @@ svm_models <- list(linear = model_linear, radial = model_radial, polynomial = mo
 
 Given the list of all resulting models, coming from the HPO of the SVM, we extract the best model for further inspection and results using the Accuracy as our focused metric.
 
-```{r , include=FALSE}
+```{r metrics and hps, include=FALSE}
 # Function to extract the best accuracy from each model
 extract_best_accuracy <- function(model) {
     max_accuracy <- max(model$results$Accuracy)
@@ -630,6 +637,7 @@ cat(paste("Recall:  ", svm_recall, "\nPrecison:", svm_precision, "\nF1:      ", 
 
 ##### 5.2.2 SVM without scaling 
 ```{r SVM no scaling, echo=FALSE}
+set.seed(0)  # set the seed
 # Train models for each kernel
 model_linear <- train_svm(RISK_train,"svmLinear", grid_linear)
 model_radial <- train_svm(RISK_train, "svmRadial", grid_radial)

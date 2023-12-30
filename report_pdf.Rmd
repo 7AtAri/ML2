@@ -122,7 +122,16 @@ RISK_num$q26 <- as.numeric(RISK_num$q26)
 RISK_num$q27 <- as.numeric(RISK_num$q27)
 RISK_num$q28 <- as.numeric(RISK_num$q28)
 RISK_num$q29 <- as.numeric(RISK_num$q29)
-RISK_s5 <- RISK_num %>% 
+
+# TODO: think about reducing to 3 classes 
+RISK_s3 <- RISK_num
+RISK_s3$suicidal_class <- ifelse(RISK_s3$q29 > 1, 3,
+                          ifelse(RISK_s3$q28 > 1, 3, 
+                          ifelse(RISK_s3$q27 == 1, 3,
+                          ifelse(RISK_s3$q26 == 1, 2,
+                          ifelse(RISK_s3$q25 == 1, 2, 1)))))
+
+RISK_s5 <- RISK_s3 %>% 
   mutate(suicidal_class = ifelse(q29 > 1,   5, # 3
                           ifelse(q28 > 1,   5, # 3
                           ifelse(q27 == 1,  4, # 3
@@ -130,9 +139,17 @@ RISK_s5 <- RISK_num %>%
                           ifelse(q25 == 1,  2,
                                             1))))))
 
-RISK_s5[, c("q25", "q26", "q27", "q28", "q29")] <- NULL  # removing the columns related to the target variable
+RISK_s3[, c("q25", "q26", "q27", "q28", "q29")] <- NULL
+RISK_s5[, c("q25", "q26", "q27", "q28", "q29")] <- NULL
 
-RISK_s5$suicidal_class<-factor(RISK_s5$suicidal_class, ordered = TRUE)  # factorize the target variable
+RISK_s3 <- RISK_s3[!is.na(RISK_s3$suicidal_class), ]
+RISK_s5 <- RISK_s5[!is.na(RISK_s5$suicidal_class), ]
+# removing the columns related to the target variable
+
+RISK_s3$suicidal_class<-factor(RISK_s3$suicidal_class, ordered = TRUE)
+RISK_s5$suicidal_class<-factor(RISK_s3$suicidal_class, ordered = TRUE)
+
+#factorize the target variable
 ```
 
 \ 
@@ -144,7 +161,8 @@ After creating the target variable we need to exclude the variables q25 to q29, 
 ```{r imputing, include= FALSE,cache=TRUE}
 set.seed(0)
 # the categorical variables are factorized in the setup.R file
-RISK_imp_s5 <- missRanger(RISK_s5, pmm.k = 200, num.trees = 500, sample.fraction = 1)
+RISK_imp_s3 <- missRanger(RISK_s3, pmm.k = 200, num.trees = 500, sample.fraction = 1)
+write_csv(RISK_imp_s3, "RISK_imp_s3.csv")
 ```
 
 
@@ -155,10 +173,14 @@ We need to reduce our data to the maximum allowed size of 2000 observations. To 
 ```{r stratified sampling, include=FALSE, cache=TRUE}
 # this code snipped was produced with the help of AI
 # *
+
 set.seed(0)  # set the seed
-size_per_class <- rep(400, times = 5) # 400 samples from each of 5 classes, adjust as needed
-sample_obj <- strata(RISK_imp_s5, stratanames = "suicidal_class", size = size_per_class, method = "srswor")
-RISK_2000_5 <- getdata(RISK_imp_s5, sample_obj)
+RISK_imp_s3 <- read_csv("RISK_imp_s3.csv")
+size_per_class <- rep(666, times = 3) # 400 samples from each of 5 classes, adjust as needed
+sample_obj <- strata(RISK_imp_s3, stratanames = "suicidal_class", size = size_per_class, method = "srswor")
+RISK_2000_3 <- getdata(RISK_imp_s3, sample_obj)
+write_csv(RISK_2000_3, "RISK_2000_3.csv")
+
 # *
 # clean up:
 # rm(RISK, RISK_imp_num, RISK_imp, sample_obj, strat_df)  # remove unnecessary variables in the environment
@@ -174,12 +196,12 @@ RISK_2000_5 <- getdata(RISK_imp_s5, sample_obj)
 ```{r RISK_2000_5 load and inspect, include=FALSE, cache=TRUE}
 source("Setup_RISK.R")
 
-variable_types <- skim(RISK_2000_5) # get the variable types
+variable_types <- skim(RISK_2000_3) # get the variable types
 summary(variable_types) # summary on variable types
 # run lines below separately again to show: (command+enter)
 table(variable_types$factor.ordered) # summary on factor variables
 variable_types[variable_types$skim_type=="numeric",]
-# introduce(RISK_2000_5)
+# introduce(RISK_2000_3)
 ```
 \
 number of observations: 2000 
@@ -203,7 +225,7 @@ question: would it introduce information leakage to reduce the features before s
 
 # ** this codeblock was done using AI **
 # check if there are constant features
-constantFeatures <- sapply(RISK_2000_5, function(x) {
+constantFeatures <- sapply(RISK_2000_3, function(x) {
     if(is.factor(x) || is.character(x)) {
         return(length(unique(x)) == 1)
     } else {
@@ -211,26 +233,27 @@ constantFeatures <- sapply(RISK_2000_5, function(x) {
     }
 })
 
-constantFeatureNames <- names(RISK_2000_5)[constantFeatures]
+constantFeatureNames <- names(RISK_2000_3)[constantFeatures]
 
 # Print constant features
 print(constantFeatureNames)
 
 # Check for near-zero variance features
-nzvFeatures <- nearZeroVar(RISK_2000_5, saveMetrics = TRUE)
-nzvFeatureNames <- names(RISK_2000_5)[nzvFeatures$nzv]
+nzvFeatures <- nearZeroVar(RISK_2000_3, saveMetrics = TRUE)
+nzvFeatureNames <- names(RISK_2000_3)[nzvFeatures$nzv]
 if(any(nzvFeatures$nzv)) {
     print("Near-zero variance features found:")
-    print(names(RISK_2000_5)[nzvFeatures$nzv])
+    print(names(RISK_2000_3)[nzvFeatures$nzv])
 } else {
     print("No near-zero variance features.")
 }
 
 # Remove near-zero variance features
-RISK_reduced <- RISK_2000_5[, !names(RISK_2000_5) %in% nzvFeatureNames]
+RISK_reduced <- RISK_2000_3[, !names(RISK_2000_3) %in% nzvFeatureNames]
 
 # ** end of AI produced code block **
 rm(nzvFeatures, constantFeatureNames, constantFeatures, nzvFeatureNames)
+write_csv(RISK_reduced,"RISK_2000_3s_red.csv")
 ```
 
 
@@ -243,7 +266,9 @@ Since our dataset has lots of variables, we decided to start by excluding some v
 Unfortunately at this point we have to many variables to do a pairs plot or correlation plot with a visually usable outcome. We will therefore perform a correlation analysis only with respect to the target variable and in numeric format instead of any visual plot.
 
 ```{r, corr plot,echo=FALSE, cache=TRUE}
-# plot_correlation(RISK_2000_5)
+#TODO:
+RISK_reduced <-read_csv("RISK_2000_3s_red.csv")
+# plot_correlation(RISK_2000_3)
 #pairs(RISK) # -> non numeric arguments included
 #plot(RISK) 
 
@@ -269,12 +294,15 @@ rm(RISK_num, target_corr, corr_mat) # not needed any more
 sorted_corr_data <- corr_data[order(-corr_data$corr), ]
 
 # stratification variable vector:
-corr_vars <- sorted_corr_data[abs(sorted_corr_data$corr) > 0.25,] 
+corr_vars <- sorted_corr_data[abs(sorted_corr_data$corr) > 0.25, ]
 # select all correlations as possible strata (pos & neg) bigger than 0.25
-
+corr_vars <- corr_vars$var[!is.na(corr_vars$var)]
 
 # all variables highly correlated with target variable
-RISK_red<-RISK_reduced[, corr_vars$var] 
+RISK_red<-RISK_reduced[, corr_vars] 
+#TODO: remove prob?
+RISK_red <- RISK_red[, -2]
+RISK_red <- RISK_red[, -17]
 # correlations of these
 plot_correlation(RISK_red)
 rm(sorted_corr_data, corr_data)
@@ -320,12 +348,15 @@ To capture non-linear relationships as well, information gain between the target
 
 ```{r chi^2 feature selection, include=FALSE, cache=TRUE}
 # data
-data<-RISK_2000_5
+data<-RISK_2000_3
 # Target variable
-target_variable <- RISK_2000_5$suicidal_class
+target_variable <- RISK_2000_3$suicidal_class
 
 # Initialize an empty data frame to store chi-squared results
 chi_squared_results <- data.frame(Variable = character(), Chi_squared = numeric(), P_value = numeric(), stringsAsFactors = FALSE)
+
+# TODO:
+# Warning: Chi-squared approximation may be incorrect
 
 # Loop through all variables
 for (var in names(data)) {
@@ -343,6 +374,7 @@ significant_vars <- chi_squared_results %>% arrange(P_value) %>% filter(P_value 
 
 # Print the significant variables
 print(significant_vars)
+
 rm(target_variable, var, data, chi_squared_results, test_result)
 ```
 
@@ -355,7 +387,7 @@ rm(target_variable, var, data, chi_squared_results, test_result)
 set.seed(0)  # set the seed
 
 # compute information gain
-scores <- information.gain(suicidal_class ~ ., RISK_2000_5)
+scores <- information.gain(suicidal_class ~ ., RISK_2000_3)
 
 # sort the features regarding their information gain
 sorted_scores <- scores[order(-scores$attr_importance), ]
@@ -364,7 +396,7 @@ sorted_scores <- scores[order(-scores$attr_importance), ]
 top_20_features <- head(sorted_scores, 20)
 
 # Get the names of all features (excluding the target variable 'suicidal_class')
-feature_names <- setdiff(names(RISK_2000_5), "suicidal_class")
+feature_names <- setdiff(names(RISK_2000_3), "suicidal_class")
 
 # Match the sorted scores with the correct feature names
 top_20_feature_names <- feature_names[order(-scores$attr_importance)[1:20]]
@@ -379,14 +411,16 @@ rm(scores, sorted_scores, top_20_feature_names, top_20_features, feature_names)
 #### 3.1.5 Domain knowledge for final feature selection
 
 ```{r difference between correlation and information gain feature selection,echo=FALSE, cache=TRUE}
-setdiff(names(named_top_20_features), corr_vars$var)
+setdiff(names(named_top_20_features), corr_vars)
+
+#TODO: q6orig not in there anymore
 ```
 
 Let's see what those variables actually stand for. "q7orig" and "q6orig" cannot be found in the data manual and will therefore be discarded. According to the data manual, "PSUs consist of counties, groups of smaller adjacent counties, or sub-areas of very large counties. “PSU” indicates the PSU the school the student attends was assigned to." (p.14). It is possible, that the district/locality of a school plays a role in the risk of suicide. For example for queer students in a very religious place. Q22 is the variable that describes physical dating violence. Therefore q22 is also a valid choice as a predictor variable for our suicidal score target variable. Q40 encodes the range of age when a student first got into contact with drinking alcohol. This might be an indicator for a negligent social surrounding if someone is exposed to an alcoholic drink in an early age and therefore also could be a valid predictor variable in our case. 
 
 ```{r setup final reduced dataframe, include=FALSE, cache=TRUE}
 # set up final variables
-final_vars<-c("psu", "q40", "q22", "suicidal_class", intersect(names(named_top_20_features), corr_vars$var))
+final_vars<-c("psu", "q40", "q22", "suicidal_class", intersect(names(named_top_20_features), corr_vars))
 print(final_vars)
 
 # all variables highly correlated with target variable
@@ -405,6 +439,7 @@ This is an optional step. It can lead to a better readability of our data frame 
 ```{r naming variables, include=FALSE, cache=TRUE}
 source("names.R") 
 rm(significant_vars, corr_vars, named_top_20_features, RISK_reduced)
+write_csv(RISK_red, "RISK_red.csv")
 ```
 
 
@@ -418,6 +453,8 @@ Since we want to do a cross validation we will split into 80% Training and 20% T
 # import as dataframe
 # RISK_red <- read_csv("RISK_red.csv", show_col_types = FALSE)
 set.seed(0)  # set the seed
+RISK_red <- read_csv("RISK_red.csv", show_col_types = FALSE)
+
 # https://cran.r-project.org/web/packages/splitTools/vignettes/splitTools.html
 inds <- partition(RISK_red$suicidal_class, p = c(train = 0.8, test = 0.2))
 
@@ -518,13 +555,20 @@ For the SVM we examine three distinct kernel types - linear, radial, and polynom
 Kernel and the cost parameter C have a significantly impact on the model's performance and need to be tuned carefully.
 
 Additionally to scaling we're also centering the data, which involves subtracting the mean from each feature, ensuring that each feature has a mean of zero. This is particularly useful when features are on different scales and can improve the performance of support vector machines by removing bias due to the scale of the features. 
-For programming purposes we use the build-in preProcess parameter of the train function where the training data is automatically scaled and centered. 
+For programming purposes we use the build-in preProcess parameter of the train function where the training data is automatically scaled and centered.
 
+# A large value of C leads to ... being heavily penalised so there are few points in the margin/missclassified (Lecture 7, p.5)
+
+<<<<<<< HEAD
 ```{r training svm, include=FALSE, cache=TRUE}
 
 set.seed(0)  # set the seed
+=======
+```{r , include=FALSE, cache=TRUE}
+library(caret)
+>>>>>>> 1f2ef89 (reducing target_label to 3)
 # linear kernel
-C <- c(0.001, 0.1, 1, 10)
+C <- c(0.01, 0.1, 1, 10, 100)
 
 grid_linear <- expand.grid(.C = C)
 
@@ -533,26 +577,27 @@ grid_radial <- expand.grid(.C = C,
                            .sigma = c(0.001, 0.01, 0.1))
 
 # polynomial kernel
-grid_poly <- expand.grid(.degree = c(2, 3, 4),
-                         .scale = c(0.1, 1, 10),
+grid_poly <- expand.grid(.degree = c(2, 3, 4, 5),
+                         .scale = c(0.1, 0.5, 1),
                          .C = C)
 
 
-train_control <- trainControl(method = "cv", number = 5, search = "grid")
+train_control <- trainControl(method = "cv", number = 5, search = "grid", )
           
 train_svm <- function(dataset, kernel, grid) {
     train(suicidal_class ~ ., data = dataset,
                    method = kernel,
                    tuneGrid = grid, 
-                   metric="Accuracy",
-                   preProcess = c("center","scale"),
+                   performance = "Accuracy",
+                   preProcess = c("center"),
                    trControl = train_control)
 }
 
 # Train models for each kernel
-model_linear <- train_svm(RISK_train,"svmLinear", grid_linear)
-model_radial <- train_svm(RISK_train, "svmRadial", grid_radial)
-model_poly <- train_svm(RISK_train, "svmPoly", grid_poly)
+# TODO: check if RISK_s3_train better than RISK_train
+model_linear <- train_svm(scaledRISK_train,"svmLinear", grid_linear)
+model_radial <- train_svm(scaledRISK_train, "svmRadial", grid_radial)
+model_poly <- train_svm(scaledRISK_train, "svmPoly", grid_poly)
 
 # Output the best models and their performance
 svm_models <- list(linear = model_linear, radial = model_radial, polynomial = model_poly)

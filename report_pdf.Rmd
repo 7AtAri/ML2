@@ -452,7 +452,7 @@ In the following, we compare two Supervised Learning methods on our reduced YOUT
 #### 4.1.1 Naive Bayes Classification
 \ 
 
-Naive Bayes Classifiers differs from a theoretically ideal Bayes Classification by assuming the independence of predictor variables. 
+Ideally a classifier is able to detect the class k which maximizes the conditional probability $P(Y=k|x_{1},...,x_{p})$. A Bayes Classifier would know these probabilities for each of the classes exactly, but usually it is only possible to approximate those. The Naive Bayes Classifier is one method of approximation. It  approximates by "naively" assuming the conditional independence of predictor variables. This leads to simpler calculations. The joint probability of two events A and B $P(A \cap B)= P(A \mid B) * P(B) $ can be simplified to $P(A \cap B)= P(A) * P(B) $under the independence assumption, since conditional independence means $P(A \mid B) = P(A)$.
 
 
 
@@ -584,27 +584,10 @@ model <- best_model
 
 
 
-```{r print model with stargazer, echo=FALSE}
-
-# stargazer(model, type = "text") # Modell ausgeben mit stargazer
-```
-
 
 \
 
 
-```{r Signifikanz der Modelle, include= FALSE}
-# lrtest(model_best) # erarbeitetes Modell ist besser als Nullmodell?
-```
-
-Mithilfe eines Likelihood-Ratio Tests wird überprüft welches Modell das bessere ist.
-```{r Vergleich der Modelle, echo=FALSE}
-
-# lrtest(model_best, model) # restringiertes Modell und optimiertes Modell mit mehr IA-Termen
-
-```
-Das optimierte Modell ist signifikant besser als das erarbeitete zum festgelegten Signifikanzniveau,
-die Nullhypothese des LR-Tests, dass das optimierte Modell nicht besser ist als das komplexere, kann verworfen werden. Wir stellen außerdem fest: Beide Modelle weisen einen signifikanten Erklärungsgehalt auf, sie sind besser als das Nullmodell.
 
 ### 5. Comparison of the Models / Model's Performance on Test Data
 \
@@ -627,8 +610,6 @@ compare training/validation and testing curves...
 
 ### 6. Visual Representation
 \
-Dimensionality Reduction Techniques: Sometimes, it's helpful to use dimensionality reduction techniques (like PCA) to identify the most significant variables or components and then focus the GAM analysis and visualization on these.
-
 
 
 ### 7. Final Discussion

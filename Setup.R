@@ -20,6 +20,8 @@ library(kernlab)
 library(FSelector)
 library(rJava)
 library(caret)
+library(Metrics)
+
 
 
 # for example:

@@ -486,17 +486,23 @@ scaleDataset <- function(dataset){
   return (scaledDataset)
 }
 
-scaledRISK_train <- scaleDataset(RISK_train)
-scaledRISK_test <- scaleDataset(RISK_test)
+shuffled_train <- RISK_train[sample(1:nrow(RISK_train)), ] 
+shuffled_test <- RISK_test[sample(1:nrow(RISK_test)), ] 
+
+scaledRISK_train <- scaleDataset(shuffled_train)
+scaledRISK_test <- scaleDataset(shuffled_test)
 ```
 
 
 
 #### 4.3 Hyperparameter Optimization
 
-Hyperparameter Optimization (HPO) enables the testing of various hyperparameter combinations to identify the optimal settings that maximize our target evaluation metric, namely the model's accuracy. The grid search method allows for the exhaustive pairing of each hyperparameter with every other, albeit at a significant computational cost. This approach, however, offers the advantage of explicitly specifying the values for testing. We examine three distinct kernel types - linear, radial, and polynomial - each characterized by unique parameters, in addition to the common cost parameter.
+Hyperparameter Optimization (HPO) enables the testing of various hyperparameter combinations to identify the optimal settings that maximize our target evaluation metric, namely the model's accuracy. The grid search method allows for the exhaustive pairing of each hyperparameter with every other, albeit at a significant computational cost. This approach, however, offers the advantage of explicitly specifying the values for testing. 
 
-Additionaly to scaling we also use centering as a part of preprocessing. Centering the data ensures that each feature has a mean of zero. This is particularly useful when features are on different scales and can improve the performance by removing bias due to the scale of the features. 
+##### 4.3.1 HPO of Naive Bayes
+
+##### 4.3.2 HPO of SVM
+For the SVM we examine three distinct kernel types - linear, radial, and polynomial - each characterized by unique parameters, in addition to the common cost parameter.
 
 Kernel and the cost parameter C have a significantly impact on the model's performance and need to be tuned carefully.
 
@@ -516,24 +522,23 @@ grid_poly <- expand.grid(.degree = c(2, 3, 4),
                          .C = C)
 
 
-train_control <- trainControl(method = "cv", number = 5, search = "grid")
+train_control <- trainControl(method = "cv", number = 5, search = "grid", savePredictions = "final", returnResamp = "all")
           
 train_svm <- function(dataset, kernel, grid) {
     train(suicidal_class ~ ., data = dataset,
                    method = kernel,
                    tuneGrid = grid, 
                    metric="Accuracy",
-                   preProcess = c("center","scale"),
                    trControl = train_control)
 }
 
 # Train models for each kernel
-model_linear <- train_svm(RISK_train,"svmLinear", grid_linear)
-model_radial <- train_svm(RISK_train, "svmRadial", grid_radial)
-model_poly <- train_svm(RISK_train, "svmPoly", grid_poly)
+model_linear <- train_svm(scaledRISK_train,"svmLinear", grid_linear)
+model_radial <- train_svm(scaledRISK_train, "svmRadial", grid_radial)
+model_poly <- train_svm(scaledRISK_train, "svmPoly", grid_poly)
 
 # Output the best models and their performance
-models <- list(linear = model_linear, radial = model_radial, polynomial = model_poly)
+svm_models <- list(linear = model_linear, radial = model_radial, polynomial = model_poly)
 
 ```
 
@@ -547,32 +552,25 @@ extract_best_accuracy <- function(model) {
 }
 
 # Apply the function to each model and collect accuracies
-model_accuracies <- sapply(models, extract_best_accuracy)
+svm_model_accuracies <- sapply(svm_models, extract_best_accuracy)
 
 # Identify the model with the highest accuracy
-best_model_name <- names(which.max(model_accuracies))
-best_model <- models[[best_model_name]]
+svm_best_model_name <- names(which.max(svm_model_accuracies))
+svm_best_model <- svm_models[[best_model_name]]
 
 # Extract the best hyperparameters
-best_hyperparameters <- best_model$bestTune
+svm_best_hyperparameters <- svm_best_model$bestTune
 
 # Print the best hyperparameters
-cat(paste("Best hyperparameters for the model with", best_model_name, "kernel and HP", colnames(best_hyperparameters), "=", best_hyperparameters))
+cat(paste("Best hyperparameters for the model with", svm_best_model_name, "kernel and HP", colnames(svm_best_hyperparameters), "=", svm_best_hyperparameters))
 
 
 # Print the name and details of the best model
-print(paste("Best performing model is:", best_model_name))
-print(best_model)
-plot(best_model)
+print(paste("Best performing model is:", svm_best_model_name))
+print(svm_best_model)
+plot(svm_best_model)
 
 ```
-
-
-
-
-\
-
-
 
 
 ### 5. Comparison of the Models / Model's Performance on Test Data
@@ -582,29 +580,100 @@ if one model performs better, is this improvement significant to a usual signifi
 #### 5.1 Quantitative 
 
 ##### 5.1.1 Confusion Matrix
-```{r confusion matrix, echo=FALSE}
+\
+###### 5.1.1.2 Naive Bayes
+```{r Confusion Matrix of Naive Bayes, echo=FALSE}
 scaledRISK_test_no_target <- scaledRISK_test[,-5]
-best_model_pred <- predict(best_model, scaledRISK_test_no_target)
+nb_best_model_pred <- predict(nb_best_model, scaledRISK_test_no_target)
 
-table(best_model_pred, scaledRISK_test$suicidal_class, dnn=c("Prediction", "Actual"))   
+table(nb_best_model_pred, scaledRISK_test$suicidal_class, dnn=c("Prediction", "Actual"))   
+confusionMatrix(table(nb_best_model_pred, scaledRISK_test$suicidal_class))
 ```
 
-##### 5.1.2 Accuracy
-```{r accuracy on test set, echo=FALSE}
 
-confusionMatrix(table(best_model_pred, scaledRISK_test$suicidal_class))
+###### 5.1.1.2 SVM 
+```{r Confusion Matrix of SVM, echo=FALSE}
+svm_actual <- scaledRISK_test$suicidal_class
+scaledRISK_test_no_target <- scaledRISK_test[,-5]
+svm_best_model_pred <- predict(svm_best_model, newdata=scaledRISK_test_no_target)
 
+table(svm_best_model_pred, actual, dnn=c("Prediction", "Actual"))   
+confusionMatrix(table(svm_best_model_pred, actual))
 ```
+Given the Confusion Matrix we can see a Accuracy of 1 meaning the predictions are 100% correct. 
+In this context, a p-value of less than 2.2e−16 for the hypothesis that "Accuracy is greater than No Information Rate" suggests that there is extremely strong statistical evidence that the accuracy of the model is better than what would be achieved by always predicting the most frequent class. This implies that the model has predictive power beyond mere chance and is effectively learning from the features in the dataset.
 
 
 ##### 5.1.2 Precision, Recall and F1-Score
+###### 5.1.2.1 Naive Bayes
+###### 5.1.2.2 SVM 
+```{r Confusion Matrix of SVM, echo=FALSE}
+svm_actual <- as.numeric(as.character(actual))
+svm_pred <- as.numeric(as.character(svm_best_model_pred))
+
+svm_recall <- Metrics::recall(svm_actual, svm_pred)
+svm_precision <- Metrics::precision(svm_actual, svm_pred)
+svm_f1 <- Metrics::f1(svm_actual, svm_pred)
+
+cat(paste("Recall:  ", svm_recall, "\nPrecison:", svm_precision, "\nF1:      ", svm_f1))
+```
+
 
 #### 5.2 Qualitative
+
+##### 5.2.2 SVM without scaling 
+```{r SVM no scaling, echo=FALSE}
+# Train models for each kernel
+model_linear <- train_svm(RISK_train,"svmLinear", grid_linear)
+model_radial <- train_svm(RISK_train, "svmRadial", grid_radial)
+model_poly <- train_svm(RISK_train, "svmPoly", grid_poly)
+
+# Output the best models and their performance
+svm_no_sc_models <- list(linear = model_linear, radial = model_radial, polynomial = model_poly)
+
+svm_model_no_sc_accuracies <- sapply(svm_no_sc_models, extract_best_accuracy)
+
+# Identify the model with the highest accuracy
+svm_no_sc_best_model_name <- names(which.max(svm_model_no_sc_accuracies))
+svm_no_sc_best_model <- svm_no_sc_models[[svm_no_sc_best_model_name]]
+
+# Extract the best hyperparameters
+svm_no_sc_best_hyperparameters <- svm_no_sc_best_model$bestTune
+
+# Print the name and details of the best model
+print(paste("Best performing model is:", svm_no_sc_best_model_name))
+plot(svm_no_sc_best_model)
+```
 
 
 #### 5.3 Overfitting Check
 \
-compare training/validation and testing curves...
+##### 5.3.2 SVM
+```{r Train and Test curve of SVM, echo=FALSE}
+extract_performance <- function(model) {
+    results <- model$results
+    resampling <- model$resample
+    list(results = results, resampling = resampling)
+}
+
+performance_linear <- extract_performance(model_linear)
+performance_radial <- extract_performance(model_radial)
+performance_poly <- extract_performance(model_poly)
+
+plot_performance <- function(performance, title) {
+    ggplot(data = performance$resampling, aes(x = Iter, y = Accuracy)) +
+        geom_line() +
+        geom_point() +
+        facet_wrap(~ parameter, scales = "free") +
+        ggtitle(title) +
+        theme_minimal()
+}
+
+# Plot for each model
+plot_performance(performance_linear, "Linear Kernel Performance")
+plot_performance(performance_radial, "Radial Kernel Performance")
+plot_performance(performance_poly, "Polynomial Kernel Performance")
+```
 
 ### 6. Visual Representation
 

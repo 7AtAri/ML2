@@ -3,7 +3,6 @@ title: "Projectreport Machine Learning 2"
 header-includes:
   - \usepackage[english]{babel}
   - \DeclareUnicodeCharacter{308}{oe}  
-  #- \usepackage{bbm}
 author: "Maluna Menke, Ari (Sara) Wahl, Pavlo Kravets"
 date: "`r Sys.Date()`"
 
@@ -36,13 +35,11 @@ source("Setup.R")
 ```
 
 ### 1. Introduction
-\
 
 Our general idea was to work with LGBT-related data. This was not as easy as expected, since it seems there are not a lot of datasets openly available that have that kind of information. Finally, we found a US survey by the CDC, that regularly monitors the country's youth in a lot of dimensions, but among other questions also asks for sexual experiences and identification.   
 
 ### 2. The Dataset
 \
-
 "The *[Youth Risk Behavior Survey (YRBS)](https://www.cdc.gov/healthyyouth/data/yrbs/data.htm)* measures health-related behaviors and experiences that can lead to death and disability among youth and adults.[...] Some of the health-related behaviors and experiences monitored are:
 - Student demographics: sex, sexual identity, race and ethnicity, and grade
 - Youth health behaviors and conditions: sexual, injury and violence, bullying, diet and physical activity, obesity, and mental health, including suicide
@@ -71,7 +68,6 @@ print(na_ratio*100) # % percentage of NAs in data
 sum(is.na(RISK)==TRUE) # sum of NAs in dataset
 ```
 \
-
 We will first exclude all the observations with NAs in all the target-related variables q25 to q29. Since we want to build our target variable on these questions, the target variable cannot all be empty. The amount of data available should be enough to just exclude these observations. After removing the observations that have NAs in all the variables, that are used to create our target variable, we still have around 13.7% NAs in the dataset.
 \
 What if we had just excluded every NA in the dataset? We will try and see if this is a viable option, since this woul not just be quick and easy, but we would also just have "real" answers. The exclusion of NAs leads to a severe reduction in the number of observations. The original data consisted of 17232 observations, after reducing the target-related NAs only, we have 11753 observations left. If we omit all NAs, the reduced dataframe still has 4334 observations.
@@ -95,7 +91,6 @@ sum(is.na(RISK$q28)==TRUE)/17138
 
 #### 2.2.2 Omitting NAs vs Data Imputation
 \
-
 If we can omit the NAs or if it may be necessary to impute the missing data points, depends on the type of missingness. If data is missing completely at random (MCAR), we can omit the NAs, if it is just missing at random (MAR) we would rather impute the data. If the data is missing not at random (MNAR), it would be a quite difficult problem because we cannot easily impute the missing data then. To find out if we can just omit the data, an MCAR test was applied. 
 \
 We test the target-related variables q25 to q29 for potential pattern(s) in the missing data. This results in a p-value of 0, which means we can say for sure, that the data is not missing completely at random. Just omitting all NAs could be problematic and lead to bias.
@@ -106,7 +101,7 @@ result <- mcar_test(RISK[, c("q25", "q26", "q27", "q28", "q29")])
 print(result)
 ```
 Because of this, we will use a rule base approach to create the target variable and impute the predictive variables afterwards. To ensure a good imputation, we need to impute our NAs before reducing the dataset to 2000 observations. To run the imputation properly we need to factorize our nominal and ordinal variables first.
-```{r analyse missingness, include=FALSE, eval=FALSE}
+```{r analyse missingness, include=FALSE}
 plot_missing(RISK[1:20])
 plot_missing(RISK[20:40])
 plot_missing(RISK[40:60])
@@ -118,10 +113,9 @@ plot_missing(RISK)
 
 #### 2.3 Target Variable
 \
-
 As a target variable, we decided to calculate a score from 5 questions that reflect the suicide risk of the person (observation) in question. This score is aggregated with a rule-based approach. 
 
-```{r creating the target variable, include= FALSE, eval=FALSE}
+```{r creating the target variable, include= FALSE}
 RISK_num<-RISK
 RISK_num$q25 <- as.numeric(RISK_num$q25)
 RISK_num$q26 <- as.numeric(RISK_num$q26)
@@ -147,7 +141,7 @@ After creating the target variable we need to exclude the variables q25 to q29, 
 #### 2.4 Imputation
 
 
-```{r imputing, include= FALSE, eval=FALSE}
+```{r imputing, include= FALSE}
 set.seed(0)
 # the categorical variables are factorized in the setup.R file
 RISK_imp_s5 <- missRanger(RISK_s5, pmm.k = 200, num.trees = 500, sample.fraction = 1)
@@ -156,10 +150,9 @@ RISK_imp_s5 <- missRanger(RISK_s5, pmm.k = 200, num.trees = 500, sample.fraction
 
 #### 2.5 Reducing and balancing the dataset to 2000 observations
 \
-
 We need to reduce our data to the maximum allowed size of 2000 observations. To ensure the best possible data quality, we want to ensure that our dataset is balanced. Intuitively, we are considering if it is best to still use as much of the non-imputed data for our smaller dataset as possible, before filling it up with imputed data, since non-imputed data is usually of better quality. On the other hand the data seemingly shows patterns in the missingness so there are reasons to just do a stratified sampling over the imputed data as well. To do a proper statified sampling we need to identify the stratification variables. Therefore we will calculate the correlations with the target variable and see which variables are highly correlated to our target variable. These will then as well as the target variable be used as stratification variables.
 
-```{r stratified sampling, include = FALSE, eval=FALSE}
+```{r stratified sampling, include = FALSE}
 # this code snipped was produced with the help of AI
 # *
 size_per_class <- rep(400, times = 5) # 400 samples from each of 5 classes, adjust as needed
@@ -188,7 +181,6 @@ variable_types[variable_types$skim_type=="numeric",]
 # introduce(RISK_2000_5)
 ```
 \
-
 number of observations: 2000 
 number of variables: 100
 
@@ -241,15 +233,13 @@ rm(nzvFeatures, constantFeatureNames, constantFeatures, nzvFeatureNames)
 
 #### 3.1 Feature Reduction
 \
-
 Since our dataset has lots of variables, we decided to start by excluding some variables depending on the estimated feature importance.
 
 #### 3.1.1 Correlations 
 \ 
-
 Unfortunately at this point we have to many variables to do a pairs plot or correlation plot with a visually usable outcome. We will therefore perform a correlation analysis only with respect to the target variable and in numeric format instead of any visual plot.
 
-```{r, corr plot, echo=FALSE, include=FALSE}
+```{r, corr plot, echo=FALSE}
 # plot_correlation(RISK_2000_5)
 #pairs(RISK) # -> non numeric arguments included
 #plot(RISK) 
@@ -288,12 +278,11 @@ rm(sorted_corr_data, corr_data)
 ```
 
 
-```{r correlations with the target, include=FALSE}
+```{r}
 print(corr_vars)
 ```
 
 The 18 variables with high correlations (>0.25) with our target variable are:
-\
 q93                 
 q85                     
 q45           
@@ -316,7 +305,6 @@ q47
 
 
 #### 3.1.2 Feature Selection Algorithm
-\
 
 Since the data still has a lot of variables, we need to use a feature selection technique to reduce the features before using a machine learning method. We chose to use model agnostic methods, because the feature selection should be valid for all methods that are later compared. In an earlier step the variables most correlated with the target variable were already identified. Unfortunately this captures only linear monotonous relationships in the data and does not work well for our nominal categorical features. 
 
@@ -325,7 +313,7 @@ We will also use a Chi^2 test between our variables and our target variable to a
 
 To capture non-linear relationships as well, information gain between the target and the predictor variables is measured as well. The variables with high information gain with respect to the target variable are kept, because they can contribute more in predicting the target variable.
 
-#### 3.1.3 Feature Selection with Chi^2
+#### 3.1.3 Feature selection with chi^2
 
 ```{r chi^2 feature selection, include=FALSE}
 # data
@@ -356,7 +344,7 @@ rm(target_variable, var, data, chi_squared_results, test_result)
 ```
 
 
-#### 3.1.4 Information Gain for Feature Selection
+#### 3.1.4 Information gain for feature selection
 
 
 ```{r mutual information, include=FALSE}
@@ -383,12 +371,11 @@ print(named_top_20_features)
 rm(scores, sorted_scores, top_20_feature_names, top_20_features, feature_names)
 ```
 
-#### 3.1.5 Domain Knowledge for Final Feature Selection
+#### 3.1.5 Domain knowledge for final feature selection
 
 ```{r difference between correlation and information gain feature selection, echo=FALSE}
 setdiff(names(named_top_20_features), corr_vars$var)
 ```
-\
 
 Let's see what those variables actually stand for. "q7orig" and "q6orig" cannot be found in the data manual and will therefore be discarded. According to the data manual, "PSUs consist of counties, groups of smaller adjacent counties, or sub-areas of very large counties. “PSU” indicates the PSU the school the student attends was assigned to." (p.14). It is possible, that the district/locality of a school plays a role in the risk of suicide. For example for queer students in a very religious place. Q22 is the variable that describes physical dating violence. Therefore q22 is also a valid choice as a predictor variable for our suicidal score target variable. Q40 encodes the range of age when a student first got into contact with drinking alcohol. This might be an indicator for a negligent social surrounding if someone is exposed to an alcoholic drink in an early age and therefore also could be a valid predictor variable in our case. 
 
@@ -405,9 +392,8 @@ RISK_red<-RISK_reduced[,final_vars]
 
 
 
-#### 3.2 Naming the Variables 
+#### 3.2 Naming the variables and the factor levels
 \
-
 For an easy understanding of their values, the variables and levels are named according to their content.
 This is an optional step. It can lead to a better readability of our data frame though.
 
@@ -420,7 +406,6 @@ rm(significant_vars, corr_vars, named_top_20_features, RISK_reduced)
 
 #### 3.3 Splitting the Data
 \
-
 According to the project requirements we split our data in 60% Training, 20% Validation and 20% Testing Data. 
 Since we want to do a cross validation we will split into 80% Training and 20% Testing Data.
 
@@ -435,25 +420,28 @@ inds <- partition(RISK_red$suicidal_class, p = c(train = 0.8, test = 0.2))
 RISK_train <- RISK_red[inds$train, ]
 
 RISK_test <- RISK_red[inds$test, ]
-
-rm(inds, RISK_2000_5, variable_types)
 ```
 
 
 
 ### 4. Machine Learning Models
-\
-In the following, we compare two Supervised Learning methods on our reduced YOUTH AT RISK dataset to predict our suicidal_class target variable. Because we want to be able to also capture non-linear relationships in our data, we chose Support Vector Machines and Naive Bayes.
+
+
+-> not linearly separable
+-> chose models that are good in separating non-linear relationships
+-> chose model preferably from ML2 (at least 1)
+-> chose a model preferable with results that can be visualized 
+
+SVM and Naive Bayes
+
 
 #### 4.1 Short Mathematical Overview on the used Methods
 \
-
 
 #### 4.1.1 Naive Bayes Classification
 \ 
 
 Ideally a classifier is able to detect the class k which maximizes the conditional probability $P(Y=k|x_{1},...,x_{p})$. A Bayes Classifier would know these probabilities for each of the classes exactly, but usually it is only possible to approximate those. The Naive Bayes Classifier is one method of approximation. It  approximates by "naively" assuming the conditional independence of predictor variables. This leads to simpler calculations. The joint probability of two events A and B $P(A \cap B)= P(A \mid B) * P(B) $ can be simplified to $P(A \cap B)= P(A) * P(B) $under the independence assumption, since conditional independence means $P(A \mid B) = P(A)$.
-
 
 
 #### 4.1.2 Support Vector Machines (SVM)
@@ -472,48 +460,49 @@ a polynomial Kernel $$ K(u,v) = (c + \langle \mathbf u, \mathbf v \rangle)^{d}, 
 \
 and a radial Kernel $$ K(u,v)= \exp \left(-\gamma \sum_{i=1}^{p}(u_{i}-v_{i} \right)$$
 
-#### 4.2 Preprocessing for SVM 
-\
+
+
+#### 4.2 Preprocessing
 
 svm in R tutorial + nice visualization:
 https://www.datacamp.com/tutorial/support-vector-machines-r
 
 
+We scale the data as part of pre-processing. Scaling transforms the data to have unit variance, further contributing to uniformity across different scales and improving algorithm performance.
 
-```{r scaling and normalizing, include=FALSE}
+```{r , include=FALSE}
 # scaling / normalizing the data for svm
 
-# scale features that are numeric
-numeric_cols <- sapply(RISK_train, is.numeric)
-# scale only numeric columns
-scaled_num_cols <- RISK_train[, numeric_cols]
-scaled_num_cols <- as.data.frame(scale(scaled_num_cols))
+scaleDataset <- function(dataset){
+  # scale features that are numeric
+  numeric_cols <- sapply(dataset, is.numeric)
+  # scale only numeric columns
+  scaled_num_cols <- dataset[, numeric_cols]
+  scaled_num_cols <- as.data.frame(scale(scaled_num_cols))
+  
+  # Combine scaled features with non-numeric data
+  other_cols <- dataset[, !numeric_cols]
+  scaledDataset <- cbind(scaled_num_cols, other_cols)
+  return (scaledDataset)
+}
 
-# Combine scaled features with non-numeric data
-other_cols <- RISK_train[, !numeric_cols]
-scaledRISK_train <- cbind(scaled_num_cols, other_cols)
-
+scaledRISK_train <- scaleDataset(RISK_train)
+scaledRISK_test <- scaleDataset(RISK_test)
 ```
 
 
 
-#### 4.3 SVM Fitting and Hyperparameter Optimization
-\
+#### 4.3 Hyperparameter Optimization
 
-for SVM:
-try different available kernels and other hyperparameters
-and cross validate 
+Hyperparameter Optimization (HPO) enables the testing of various hyperparameter combinations to identify the optimal settings that maximize our target evaluation metric, namely the model's accuracy. The grid search method allows for the exhaustive pairing of each hyperparameter with every other, albeit at a significant computational cost. This approach, however, offers the advantage of explicitly specifying the values for testing. We examine three distinct kernel types - linear, radial, and polynomial - each characterized by unique parameters, in addition to the common cost parameter.
 
-```{r svm, include=FALSE, eval= FALSE}
-# This is already HPO 
-svm_grid <- expand.grid(sigma = c(0.001, 0.01, 0.1),
-                       C = c(1, 10, 100))
-                       #gamma = c(0.01, 0.1, 1),
-                       #kernel = c("radial", "linear", "polynomial"),   #kernels
-                       #degree = c(2, 3))  # of the polynomial kernel
+Additionaly to scaling we also use centering as a part of preprocessing. Centering the data ensures that each feature has a mean of zero. This is particularly useful when features are on different scales and can improve the performance by removing bias due to the scale of the features. 
 
+Kernel and the cost parameter C have a significantly impact on the model's performance and need to be tuned carefully.
+
+```{r , include=FALSE}
 # linear kernel
-C <- c(1, 10, 100)
+C <- c(0.0001, 0.001, 0.1, 1)
 
 grid_linear <- expand.grid(.C = C)
 
@@ -529,29 +518,28 @@ grid_poly <- expand.grid(.degree = c(2, 3, 4),
 
 train_control <- trainControl(method = "cv", number = 5, search = "grid")
           
-train_svm <- function(kernel, grid) {
-    cat(paste("Training with", kernel, "kernel started using", grid, "...\n"))
-
-    # Train the model
-    train(suicidal_class ~ ., data = scaledRISK_train,
+train_svm <- function(dataset, kernel, grid) {
+    train(suicidal_class ~ ., data = dataset,
                    method = kernel,
                    tuneGrid = grid, 
+                   metric="Accuracy",
+                   preProcess = c("center","scale"),
                    trControl = train_control)
-    cat(paste("Training with kernel", kernel, "done.\n"))
 }
+
 # Train models for each kernel
-model_linear <- train_svm("svmLinear", grid_linear)
-model_radial <- train_svm("svmRadial", grid_radial)
-model_poly <- train_svm("svmPoly", grid_poly)
+model_linear <- train_svm(RISK_train,"svmLinear", grid_linear)
+model_radial <- train_svm(RISK_train, "svmRadial", grid_radial)
+model_poly <- train_svm(RISK_train, "svmPoly", grid_poly)
 
 # Output the best models and their performance
 models <- list(linear = model_linear, radial = model_radial, polynomial = model_poly)
 
 ```
 
-Given the list of all resulting models, coming from the HPO of the SVM, we extract the best model for further inspection and results.
+Given the list of all resulting models, coming from the HPO of the SVM, we extract the best model for further inspection and results using the Accuracy as our focused metric.
 
-```{r evaluation, include=FALSE, eval=FALSE}
+```{r , include=FALSE}
 # Function to extract the best accuracy from each model
 extract_best_accuracy <- function(model) {
     max_accuracy <- max(model$results$Accuracy)
@@ -575,17 +563,15 @@ cat(paste("Best hyperparameters for the model with", best_model_name, "kernel an
 # Print the name and details of the best model
 print(paste("Best performing model is:", best_model_name))
 print(best_model)
+plot(best_model)
 
-# Print the best model's name and its details
-print(paste("Best model is:", best_model_name))
-print(best_model)
-model <- best_model
 ```
 
 
 
 
 \
+
 
 
 
@@ -596,8 +582,20 @@ if one model performs better, is this improvement significant to a usual signifi
 #### 5.1 Quantitative 
 
 ##### 5.1.1 Confusion Matrix
+```{r confusion matrix, echo=FALSE}
+scaledRISK_test_no_target <- scaledRISK_test[,-5]
+best_model_pred <- predict(best_model, scaledRISK_test_no_target)
+
+table(best_model_pred, scaledRISK_test$suicidal_class, dnn=c("Prediction", "Actual"))   
+```
 
 ##### 5.1.2 Accuracy
+```{r accuracy on test set, echo=FALSE}
+
+confusionMatrix(table(best_model_pred, scaledRISK_test$suicidal_class))
+
+```
+
 
 ##### 5.1.2 Precision, Recall and F1-Score
 
@@ -609,7 +607,6 @@ if one model performs better, is this improvement significant to a usual signifi
 compare training/validation and testing curves...
 
 ### 6. Visual Representation
-\
 
 
 ### 7. Final Discussion

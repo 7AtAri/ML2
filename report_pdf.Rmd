@@ -24,7 +24,7 @@ output:
 
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, cache=TRUE}
 params <- list(html=knitr::is_html_output())
 knitr::opts_chunk$set(echo = params$html)
 rm(list = ls(all.names = TRUE)) # reset the environment
@@ -51,7 +51,7 @@ It is a national survey conducted by the CDC (Center for Disease Control and Pre
 #### 2.1 Preprocessing of the dataset
 \
 
-```{r summary, include = FALSE}
+```{r summary, include=FALSE, cache=TRUE}
 # possible summaries of the data:
 # summary(RISK) 
 # describe(RISK) # more detail
@@ -73,14 +73,14 @@ We will first exclude all the observations with NAs in all the target-related va
 What if we had just excluded every NA in the dataset? We will try and see if this is a viable option, since this woul not just be quick and easy, but we would also just have "real" answers. The exclusion of NAs leads to a severe reduction in the number of observations. The original data consisted of 17232 observations, after reducing the target-related NAs only, we have 11753 observations left. If we omit all NAs, the reduced dataframe still has 4334 observations.
 \
 
-```{r check exclude NAs, include=FALSE}
+```{r check exclude NAs, include=FALSE, cache=TRUE}
 RISK_no_NAs <- na.omit(RISK)
 summary(RISK_no_NAs)
 ```
 
 In this case need to assess the loss of information foremost about our target variable. The important question is if there is a pattern to the missingness in our data, not just, but especially about our target variable.
 
-```{r Tables for Missingness in q28, include=FALSE}
+```{r Tables for Missingness in q28, include=FALSE, cache=TRUE}
 table(RISK_no_NAs$q28)
 table(RISK$q28)
 
@@ -96,12 +96,12 @@ If we can omit the NAs or if it may be necessary to impute the missing data poin
 We test the target-related variables q25 to q29 for potential pattern(s) in the missing data. This results in a p-value of 0, which means we can say for sure, that the data is not missing completely at random. Just omitting all NAs could be problematic and lead to bias.
 \
 
-```{r MCAR test for target columns}
+```{r MCAR test for target columns, cache=TRUE}
 result <- mcar_test(RISK[, c("q25", "q26", "q27", "q28", "q29")])
 print(result)
 ```
 Because of this, we will use a rule base approach to create the target variable and impute the predictive variables afterwards. To ensure a good imputation, we need to impute our NAs before reducing the dataset to 2000 observations. To run the imputation properly we need to factorize our nominal and ordinal variables first.
-```{r analyse missingness, include=FALSE}
+```{r analyse missingness, include=FALSE, cache=TRUE}
 plot_missing(RISK[1:20])
 plot_missing(RISK[20:40])
 plot_missing(RISK[40:60])
@@ -115,7 +115,7 @@ plot_missing(RISK)
 \
 As a target variable, we decided to calculate a score from 5 questions that reflect the suicide risk of the person (observation) in question. This score is aggregated with a rule-based approach. 
 
-```{r creating the target variable, include= FALSE}
+```{r creating the target variable, include=FALSE, cache=TRUE}
 RISK_num<-RISK
 RISK_num$q25 <- as.numeric(RISK_num$q25)
 RISK_num$q26 <- as.numeric(RISK_num$q26)
@@ -141,7 +141,7 @@ After creating the target variable we need to exclude the variables q25 to q29, 
 #### 2.4 Imputation
 
 
-```{r imputing, include= FALSE}
+```{r imputing, include= FALSE,cache=TRUE}
 set.seed(0)
 # the categorical variables are factorized in the setup.R file
 RISK_imp_s5 <- missRanger(RISK_s5, pmm.k = 200, num.trees = 500, sample.fraction = 1)
@@ -152,7 +152,7 @@ RISK_imp_s5 <- missRanger(RISK_s5, pmm.k = 200, num.trees = 500, sample.fraction
 \
 We need to reduce our data to the maximum allowed size of 2000 observations. To ensure the best possible data quality, we want to ensure that our dataset is balanced. Intuitively, we are considering if it is best to still use as much of the non-imputed data for our smaller dataset as possible, before filling it up with imputed data, since non-imputed data is usually of better quality. On the other hand the data seemingly shows patterns in the missingness so there are reasons to just do a stratified sampling over the imputed data as well. To do a proper statified sampling we need to identify the stratification variables. Therefore we will calculate the correlations with the target variable and see which variables are highly correlated to our target variable. These will then as well as the target variable be used as stratification variables.
 
-```{r stratified sampling, include = FALSE}
+```{r stratified sampling, include=FALSE, cache=TRUE}
 # this code snipped was produced with the help of AI
 # *
 set.seed(0)  # set the seed
@@ -171,7 +171,7 @@ RISK_2000_5 <- getdata(RISK_imp_s5, sample_obj)
 
 
 
-```{r RISK_2000_5 load and inspect, include=FALSE}
+```{r RISK_2000_5 load and inspect, include=FALSE, cache=TRUE}
 source("Setup_RISK.R")
 
 variable_types <- skim(RISK_2000_5) # get the variable types
@@ -198,7 +198,8 @@ numeric variables: 4
 
 question: would it introduce information leakage to reduce the features before splitting the data?
 
-```{r check for constant or near zero variance features and eliminate them, include=FALSE}
+
+```{r check for constant or near zero variance features and eliminate them, include=FALSE, cache=TRUE}
 
 # ** this codeblock was done using AI **
 # check if there are constant features
@@ -241,7 +242,7 @@ Since our dataset has lots of variables, we decided to start by excluding some v
 \ 
 Unfortunately at this point we have to many variables to do a pairs plot or correlation plot with a visually usable outcome. We will therefore perform a correlation analysis only with respect to the target variable and in numeric format instead of any visual plot.
 
-```{r, corr plot, echo=FALSE}
+```{r, corr plot,echo=FALSE, cache=TRUE}
 # plot_correlation(RISK_2000_5)
 #pairs(RISK) # -> non numeric arguments included
 #plot(RISK) 
@@ -280,7 +281,7 @@ rm(sorted_corr_data, corr_data)
 ```
 
 
-```{r}
+```{r, cache=TRUE}
 print(corr_vars)
 ```
 
@@ -317,7 +318,7 @@ To capture non-linear relationships as well, information gain between the target
 
 #### 3.1.3 Feature selection with chi^2
 
-```{r chi^2 feature selection, include=FALSE}
+```{r chi^2 feature selection, include=FALSE, cache=TRUE}
 # data
 data<-RISK_2000_5
 # Target variable
@@ -349,7 +350,8 @@ rm(target_variable, var, data, chi_squared_results, test_result)
 #### 3.1.4 Information gain for feature selection
 
 
-```{r mutual information, include=FALSE}
+```{r mutual information, include=FALSE, cache=TRUE}
+
 set.seed(0)  # set the seed
 
 # compute information gain
@@ -376,13 +378,13 @@ rm(scores, sorted_scores, top_20_feature_names, top_20_features, feature_names)
 
 #### 3.1.5 Domain knowledge for final feature selection
 
-```{r difference between correlation and information gain feature selection, echo=FALSE}
+```{r difference between correlation and information gain feature selection,echo=FALSE, cache=TRUE}
 setdiff(names(named_top_20_features), corr_vars$var)
 ```
 
 Let's see what those variables actually stand for. "q7orig" and "q6orig" cannot be found in the data manual and will therefore be discarded. According to the data manual, "PSUs consist of counties, groups of smaller adjacent counties, or sub-areas of very large counties. “PSU” indicates the PSU the school the student attends was assigned to." (p.14). It is possible, that the district/locality of a school plays a role in the risk of suicide. For example for queer students in a very religious place. Q22 is the variable that describes physical dating violence. Therefore q22 is also a valid choice as a predictor variable for our suicidal score target variable. Q40 encodes the range of age when a student first got into contact with drinking alcohol. This might be an indicator for a negligent social surrounding if someone is exposed to an alcoholic drink in an early age and therefore also could be a valid predictor variable in our case. 
 
-```{r setup final reduced dataframe, include=FALSE}
+```{r setup final reduced dataframe, include=FALSE, cache=TRUE}
 # set up final variables
 final_vars<-c("psu", "q40", "q22", "suicidal_class", intersect(names(named_top_20_features), corr_vars$var))
 print(final_vars)
@@ -400,7 +402,7 @@ RISK_red<-RISK_reduced[,final_vars]
 For an easy understanding of their values, the variables and levels are named according to their content.
 This is an optional step. It can lead to a better readability of our data frame though.
 
-```{r naming variables, include=FALSE}
+```{r naming variables, include=FALSE, cache=TRUE}
 source("names.R") 
 rm(significant_vars, corr_vars, named_top_20_features, RISK_reduced)
 ```
@@ -412,7 +414,7 @@ rm(significant_vars, corr_vars, named_top_20_features, RISK_reduced)
 According to the project requirements we split our data in 60% Training, 20% Validation and 20% Testing Data. 
 Since we want to do a cross validation we will split into 80% Training and 20% Testing Data.
 
-```{r splitting the data, include=FALSE}
+```{r splitting the data, include=FALSE, cache=TRUE}
 # import as dataframe
 # RISK_red <- read_csv("RISK_red.csv", show_col_types = FALSE)
 set.seed(0)  # set the seed
@@ -477,9 +479,9 @@ https://www.datacamp.com/tutorial/support-vector-machines-r
 
 We scale the data as part of pre-processing. Scaling transforms the data to have unit variance, further contributing to uniformity across different scales and improving algorithm performance.
 
-```{r , include=FALSE}
-set.seed(0)  # set the seed to shuffle
+```{r , include=FALSE, cache=TRUE}
 
+set.seed(0)  # set the seed to shuffle
 # scaling / normalizing the data for svm
 
 scaleDataset <- function(dataset){
@@ -495,11 +497,9 @@ scaleDataset <- function(dataset){
   return (scaledDataset)
 }
 
-shuffled_train <- RISK_train[sample(1:nrow(RISK_train)), ] 
-shuffled_test <- RISK_test[sample(1:nrow(RISK_test)), ] 
 
-scaledRISK_train <- scaleDataset(shuffled_train)
-scaledRISK_test <- scaleDataset(shuffled_test)
+scaledRISK_train <- scaleDataset(RISK_train)
+scaledRISK_test <- scaleDataset(RISK_test)
 ```
 
 
@@ -517,12 +517,14 @@ For the SVM we examine three distinct kernel types - linear, radial, and polynom
 
 Kernel and the cost parameter C have a significantly impact on the model's performance and need to be tuned carefully.
 
-```{r svm hpo, include=FALSE}
+Additionally to scaling we're also centering the data, which involves subtracting the mean from each feature, ensuring that each feature has a mean of zero. This is particularly useful when features are on different scales and can improve the performance of support vector machines by removing bias due to the scale of the features. 
+For programming purposes we use the build-in preProcess parameter of the train function where the training data is automatically scaled and centered. 
+
+```{r , include=FALSE, cache=TRUE}
 
 set.seed(0)  # set the seed
-
 # linear kernel
-C <- c(0.0001, 0.001, 0.1, 1)
+C <- c(0.001, 0.1, 1, 10)
 
 grid_linear <- expand.grid(.C = C)
 
@@ -536,20 +538,21 @@ grid_poly <- expand.grid(.degree = c(2, 3, 4),
                          .C = C)
 
 
-train_control <- trainControl(method = "cv", number = 5, search = "grid", savePredictions = "final", returnResamp = "all")
+train_control <- trainControl(method = "cv", number = 5, search = "grid")
           
 train_svm <- function(dataset, kernel, grid) {
     train(suicidal_class ~ ., data = dataset,
                    method = kernel,
                    tuneGrid = grid, 
                    metric="Accuracy",
+                   preProcess = c("center","scale"),
                    trControl = train_control)
 }
 
 # Train models for each kernel
-model_linear <- train_svm(scaledRISK_train,"svmLinear", grid_linear)
-model_radial <- train_svm(scaledRISK_train, "svmRadial", grid_radial)
-model_poly <- train_svm(scaledRISK_train, "svmPoly", grid_poly)
+model_linear <- train_svm(RISK_train,"svmLinear", grid_linear)
+model_radial <- train_svm(RISK_train, "svmRadial", grid_radial)
+model_poly <- train_svm(RISK_train, "svmPoly", grid_poly)
 
 # Output the best models and their performance
 svm_models <- list(linear = model_linear, radial = model_radial, polynomial = model_poly)
@@ -558,7 +561,9 @@ svm_models <- list(linear = model_linear, radial = model_radial, polynomial = mo
 
 Given the list of all resulting models, coming from the HPO of the SVM, we extract the best model for further inspection and results using the Accuracy as our focused metric.
 
-```{r metrics and hps, include=FALSE}
+
+```{r , include=FALSE, cache=TRUE}
+
 # Function to extract the best accuracy from each model
 extract_best_accuracy <- function(model) {
     max_accuracy <- max(model$results$Accuracy)
@@ -570,7 +575,7 @@ svm_model_accuracies <- sapply(svm_models, extract_best_accuracy)
 
 # Identify the model with the highest accuracy
 svm_best_model_name <- names(which.max(svm_model_accuracies))
-svm_best_model <- svm_models[[best_model_name]]
+svm_best_model <- svm_models[[svm_best_model_name]]
 
 # Extract the best hyperparameters
 svm_best_hyperparameters <- svm_best_model$bestTune
@@ -596,7 +601,7 @@ if one model performs better, is this improvement significant to a usual signifi
 ##### 5.1.1 Confusion Matrix
 \
 ###### 5.1.1.2 Naive Bayes
-```{r Confusion Matrix of Naive Bayes, echo=FALSE}
+```{r Confusion Matrix of Naive Bayes,echo=FALSE, cache=TRUE}
 scaledRISK_test_no_target <- scaledRISK_test[,-5]
 nb_best_model_pred <- predict(nb_best_model, scaledRISK_test_no_target)
 
@@ -606,7 +611,7 @@ confusionMatrix(table(nb_best_model_pred, scaledRISK_test$suicidal_class))
 
 
 ###### 5.1.1.2 SVM 
-```{r Confusion Matrix of SVM, echo=FALSE}
+```{r Confusion Matrix of SVM,echo=FALSE, cache=TRUE}
 svm_actual <- scaledRISK_test$suicidal_class
 scaledRISK_test_no_target <- scaledRISK_test[,-5]
 svm_best_model_pred <- predict(svm_best_model, newdata=scaledRISK_test_no_target)
@@ -621,7 +626,7 @@ In this context, a p-value of less than 2.2e−16 for the hypothesis that "Accur
 ##### 5.1.2 Precision, Recall and F1-Score
 ###### 5.1.2.1 Naive Bayes
 ###### 5.1.2.2 SVM 
-```{r Confusion Matrix of SVM, echo=FALSE}
+```{r Confusion Matrix of SVM,echo=FALSE, cache=TRUE}
 svm_actual <- as.numeric(as.character(actual))
 svm_pred <- as.numeric(as.character(svm_best_model_pred))
 
@@ -636,8 +641,10 @@ cat(paste("Recall:  ", svm_recall, "\nPrecison:", svm_precision, "\nF1:      ", 
 #### 5.2 Qualitative
 
 ##### 5.2.2 SVM without scaling 
-```{r SVM no scaling, echo=FALSE}
+
+```{r SVM no scaling,echo=FALSE, cache=TRUE}
 set.seed(0)  # set the seed
+
 # Train models for each kernel
 model_linear <- train_svm(RISK_train,"svmLinear", grid_linear)
 model_radial <- train_svm(RISK_train, "svmRadial", grid_radial)
@@ -662,9 +669,10 @@ plot(svm_no_sc_best_model)
 
 
 #### 5.3 Overfitting Check
-\
+Overfitting is a frequent problem in machine learning. It happens when a model learns the training data too well, including all its quirks and noise. As a result, its ability to generalize weakens. When the model is tested with new data, its performance often drops significantly. This is because it's overly tuned to the training data and doesn't adapt well to new, unseen data.
+
 ##### 5.3.2 SVM
-```{r Train and Test curve of SVM, echo=FALSE}
+```{r Train and Test curve of SVM,echo=FALSE, cache=TRUE}
 extract_performance <- function(model) {
     results <- model$results
     resampling <- model$resample
@@ -689,6 +697,9 @@ plot_performance(performance_linear, "Linear Kernel Performance")
 plot_performance(performance_radial, "Radial Kernel Performance")
 plot_performance(performance_poly, "Polynomial Kernel Performance")
 ```
+
+By employing Cross-Validation (CV) and utilizing a range of performance metrics such as recall, precision, and F1-score, we can confidently assert that overfitting is not occurring in our model. Additionally, our experiments with different kernels reveal that the linear kernel maintains robust performance, even when compared to the more complex radial and polynomial kernels. Prior to modeling, we also took the precaution of reducing the number of features, which further diminishes the risk of overfitting. Moreover, setting the cost parameter C to a moderate level – in our case, 1, which is the default value – lessens the likelihood of overfitting. Considering these factors collectively, it's reasonable to conclude that our model is not overfitted. 
+
 
 ### 6. Visual Representation
 

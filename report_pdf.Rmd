@@ -441,8 +441,12 @@ SVM and Naive Bayes
 #### 4.1.1 Naive Bayes Classification
 \ 
 
-Ideally a classifier is able to detect the class k which maximizes the conditional probability $P(Y=k|x_{1},...,x_{p})$. A Bayes Classifier would know these probabilities for each of the classes exactly, but usually it is only possible to approximate those. The Naive Bayes Classifier is one method of approximation. It  approximates by "naively" assuming the conditional independence of predictor variables. This leads to simpler calculations. The joint probability of two events A and B $P(A \cap B)= P(A \mid B) * P(B) $ can be simplified to $P(A \cap B)= P(A) * P(B) $under the independence assumption, since conditional independence means $P(A \mid B) = P(A)$.
+Ideally a classifier is able to detect the class k which maximizes the conditional probability $P(Y=k|X=x_{1},...,x_{p})$. A Bayes Classifier would calculate these probabilities for each of the classes exactly, but usually it is only possible to approximate those. The Naive Bayes Classifier is one method of approximation. It  approximates by "naively" assuming the conditional independence of predictor variables. This leads to simpler calculations. The joint probability of two events A and B $P(A \cap B)= P(A \mid B) * P(B) $ can be simplified to $P(A \cap B)= P(A) * P(B) $under the independence assumption, since conditional independence means $P(A \mid B) = P(A)$. The conditional probabilities of a class k can be calculated with the Bayes Theorem. It states that: $$P(k \mid X) = \frac {P(X\mid k) \cdot P(k)}{P(X)}$$
+Since the denominator only uses our predictor variables, we only need to focus on the nominator and find the maximum class for each observation to be classified. We can express this relationship with the proportionality operator:
+$$P(k|X) \propto P(X|k) \cdot P(k)$$
+At this point, the assumption of independent predictor variables simplifies the calculations if there is more than one predictor variable. Instead of calculating $P(k|x_{1},...,x_{p}) \propto P(x_{1},...,x_{p}|k) \cdot P(k)$ where $P(x_{1},...,x_{p}|k)$ is quite complicated to calculate because of all the possible dependencies among the variables, the independence assumption leads to: $$P(k|x_{1},...,x_{p}) \propto P(k) \cdot  \prod_{i=1}^{p} P(x_{i}|k) $$
 
+Often this yields good results even if the quite strong assumption of conditional independence is not met. If the dependencies do not contribute that much to the outcome, the approximation is still quite good.
 
 #### 4.1.2 Support Vector Machines (SVM)
 \ 
@@ -496,7 +500,7 @@ scaledRISK_test <- scaleDataset(RISK_test)
 
 Hyperparameter Optimization (HPO) enables the testing of various hyperparameter combinations to identify the optimal settings that maximize our target evaluation metric, namely the model's accuracy. The grid search method allows for the exhaustive pairing of each hyperparameter with every other, albeit at a significant computational cost. This approach, however, offers the advantage of explicitly specifying the values for testing. We examine three distinct kernel types - linear, radial, and polynomial - each characterized by unique parameters, in addition to the common cost parameter.
 
-Additionaly to scaling we also use centering as a part of preprocessing. Centering the data ensures that each feature has a mean of zero. This is particularly useful when features are on different scales and can improve the performance by removing bias due to the scale of the features. 
+Additional to scaling we also use centering as a part of preprocessing. Centering the data ensures that each feature has a mean of zero. This is particularly useful when features are on different scales and can improve the performance by removing bias due to the scale of the features. 
 
 Kernel and the cost parameter C have a significantly impact on the model's performance and need to be tuned carefully.
 

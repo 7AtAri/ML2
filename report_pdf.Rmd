@@ -479,7 +479,7 @@ https://www.datacamp.com/tutorial/support-vector-machines-r
 
 We scale the data as part of pre-processing. Scaling transforms the data to have unit variance, further contributing to uniformity across different scales and improving algorithm performance.
 
-```{r , include=FALSE, cache=TRUE}
+```{r scaling and normalizing, include=FALSE, cache=TRUE}
 
 set.seed(0)  # set the seed to shuffle
 # scaling / normalizing the data for svm
@@ -520,7 +520,7 @@ Kernel and the cost parameter C have a significantly impact on the model's perfo
 Additionally to scaling we're also centering the data, which involves subtracting the mean from each feature, ensuring that each feature has a mean of zero. This is particularly useful when features are on different scales and can improve the performance of support vector machines by removing bias due to the scale of the features. 
 For programming purposes we use the build-in preProcess parameter of the train function where the training data is automatically scaled and centered. 
 
-```{r , include=FALSE, cache=TRUE}
+```{r training svm, include=FALSE, cache=TRUE}
 
 set.seed(0)  # set the seed
 # linear kernel
@@ -562,7 +562,7 @@ svm_models <- list(linear = model_linear, radial = model_radial, polynomial = mo
 Given the list of all resulting models, coming from the HPO of the SVM, we extract the best model for further inspection and results using the Accuracy as our focused metric.
 
 
-```{r , include=FALSE, cache=TRUE}
+```{r metrics calc svm, include=FALSE, cache=TRUE}
 
 # Function to extract the best accuracy from each model
 extract_best_accuracy <- function(model) {
@@ -626,7 +626,7 @@ In this context, a p-value of less than 2.2e−16 for the hypothesis that "Accur
 ##### 5.1.2 Precision, Recall and F1-Score
 ###### 5.1.2.1 Naive Bayes
 ###### 5.1.2.2 SVM 
-```{r Confusion Matrix of SVM,echo=FALSE, cache=TRUE}
+```{r Metrics of SVM,echo=FALSE, cache=TRUE}
 svm_actual <- as.numeric(as.character(actual))
 svm_pred <- as.numeric(as.character(svm_best_model_pred))
 
@@ -639,6 +639,11 @@ cat(paste("Recall:  ", svm_recall, "\nPrecison:", svm_precision, "\nF1:      ", 
 
 
 #### 5.2 Qualitative
+
+---> Ari: Do we need this section? 
+I am not sure if we are supposed to do a qualitative analysis,
+the task only says "an appropriate assessment of the predicted values and a fair comparison of the two methods using the test data." 
+I just added the section as a proposal...
 
 ##### 5.2.2 SVM without scaling 
 
@@ -668,7 +673,7 @@ plot(svm_no_sc_best_model)
 ```
 
 
-#### 5.3 Overfitting Check
+#### 5.3 Overfitting 
 Overfitting is a frequent problem in machine learning. It happens when a model learns the training data too well, including all its quirks and noise. As a result, its ability to generalize weakens. When the model is tested with new data, its performance often drops significantly. This is because it's overly tuned to the training data and doesn't adapt well to new, unseen data.
 
 ##### 5.3.2 SVM
@@ -684,22 +689,33 @@ performance_radial <- extract_performance(model_radial)
 performance_poly <- extract_performance(model_poly)
 
 plot_performance <- function(performance, title) {
-    ggplot(data = performance$resampling, aes(x = Iter, y = Accuracy)) +
+    p<-ggplot(data = performance$resampling, aes(x = Iter, y = Accuracy)) +
         geom_line() +
         geom_point() +
         facet_wrap(~ parameter, scales = "free") +
         ggtitle(title) +
         theme_minimal()
+  
+    # create filename from title
+    filename <- paste0(gsub(" ", "_", title), ".png") 
+    # replaces every empty space in the title with underscore and adds png format 
+
+    # save plot as png
+    ggsave(filename, plot = p, width = 10, height = 8, dpi = 300)
+
+    # return ggplot object
+    return(p)
+  
 }
 
 # Plot for each model
-plot_performance(performance_linear, "Linear Kernel Performance")
-plot_performance(performance_radial, "Radial Kernel Performance")
-plot_performance(performance_poly, "Polynomial Kernel Performance")
+plot_linear<-plot_performance(performance_linear, "Linear Kernel Performance")
+plot_radial<-plot_performance(performance_radial, "Radial Kernel Performance")
+plot_polynomial<-plot_performance(performance_poly, "Polynomial Kernel Performance")
 ```
 
-By employing Cross-Validation (CV) and utilizing a range of performance metrics such as recall, precision, and F1-score, we can confidently assert that overfitting is not occurring in our model. Additionally, our experiments with different kernels reveal that the linear kernel maintains robust performance, even when compared to the more complex radial and polynomial kernels. Prior to modeling, we also took the precaution of reducing the number of features, which further diminishes the risk of overfitting. Moreover, setting the cost parameter C to a moderate level – in our case, 1, which is the default value – lessens the likelihood of overfitting. Considering these factors collectively, it's reasonable to conclude that our model is not overfitted. 
 
+By employing Cross-Validation (CV) and utilizing a range of performance metrics such as recall, precision, and F1-score, we try to avoid overfitting in our model. Additionally, our experiments with different kernels reveal that the linear kernel maintains robust performance, even when compared to the more complex radial and polynomial kernels. Prior to modeling, we also took the precaution of reducing the number of features, which further diminishes the risk of overfitting. Moreover, setting the cost parameter C to a moderate level – in our case, 1, which is the default value – lessens the likelihood of overfitting. Considering these factors collectively, we are confident that our model is unlikely to overfit on our training data.
 
 ### 6. Visual Representation
 

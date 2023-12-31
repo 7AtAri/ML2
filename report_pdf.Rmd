@@ -153,7 +153,7 @@ RISK_s5$suicidal_class<-factor(RISK_s3$suicidal_class, ordered = TRUE)
 ```
 
 \ 
-After creating the target variable we need to exclude the variables q25 to q29, which were used for creating it, from our dataset. 
+After creating the target variable we need to exclude the variables q25 to q29, which were used for creating it, from our dataset. After originally starting with 5 classes (no risk, low risk, moderate risk, high risk, very high risk) for our target variable we reduced it to 3 classes (no risk, low or moderate risk, high risk). 
 
 #### 2.4 Imputation
 
@@ -179,7 +179,7 @@ RISK_imp_s3 <- read_csv("RISK_imp_s3.csv")
 size_per_class <- rep(666, times = 3) # 400 samples from each of 5 classes, adjust as needed
 sample_obj <- strata(RISK_imp_s3, stratanames = "suicidal_class", size = size_per_class, method = "srswor")
 RISK_2000_3 <- getdata(RISK_imp_s3, sample_obj)
-write_csv(RISK_2000_3, "RISK_2000_3.csv")
+# write_csv(RISK_2000_3, "RISK_2000_3.csv")
 
 # *
 # clean up:
@@ -567,14 +567,12 @@ For programming purposes we use the build-in preProcess parameter of the train f
 
 # A large value of C leads to ... being heavily penalised so there are few points in the margin/missclassified (Lecture 7, p.5)
 
-<<<<<<< HEAD
 ```{r training svm, include=FALSE, cache=TRUE}
 
 set.seed(0)  # set the seed
-=======
-```{r , include=FALSE, cache=TRUE}
+
 library(caret)
->>>>>>> 1f2ef89 (reducing target_label to 3)
+
 # linear kernel
 C <- c(0.1, 1, 10, 100)
 

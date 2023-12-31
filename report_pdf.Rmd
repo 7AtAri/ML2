@@ -301,8 +301,8 @@ corr_vars <- corr_vars$var[!is.na(corr_vars$var)]
 # all variables highly correlated with target variable
 RISK_red<-RISK_reduced[, corr_vars] 
 #TODO: remove prob?
-RISK_red <- RISK_red[, -2]
-RISK_red <- RISK_red[, -17]
+RISK_red$Stratum <- NULL
+RISK_red$Prob <- NULL
 # correlations of these
 plot_correlation(RISK_red)
 rm(sorted_corr_data, corr_data)
@@ -419,12 +419,15 @@ setdiff(names(named_top_20_features), corr_vars)
 Let's see what those variables actually stand for. "q7orig" and "q6orig" cannot be found in the data manual and will therefore be discarded. According to the data manual, "PSUs consist of counties, groups of smaller adjacent counties, or sub-areas of very large counties. “PSU” indicates the PSU the school the student attends was assigned to." (p.14). It is possible, that the district/locality of a school plays a role in the risk of suicide. For example for queer students in a very religious place. Q22 is the variable that describes physical dating violence. Therefore q22 is also a valid choice as a predictor variable for our suicidal score target variable. Q40 encodes the range of age when a student first got into contact with drinking alcohol. This might be an indicator for a negligent social surrounding if someone is exposed to an alcoholic drink in an early age and therefore also could be a valid predictor variable in our case. 
 
 ```{r setup final reduced dataframe, include=FALSE, cache=TRUE}
+
 # set up final variables
 final_vars<-c("psu", "q40", "q22", "suicidal_class", intersect(names(named_top_20_features), corr_vars))
+final_vars$Stratum <- NULL
+final_vars$Prob <- NULL
 print(final_vars)
 
 # all variables highly correlated with target variable
-RISK_red<-RISK_reduced[,final_vars] 
+RISK_red<-RISK_reduced[,unlist(final_vars)] 
 
 ```
 
@@ -524,6 +527,7 @@ set.seed(0)  # set the seed to shuffle
 scaleDataset <- function(dataset){
   # scale features that are numeric
   numeric_cols <- sapply(dataset, is.numeric)
+  numeric_cols["suicidal_class"] <- FALSE
   # scale only numeric columns
   scaled_num_cols <- dataset[, numeric_cols]
   scaled_num_cols <- as.data.frame(scale(scaled_num_cols))
@@ -534,7 +538,11 @@ scaleDataset <- function(dataset){
   return (scaledDataset)
 }
 
+RISK_train$suicidal_class <- factor(RISK_train$suicidal_class, ordered = TRUE)
+RISK_test$suicidal_class <- factor(RISK_test$suicidal_class, ordered = TRUE)
 
+RISK_train$Stratum <- NULL
+RISK_train$Prob <- NULL
 scaledRISK_train <- scaleDataset(RISK_train)
 scaledRISK_test <- scaleDataset(RISK_test)
 ```
@@ -568,7 +576,7 @@ set.seed(0)  # set the seed
 library(caret)
 >>>>>>> 1f2ef89 (reducing target_label to 3)
 # linear kernel
-C <- c(0.01, 0.1, 1, 10, 100)
+C <- c(0.1, 1, 10, 100)
 
 grid_linear <- expand.grid(.C = C)
 
@@ -588,13 +596,13 @@ train_svm <- function(dataset, kernel, grid) {
     train(suicidal_class ~ ., data = dataset,
                    method = kernel,
                    tuneGrid = grid, 
-                   performance = "Accuracy",
+                   metric="Accuracy",
                    preProcess = c("center"),
                    trControl = train_control)
 }
 
+
 # Train models for each kernel
-# TODO: check if RISK_s3_train better than RISK_train
 model_linear <- train_svm(scaledRISK_train,"svmLinear", grid_linear)
 model_radial <- train_svm(scaledRISK_train, "svmRadial", grid_radial)
 model_poly <- train_svm(scaledRISK_train, "svmPoly", grid_poly)
@@ -621,9 +629,11 @@ svm_model_accuracies <- sapply(svm_models, extract_best_accuracy)
 # Identify the model with the highest accuracy
 svm_best_model_name <- names(which.max(svm_model_accuracies))
 svm_best_model <- svm_models[[svm_best_model_name]]
-
 # Extract the best hyperparameters
 svm_best_hyperparameters <- svm_best_model$bestTune
+
+svm_best_model <- svm_best_model$finalModel
+
 
 # Print the best hyperparameters
 cat(paste("Best hyperparameters for the model with", svm_best_model_name, "kernel and HP", colnames(svm_best_hyperparameters), "=", svm_best_hyperparameters))
@@ -632,7 +642,8 @@ cat(paste("Best hyperparameters for the model with", svm_best_model_name, "kerne
 # Print the name and details of the best model
 print(paste("Best performing model is:", svm_best_model_name))
 print(svm_best_model)
-plot(svm_best_model)
+
+saveRDS(svm_best_model, file = "svm_best_model.rda")
 
 ```
 
@@ -648,21 +659,25 @@ if one model performs better, is this improvement significant to a usual signifi
 ###### 5.1.1.2 Naive Bayes
 ```{r Confusion Matrix of Naive Bayes,echo=FALSE, cache=TRUE}
 scaledRISK_test_no_target <- scaledRISK_test[,-5]
-nb_best_model_pred <- predict(nb_best_model, scaledRISK_test_no_target)
+# TODO:
+# nb_best_model_pred <- predict(nb_best_model, scaledRISK_test_no_target)
 
-table(nb_best_model_pred, scaledRISK_test$suicidal_class, dnn=c("Prediction", "Actual"))   
-confusionMatrix(table(nb_best_model_pred, scaledRISK_test$suicidal_class))
+# table(nb_best_model_pred, scaledRISK_test$suicidal_class, dnn=c("Prediction", "Actual"))   
+# confusionMatrix(table(nb_best_model_pred, scaledRISK_test$suicidal_class))
 ```
 
 
 ###### 5.1.1.2 SVM 
 ```{r Confusion Matrix of SVM,echo=FALSE, cache=TRUE}
+svm_best_model <- readRDS("svm_best_model.rda")
 svm_actual <- scaledRISK_test$suicidal_class
-scaledRISK_test_no_target <- scaledRISK_test[,-5]
-svm_best_model_pred <- predict(svm_best_model, newdata=scaledRISK_test_no_target)
-
-table(svm_best_model_pred, actual, dnn=c("Prediction", "Actual"))   
-confusionMatrix(table(svm_best_model_pred, actual))
+scaledRISK_test$suicidal_class <- NULL
+scaledRISK_test$Stratum <- NULL
+scaledRISK_test$Prob <- NULL
+svm_best_model_pred <- predict(svm_best_model, newdata=scaledRISK_test)
+svm_best_model_pred
+table(svm_best_model_pred, svm_actual, dnn=c("Prediction", "Actual"))   
+confusionMatrix(table(svm_best_model_pred, svm_actual))
 ```
 Given the Confusion Matrix we can see a Accuracy of 1 meaning the predictions are 100% correct. 
 In this context, a p-value of less than 2.2e−16 for the hypothesis that "Accuracy is greater than No Information Rate" suggests that there is extremely strong statistical evidence that the accuracy of the model is better than what would be achieved by always predicting the most frequent class. This implies that the model has predictive power beyond mere chance and is effectively learning from the features in the dataset.

@@ -673,7 +673,6 @@ scaledRISK_test$suicidal_class <- NULL
 scaledRISK_test$Stratum <- NULL
 scaledRISK_test$Prob <- NULL
 svm_best_model_pred <- predict(svm_best_model, newdata=scaledRISK_test)
-svm_best_model_pred
 table(svm_best_model_pred, svm_actual, dnn=c("Prediction", "Actual"))   
 confusionMatrix(table(svm_best_model_pred, svm_actual))
 ```

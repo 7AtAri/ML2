@@ -2,14 +2,14 @@
 title: "Projectreport Machine Learning 2"
 header-includes:
   - \usepackage[english]{babel}
-  - \DeclareUnicodeCharacter{308}{oe}  
+  #- \DeclareUnicodeCharacter{308}{oe}  
 author: "Maluna Menke, Ari (Sara) Wahl, Pavlo Kravets"
 date: "`r Sys.Date()`"
 
 output:
   #html_document: 
   pdf_document:
-    
+    latex_engine: xelatex
     toc: true
     toc_depth: 6
   start-page: 2
@@ -486,7 +486,7 @@ SVM and Naive Bayes
 #### 4.1.1 Naive Bayes Classification
 \ 
 
-Ideally a classifier is able to detect the class k which maximizes the conditional probability $P(Y=k|X=x_{1},...,x_{p})$. A Bayes Classifier would calculate these probabilities for each of the classes exactly, but usually it is only possible to approximate those. The Naive Bayes Classifier is one method of approximation. It  approximates by "naively" assuming the conditional independence of predictor variables. This leads to simpler calculations. The joint probability of two events A and B $P(A \cap B)= P(A \mid B) * P(B) $ can be simplified to $P(A \cap B)= P(A) * P(B) $under the independence assumption, since conditional independence means $P(A \mid B) = P(A)$. The conditional probabilities of a class k can be calculated with the Bayes Theorem. It states that: $$P(k \mid X) = \frac {P(X\mid k) \cdot P(k)}{P(X)}$$
+Ideally a classifier is able to detect the class k which maximizes the conditional probability $P(Y=k|X=x_{1},...,x_{p})$. A Bayes Classifier would calculate these probabilities for each of the classes exactly, but usually it is only possible to approximate those. The Naive Bayes Classifier is one method of approximation. It  approximates by "naively" assuming the conditional independence of predictor variables. This leads to simpler calculations. The joint probability of two events A and B $P(A \cap B)= P(A \mid B) * P(B)$ can be simplified to $P(A \cap B)= P(A) * P(B)$ under the independence assumption, since conditional independence means $P(A \mid B) = P(A)$. The conditional probabilities of a class k can be calculated with the Bayes Theorem. It states that: $$P(k \mid X) = \frac {P(X\mid k) \cdot P(k)}{P(X)}$$
 Since the denominator only uses our predictor variables, we only need to focus on the nominator and find the maximum class for each observation to be classified. We can express this relationship with the proportionality operator:
 $$P(k|X) \propto P(X|k) \cdot P(k)$$
 At this point, the assumption of independent predictor variables simplifies the calculations if there is more than one predictor variable. Instead of calculating $P(k|x_{1},...,x_{p}) \propto P(x_{1},...,x_{p}|k) \cdot P(k)$ where $P(x_{1},...,x_{p}|k)$ is quite complicated to calculate because of all the possible dependencies among the variables, the independence assumption leads to: $$P(k|x_{1},...,x_{p}) \propto P(k) \cdot  \prod_{i=1}^{p} P(x_{i}|k) $$
@@ -747,7 +747,7 @@ Overfitting is a frequent problem in machine learning. It happens when a model l
 \
 
 ##### 5.3.2 SVM
-```{r Train and Test curve of SVM,echo=FALSE, cache=TRUE}
+```{r Train and Test curve of SVM,echo=FALSE, cache=TRUE, eval=FALSE}
 # read the models:
 model_linear <- readRDS("model_linear.rda")
 model_radial <- readRDS("model_radial.rda")
@@ -769,7 +769,7 @@ plot_performance <- function(performance, title) {
     p<-ggplot(data = performance$resampling, aes(x = Iter, y = Accuracy)) +
         geom_line() +
         geom_point() +
-        facet_wrap(~ parameter, scales = "free") +
+        #facet_wrap(~ parameter, scales = "free") +
         ggtitle(title) +
         theme_minimal()
   

@@ -161,8 +161,8 @@ After creating the target variable we need to exclude the variables q25 to q29, 
 ```{r imputing, include= FALSE,cache=TRUE}
 set.seed(0)
 # the categorical variables are factorized in the setup.R file
-RISK_imp_s3 <- missRanger(RISK_s3, pmm.k = 200, num.trees = 500, sample.fraction = 1)
-write_csv(RISK_imp_s3, "RISK_imp_s3.csv")
+# RISK_imp_s3 <- missRanger(RISK_s3, pmm.k = 200, num.trees = 500, sample.fraction = 1)
+# write_csv(RISK_imp_s3, "RISK_imp_s3.csv")
 ```
 
 
@@ -512,10 +512,10 @@ and a radial Kernel $$ K(u,v)= \exp \left(-\gamma \sum_{i=1}^{p}(u_{i}-v_{i} \ri
 
 
 #### 4.2 Preprocessing
-
+\
 svm in R tutorial + nice visualization:
 https://www.datacamp.com/tutorial/support-vector-machines-r
-
+\
 
 We scale the data as part of pre-processing. Scaling transforms the data to have unit variance, further contributing to uniformity across different scales and improving algorithm performance.
 
@@ -550,22 +550,23 @@ scaledRISK_test <- scaleDataset(RISK_test)
 
 
 #### 4.3 Hyperparameter Optimization
-
+\
 Hyperparameter Optimization (HPO) enables the testing of various hyperparameter combinations to identify the optimal settings that maximize our target evaluation metric, namely the model's accuracy. The grid search method allows for the exhaustive pairing of each hyperparameter with every other, albeit at a significant computational cost. This approach, however, offers the advantage of explicitly specifying the values for testing. 
-
+\
 Additional to scaling we also use centering as a part of preprocessing. Centering the data ensures that each feature has a mean of zero. This is particularly useful when features are on different scales and can improve the performance by removing bias due to the scale of the features. 
 
 ##### 4.3.1 HPO of Naive Bayes
 
 ##### 4.3.2 HPO of SVM
+\
 For the SVM we examine three distinct kernel types - linear, radial, and polynomial - each characterized by unique parameters, in addition to the common cost parameter.
-
+\
 Kernel and the cost parameter C have a significantly impact on the model's performance and need to be tuned carefully.
-
+\
 Additionally to scaling we're also centering the data, which involves subtracting the mean from each feature, ensuring that each feature has a mean of zero. This is particularly useful when features are on different scales and can improve the performance of support vector machines by removing bias due to the scale of the features. 
 For programming purposes we use the build-in preProcess parameter of the train function where the training data is automatically scaled and centered.
-
-# A large value of C leads to ... being heavily penalised so there are few points in the margin/missclassified (Lecture 7, p.5)
+\
+?A large value of C leads to ... being heavily penalised so there are few points in the margin/missclassified (Lecture 7, p.5)
 
 ```{r training svm, include=FALSE, cache=TRUE}
 
@@ -605,6 +606,11 @@ model_linear <- train_svm(scaledRISK_train,"svmLinear", grid_linear)
 model_radial <- train_svm(scaledRISK_train, "svmRadial", grid_radial)
 model_poly <- train_svm(scaledRISK_train, "svmPoly", grid_poly)
 
+# save all models
+saveRDS(model_linear, file = "model_linear.rda")
+saveRDS(model_radial, file = "model_radial.rda")
+saveRDS(model_poly, file = "model_poly.rda")
+
 # Output the best models and their performance
 svm_models <- list(linear = model_linear, radial = model_radial, polynomial = model_poly)
 
@@ -613,7 +619,7 @@ svm_models <- list(linear = model_linear, radial = model_radial, polynomial = mo
 Given the list of all resulting models, coming from the HPO of the SVM, we extract the best model for further inspection and results using the Accuracy as our focused metric.
 
 
-```{r metrics calc svm, include=FALSE, cache=TRUE}
+```{r metrics calc svm, include=FALSE, cache=TRUE, eval=FALSE}
 
 # Function to extract the best accuracy from each model
 extract_best_accuracy <- function(model) {
@@ -655,6 +661,7 @@ if one model performs better, is this improvement significant to a usual signifi
 ##### 5.1.1 Confusion Matrix
 \
 ###### 5.1.1.2 Naive Bayes
+\
 ```{r Confusion Matrix of Naive Bayes,echo=FALSE, cache=TRUE}
 scaledRISK_test_no_target <- scaledRISK_test[,-5]
 # TODO:
@@ -666,6 +673,7 @@ scaledRISK_test_no_target <- scaledRISK_test[,-5]
 
 
 ###### 5.1.1.2 SVM 
+\
 ```{r Confusion Matrix of SVM,echo=FALSE, cache=TRUE}
 svm_best_model <- readRDS("svm_best_model.rda")
 svm_actual <- scaledRISK_test$suicidal_class
@@ -682,10 +690,13 @@ In this context, a p-value of less than 2.2e−16 for the hypothesis that "Accur
 
 
 ##### 5.1.2 Precision, Recall and F1-Score
+\
 ###### 5.1.2.1 Naive Bayes
+\
 ###### 5.1.2.2 SVM 
-```{r Metrics of SVM,echo=FALSE, cache=TRUE}
-svm_actual <- as.numeric(as.character(actual))
+\
+```{r Metrics of SVM, echo=FALSE, cache=TRUE}
+svm_actual <- as.numeric(as.character(svm_actual))
 svm_pred <- as.numeric(as.character(svm_best_model_pred))
 
 svm_recall <- Metrics::recall(svm_actual, svm_pred)
@@ -697,15 +708,12 @@ cat(paste("Recall:  ", svm_recall, "\nPrecison:", svm_precision, "\nF1:      ", 
 
 
 #### 5.2 Qualitative
-
----> Ari: Do we need this section? 
-I am not sure if we are supposed to do a qualitative analysis,
-the task only says "an appropriate assessment of the predicted values and a fair comparison of the two methods using the test data." 
-I just added the section as a proposal...
+\
+---> Ari: maybe delete this section?
 
 ##### 5.2.2 SVM without scaling 
 
-```{r SVM no scaling,echo=FALSE, cache=TRUE}
+```{r SVM no scaling,echo=FALSE, cache=TRUE, eval=FALSE}
 set.seed(0)  # set the seed
 
 # Train models for each kernel
@@ -732,10 +740,20 @@ plot(svm_no_sc_best_model)
 
 
 #### 5.3 Overfitting 
+\
 Overfitting is a frequent problem in machine learning. It happens when a model learns the training data too well, including all its quirks and noise. As a result, its ability to generalize weakens. When the model is tested with new data, its performance often drops significantly. This is because it's overly tuned to the training data and doesn't adapt well to new, unseen data.
+
+##### 5.3.1 Naive Bayes
+\
 
 ##### 5.3.2 SVM
 ```{r Train and Test curve of SVM,echo=FALSE, cache=TRUE}
+# read the models:
+model_linear <- readRDS("model_linear.rda")
+model_radial <- readRDS("model_radial.rda")
+model_poly <- readRDS("model_poly.rda")
+
+# get performance results for each model
 extract_performance <- function(model) {
     results <- model$results
     resampling <- model$resample
@@ -746,6 +764,7 @@ performance_linear <- extract_performance(model_linear)
 performance_radial <- extract_performance(model_radial)
 performance_poly <- extract_performance(model_poly)
 
+# plot and save the performace results
 plot_performance <- function(performance, title) {
     p<-ggplot(data = performance$resampling, aes(x = Iter, y = Accuracy)) +
         geom_line() +
@@ -772,7 +791,7 @@ plot_radial<-plot_performance(performance_radial, "Radial Kernel Performance")
 plot_polynomial<-plot_performance(performance_poly, "Polynomial Kernel Performance")
 ```
 
-
+\
 By employing Cross-Validation (CV) and utilizing a range of performance metrics such as recall, precision, and F1-score, we try to avoid overfitting in our model. Additionally, our experiments with different kernels reveal that the linear kernel maintains robust performance, even when compared to the more complex radial and polynomial kernels. Prior to modeling, we also took the precaution of reducing the number of features, which further diminishes the risk of overfitting. Moreover, setting the cost parameter C to a moderate level – in our case, 1, which is the default value – lessens the likelihood of overfitting. Considering these factors collectively, we are confident that our model is unlikely to overfit on our training data.
 
 ### 6. Visual Representation

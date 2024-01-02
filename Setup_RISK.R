@@ -10,6 +10,7 @@ library(e1071) # for svm
 library(caret) # for nearZeroVar()
 library(kernlab)
 library(FSelector) # for feature selection with mutual information
+library(mltest)
 
 # ---- clean the workspace: ------------------------------------
 

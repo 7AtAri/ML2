@@ -444,6 +444,8 @@ RISK_train <- RISK_red[inds$train, ]
 
 RISK_test <- RISK_red[inds$test, ]
 
+
+
 rm(inds)
 ```
 
@@ -525,6 +527,8 @@ RISK_train$Stratum <- NULL
 RISK_train$Prob <- NULL
 scaledRISK_train <- scaleDataset(RISK_train)
 scaledRISK_test <- scaleDataset(RISK_test)
+actual_pred <- 
+
 ```
 
 
@@ -880,7 +884,11 @@ dev.off()
 
 
 ### 7. Final Discussion
+After training, testing, and interpreting our final machine learning models, it becomes evident that these models do not achieve the necessary accuracy for practical application, particularly given the critical nature of the target variable.
 
+Misclassifying individuals, especially those at high risk of suicide, can lead to dire consequences. When someone at moderate to high risk (Class 3) is incorrectly categorized as low to moderate risk (Class 2) or no risk (Class 1), they may not receive the urgent care and intervention they need.
+
+Furthermore, it's crucial to understand that accuracy alone is not a sufficient metric in this context. Both Type I (False Positive) and Type II (False Negative) Errors need to be carefully considered. Here, Type II Errors are of greater significance than Type I Errors. While Type I errors might result in over-treatment or undue anxiety, Type II errors are more serious as they could lead to a lack of necessary support for individuals at high risk of suicide. Therefore, it is essential to particularly focus on minimizing Type II errors in predictive models dealing with mental health and suicide risk.
 
 
 ### 8. References

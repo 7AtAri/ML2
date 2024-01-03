@@ -201,6 +201,9 @@ if (!("Sex_of_sexual_contacts" %in% colnames(RISK_red)) && "q64" %in% colnames(R
   RISK_red<- RISK_red%>%
     rename(Sex_of_sexual_contacts= q64)}
 
+if (!("Sexual_identity" %in% colnames(RISK_red)) && "q65" %in% colnames(RISK_red)) {
+  RISK_red<- RISK_red%>%
+    rename(Sexual_identity= q65)}
 
 # ---------------naming the levels of the categorical variables -------------
 

@@ -772,6 +772,9 @@ plot(svm_no_sc_best_model)
 #### 5.3 Overfitting 
 \
 Overfitting is a frequent problem in machine learning. It happens when a model learns the training data too well, including all its quirks and noise. As a result, its ability to generalize weakens. When the model is tested with new data, its performance often drops significantly. This is because it's overly tuned to the training data and doesn't adapt well to new, unseen data. We take a number of measures trying to prevent overfitting on our training data.
+\
+By employing Cross-Validation (CV) and utilizing a range of performance metrics such as recall, precision, and F1-score, we try to avoid overfitting in our models. Additionally, our experiments with different kernels reveal that the linear kernel maintains robust performance, even when compared to the more complex radial and polynomial kernels. Prior to modeling, we also took the precaution of reducing the number of features, which further diminishes the risk of overfitting. Moreover, setting the cost parameter C to a moderate level – in our case, 1, which is the default value – lessens the likelihood of overfitting. Considering these factors collectively, we are confident that our models are unlikely to overfit on our training data.
+
 
 ##### 5.3.1 Naive Bayes
 \
@@ -799,11 +802,6 @@ str(performance_linear$resampling)
 head(performance_linear$resampling)
 ```
 
-```{r}
-ncol(testing_res_binary)
-ncol(predictions)
-```
-
 #### 5.4 ROC
 
 To further visually assess our classifier we plot the ROC curves for our classes.
@@ -814,12 +812,17 @@ todo
 
 #### 5.4.2 ROC for best SVM model
 
+To plot the ROC curves, we need to get the probabilities for our model predictions.
+Since we set a seed, we can retrain on our best model and its hyperparameters to get the probabilities. Unfortunately, this was not possible as an upstream task.
+
+todo:
+
 ```{r AUC }
 library(pROC)
 library(nnet)  
-
+set.seed(0)
 # get predictions from best model
-svm_best_model_probs <- predict(svm_best_model, newdata=scaledRISK_test, type = "prob")
+# svm_best_model_probs <- predict(svm_best_model, newdata=scaledRISK_test, type = "prob")
 # predictions <- predict(model_radial, scaledRISK_test, type = "prob")
 
 # binarize output
@@ -841,45 +844,6 @@ legend("bottomright", legend = levels(scaledRISK_test$suicidal_class), col = 1:3
 ```
 
 
-No epochs ---> no test train curves
-```{r plot test train curves, echo=FALSE, cache=TRUE}
-
-# plot and save the performace results
-plot_AUC <- function(performance, title) {
-  
-    if (!"Iter" %in% names(performance$resampling)) {
-        cat("Available columns are:", names(performance$resampling), "\n")
-        stop("Column 'Iter' not found in the data frame")
-    }
-    
-    
-    p<-ggplot(data = performance$resampling, aes(x = Iter, y = Accuracy)) +
-        geom_line() +
-        geom_point() +
-        #facet_wrap(~ parameter, scales = "free") +
-        ggtitle(title) +
-        theme_minimal()
-  
-    # create filename from title
-    filename <- paste0(gsub(" ", "_", title), ".png") 
-    # replaces every empty space in the title with underscore and adds png format 
-
-    # save plot as png
-    ggsave(filename, plot = p, width = 10, height = 8, dpi = 300)
-
-    # return ggplot object
-    return(p)
-  
-}
-
-# Plot for each model
-plot_linear<-plot_performance(performance_linear, "Linear Kernel Performance")
-plot_radial<-plot_performance(performance_radial, "Radial Kernel Performance")
-plot_polynomial<-plot_performance(performance_poly, "Polynomial Kernel Performance")
-```
-
-\
-By employing Cross-Validation (CV) and utilizing a range of performance metrics such as recall, precision, and F1-score, we try to avoid overfitting in our model. Additionally, our experiments with different kernels reveal that the linear kernel maintains robust performance, even when compared to the more complex radial and polynomial kernels. Prior to modeling, we also took the precaution of reducing the number of features, which further diminishes the risk of overfitting. Moreover, setting the cost parameter C to a moderate level – in our case, 1, which is the default value – lessens the likelihood of overfitting. Considering these factors collectively, we are confident that our model is unlikely to overfit on our training data.
 
 ### 6. Visual Representation
 

@@ -11,6 +11,8 @@ library(caret) # for nearZeroVar()
 library(kernlab)
 library(FSelector) # for feature selection with mutual information
 library(mltest)
+library(pROC) # for ROC and AUC 
+library(nnet) # for model.matrix
 
 # ---- clean the workspace: ------------------------------------
 

@@ -547,11 +547,6 @@ Additionally to scaling we're also centering the data, which involves subtractin
 For programming purposes we use the build-in preProcess parameter of the train function where the training data is automatically scaled and centered.
 \
 A large value of C leads to points within the margin or on the other side of the boundary being heavily penalized so there are few points in the margin/missclassified (Lecture 7, p.5)
-```{r rename target levels, include=FALSE, cache=TRUE}
-# rename target levels 
-#levels(scaledRISK_train$suicidal_class) <- c("l1", "l2", "l3")
-#scaledRISK_train$suicidal_class <- factor(scaledRISK_train$suicidal_class, ordered = TRUE)
-```
 
 
 ```{r training svm, include=FALSE, cache=TRUE}
@@ -657,7 +652,7 @@ if one model performs better, is this improvement significant to a usual signifi
 ###### 5.1.1.2 Naive Bayes
 \
 ```{r Confusion Matrix of Naive Bayes,echo=FALSE, cache=TRUE}
-#scaledRISK_test_no_target <- scaledRISK_test[,-5]
+scaledRISK_test_no_target <- scaledRISK_test[, !names(scaledRISK_test) %in% c("suicidal_class")]
 # TODO:
 # nb_best_model_pred <- predict(nb_best_model, scaledRISK_test_no_target)
 
@@ -814,34 +809,70 @@ todo
 
 To plot the ROC curves, we need to get the probabilities for our model predictions.
 Since we set a seed, we can retrain on our best model and its hyperparameters to get the probabilities. Unfortunately, this was not possible as an upstream task.
-
+```{r rename target levels, include=FALSE, cache=TRUE}
+# rename target levels 
+levels(scaledRISK_train$suicidal_class) <- c("l1", "l2", "l3")
+scaledRISK_train$suicidal_class <- factor(scaledRISK_train$suicidal_class, ordered = TRUE)
+```
 todo:
 
-```{r AUC }
+```{r ROC curves, include=FALSE, cache=TRUE }
 library(pROC)
 library(nnet)  
+
+train_control_probs <- trainControl(method = "cv",
+                              number = 5, 
+                              search = "grid",
+                              classProbs=TRUE)
+          
+train_svm_probs <- function(dataset, kernel, grid) {
+    train(suicidal_class ~ ., data = dataset,
+                   method = kernel,
+                   tuneGrid = grid, 
+                   metric="Accuracy",
+                   preProcess = c("center"),
+                   trControl = train_control_probs)
+}
+
+# retrain best model with best hp config for probabilities
 set.seed(0)
+model_radial_probs <- train_svm_probs(scaledRISK_train, "svmRadial", grid_radial)
+
 # get predictions from best model
-# svm_best_model_probs <- predict(svm_best_model, newdata=scaledRISK_test, type = "prob")
-# predictions <- predict(model_radial, scaledRISK_test, type = "prob")
+model_radial_probs_pred <- predict(model_radial_probs, newdata=scaledRISK_test_no_target, type = "prob")
 
 # binarize output
-#testing_res_binary <- class.ind(as.factor(scaledRISK_test$suicidal_class))
 testing_res_binary <- model.matrix(~ svm_actual - 1)
 
 
 # get ROC curve and AUC for each class
 roc_curves <- list()
 for(i in 1:ncol(testing_res_binary)) {
-  roc_curves[[i]] <- roc(testing_res_binary[,i], svm_best_model_probs[,i])
+  roc_curves[[i]] <- roc(testing_res_binary[,i], model_radial_probs_pred[,i])
 }
 
-# Plotting ROC curves
-plot.roc(roc_curves[[1]], col = "blue")
-sapply(2:length(roc_curves), function(i) lines.roc(roc_curves[[i]], col = i))
-
-legend("bottomright", legend = levels(scaledRISK_test$suicidal_class), col = 1:3, lwd = 2)
 ```
+```{r plotting and saving the ROC curves, echo=FALSE, cache=TRUE}
+# ** this code snipped is created with the help of AI** ##
+# Set up the PNG output
+png("roc_curves.png", width = 800, height = 800)
+
+# Plot the first ROC curve
+plot(roc_curves[[1]], main = "ROC Curves", col = "red")
+
+# Add the next ROC curves with lines()
+lines(roc_curves[[2]], col = "blue")
+lines(roc_curves[[3]], col = "green")
+
+# Add a legend if needed
+legend("bottomright", legend = c("Class 1", "Class 2", "Class 3"),
+       col = c("red", "blue", "green"), lty = 1)
+# Close the PNG device
+dev.off()
+
+## ** end of AI created code snipped ** 
+```
+
 
 
 

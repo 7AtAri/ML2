@@ -405,8 +405,7 @@ RISK_red<-RISK_reduced[,unlist(final_vars)]
 
 #### 3.2 Naming the variables and the factor levels
 \
-For an easy understanding of their values, the variables and levels are named according to their content.
-This is an optional step. It can lead to a better readability of our data frame though.
+For an easy understanding of their values, the variables and levels are named according to their content. This is an optional step. Please uncomment the names.R file and source it if you want to name the encoded variables according to their content. It can lead to a better readability of our data frame.
 
 ```{r naming variables, include=FALSE, cache=TRUE}
 source("names.R") 
@@ -426,6 +425,12 @@ Since we want to do a cross validation we will split into 80% Training and 20% T
 # RISK_red <- read_csv("RISK_red.csv", show_col_types = FALSE)
 set.seed(0)  # set the seed
 RISK_red <- read_csv("RISK_red.csv", show_col_types = FALSE)
+
+# Source the factor conversion file
+source("factorize.R")
+
+# Use the function for a specific dataframe
+RISK_red <- convert_columns_to_factors("RISK_red")
 
 # ensure stratum and prob are not in the dataframe
 RISK_red$Stratum <- NULL
@@ -544,8 +549,8 @@ For programming purposes we use the build-in preProcess parameter of the train f
 A large value of C leads to points within the margin or on the other side of the boundary being heavily penalized so there are few points in the margin/missclassified (Lecture 7, p.5)
 ```{r rename target levels, include=FALSE, cache=TRUE}
 # rename target levels 
-levels(scaledRISK_train$suicidal_class) <- c("l1", "l2", "l3")
-scaledRISK_train$suicidal_class <- factor(scaledRISK_train$suicidal_class, ordered = TRUE)
+#levels(scaledRISK_train$suicidal_class) <- c("l1", "l2", "l3")
+#scaledRISK_train$suicidal_class <- factor(scaledRISK_train$suicidal_class, ordered = TRUE)
 ```
 
 
@@ -573,8 +578,8 @@ grid_poly <- expand.grid(.degree = c(2, 3, 4, 5),
 
 train_control <- trainControl(method = "cv",
                               number = 5, 
-                              search = "grid", 
-                              classProbs=TRUE)
+                              search = "grid")
+                              #classProbs=TRUE)
           
 train_svm <- function(dataset, kernel, grid) {
     train(suicidal_class ~ ., data = dataset,
@@ -652,7 +657,7 @@ if one model performs better, is this improvement significant to a usual signifi
 ###### 5.1.1.2 Naive Bayes
 \
 ```{r Confusion Matrix of Naive Bayes,echo=FALSE, cache=TRUE}
-scaledRISK_test_no_target <- scaledRISK_test[,-5]
+#scaledRISK_test_no_target <- scaledRISK_test[,-5]
 # TODO:
 # nb_best_model_pred <- predict(nb_best_model, scaledRISK_test_no_target)
 
@@ -667,7 +672,7 @@ scaledRISK_test_no_target <- scaledRISK_test[,-5]
 svm_best_model <- readRDS("svm_best_model.rda")
 
 # rename target levels 
-levels(scaledRISK_test$suicidal_class) <- c("l1", "l2", "l3")
+#levels(scaledRISK_test$suicidal_class) <- c("l1", "l2", "l3")
 scaledRISK_test$suicidal_class <- factor(scaledRISK_test$suicidal_class, ordered = TRUE)
 
 svm_actual <- scaledRISK_test$suicidal_class
@@ -692,10 +697,12 @@ In this context, a p-value of less than 2.2e−16 for the hypothesis that "Accur
 ###### 5.1.2.2 SVM 
 \
 
-Since we have a multi class classification problem, we also evaluate our metrics separately for each of our classes:
+Since we have a multi class classification problem, we also evaluate our metrics separately for each of our classes. 
+
+todo: check why confusion matrix output above gives different results...
 
 ```{r multiclass metrics, echo=FALSE, cache=TRUE}
-# library(mltest)
+library(mltest)
 
 classifier_metrics <- ml_test(svm_best_model_pred, svm_actual, output.as.table = FALSE)
 

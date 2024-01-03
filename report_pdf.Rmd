@@ -527,7 +527,7 @@ RISK_train$Stratum <- NULL
 RISK_train$Prob <- NULL
 scaledRISK_train <- scaleDataset(RISK_train)
 scaledRISK_test <- scaleDataset(RISK_test)
-actual_pred <- 
+#actual_pred <- 
 
 ```
 
@@ -542,8 +542,8 @@ Additional to scaling we also use centering as a part of preprocessing. Centerin
 ##### 4.3.1 HPO of Naive Bayes
 
 \
-For the Naive Bayes we examine one option for hyperparameter optimization:
-use of Laplace smoothing
+Naive Bayes is quite simple and only has one hyperparameter that we need to consider:
+the use of Laplace smoothing. The type of Naive Bayes model is automatically estimated by our package (naivebayes). 
 \
 Laplace smoothing is used to obtain "more smooth" class distribution and avoid zero probabilities.
 It is a numeric parameter. We examine three common values for that parameter: 0 (leading to Max-likelihood estimation), 0.5 and 1.
@@ -559,6 +559,7 @@ scaledRISK_train$suicidal_class <- factor(scaledRISK_train$suicidal_class, order
 set.seed(0)  # set the seed
 
 library(caret)
+library(naivebayes)
 
 laplace = c(0, 0.5, 1, 100000)
 
@@ -585,8 +586,7 @@ saveRDS(model_nb, file = "model_nb.rda")
 
 ```
 
-Given the list of all resulting models, coming from the HPO of the SVM, we extract the best model for further inspection and results using Accuracy as our focused metric.
-Since our classes are balanced, Accuracy is the preferred testing metric. 
+Given the list of all resulting models, coming from the HPO of the Naive Bayes, we extract the best model for further inspection and results using Accuracy as our focused metric. Since our classes are balanced, Accuracy is the preferred testing metric. 
 
 ```{r metrics calc nb, include=FALSE, cache=TRUE, eval=FALSE}
 
@@ -609,8 +609,12 @@ print(paste("Laplace smoothing value of the best model is:", nb_best_model$tuneV
 print(nb_best_model)
 ```
 
+According to our HPO the best value for the Laplace Smoothing is 0. This means that a smoothing term is not helpful in our case. The automatic bayes model type configuration gives us a gaussian naive bayes model.
+
+
 ```{r plot cross-val hpo results, echo=FALSE, cache=TRUE}
 plot(nb_best_model)
+#print(nb_best_model)
 ```
 
 

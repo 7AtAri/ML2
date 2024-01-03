@@ -13,6 +13,7 @@ library(FSelector) # for feature selection with mutual information
 library(mltest)
 library(pROC) # for ROC and AUC 
 library(nnet) # for model.matrix
+library(naivebayes) # for naive bayes
 
 # ---- clean the workspace: ------------------------------------
 

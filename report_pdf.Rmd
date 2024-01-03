@@ -532,6 +532,79 @@ Additional to scaling we also use centering as a part of preprocessing. Centerin
 
 ##### 4.3.1 HPO of Naive Bayes
 
+\
+For the Naive Bayes we examine one option for hyperparameter optimization:
+use of Laplace smoothing
+\
+Laplace smoothing is used to obtain "more smooth" class distribution and avoid zero probabilities.
+It is a numeric parameter. We examine three common values for that parameter: 0 (leading to Max-likelihood estimation), 0.5 and 1.
+
+```{r rename target levels, include=FALSE, cache=TRUE}
+# rename target levels 
+levels(scaledRISK_train$suicidal_class) <- c("l1", "l2", "l3")
+scaledRISK_train$suicidal_class <- factor(scaledRISK_train$suicidal_class, ordered = TRUE)
+```
+
+```{r training naive bayes, include=FALSE, cache=TRUE}
+
+set.seed(0)  # set the seed
+
+library(caret)
+
+laplace = c(0, 0.5, 1, 100000)
+
+train_control <- trainControl(method = "cv",
+                              number = 5, 
+                              search = "grid", 
+                              classProbs=TRUE)
+          
+train_nb <- function(dataset) {
+    train(suicidal_class ~ ., data = dataset,
+                   method = 'naive_bayes',
+                   tuneGrid = data.frame(laplace = laplace, usekernel = FALSE, adjust = FALSE),
+                   metric="Accuracy",
+                   preProcess = c("center"),
+                   trControl = train_control)
+}
+
+
+# Train models for each value of laplace smoothing
+model_nb <- train_nb(scaledRISK_train)
+
+# save all models
+saveRDS(model_nb, file = "model_nb.rda")
+
+```
+
+Given the list of all resulting models, coming from the HPO of the SVM, we extract the best model for further inspection and results using Accuracy as our focused metric.
+Since our classes are balanced, Accuracy is the preferred testing metric. 
+
+```{r metrics calc nb, include=FALSE, cache=TRUE, eval=FALSE}
+
+# Function to extract the best accuracy from each model
+extract_best_accuracy <- function(model) {
+    max_accuracy <- max(model$results$Accuracy)
+    return(max_accuracy)
+}
+
+# Apply the function to each model and collect accuracies
+nb_model_accuracy <- extract_best_accuracy(model_nb)
+
+# Extract the best hyperparameters
+nb_best_hyperparameters <- model_nb$bestTune
+
+nb_best_model <- model_nb$finalModel
+
+# Print the name and details of the best model
+print(paste("Laplace smoothing value of the best model is:", nb_best_model$tuneValue$fL))
+print(nb_best_model)
+```
+
+```{r plot cross-val hpo results, echo=FALSE, cache=TRUE}
+plot(nb_best_model)
+```
+
+
 ##### 4.3.2 HPO of SVM
 \
 For the SVM we examine three distinct kernel types - linear, radial, and polynomial - each characterized by unique parameters, in addition to the common cost parameter.

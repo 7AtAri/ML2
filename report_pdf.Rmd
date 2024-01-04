@@ -420,7 +420,7 @@ write_csv(RISK_red, "RISK_red.csv")
 According to the project requirements we split our data in 60% Training, 20% Validation and 20% Testing Data. 
 Since we want to do a cross validation we will split into 80% Training and 20% Testing Data.
 
-```{r splitting the data, include=FALSE, cache=TRUE}
+```{r splitting the data, cache=TRUE, include=FALSE}
 # import as dataframe
 # RISK_red <- read_csv("RISK_red.csv", show_col_types = FALSE)
 set.seed(0)  # set the seed
@@ -527,6 +527,8 @@ RISK_train$Stratum <- NULL
 RISK_train$Prob <- NULL
 scaledRISK_train <- scaleDataset(RISK_train)
 scaledRISK_test <- scaleDataset(RISK_test)
+levels(scaledRISK_train$suicidal_class) <- c("l1", "l2", "l3")
+scaledRISK_train$suicidal_class <- factor(scaledRISK_train$suicidal_class, ordered = TRUE)
 
 ```
 
@@ -588,7 +590,7 @@ saveRDS(model_nb, file = "model_nb.rda")
 Given the list of all resulting models, coming from the HPO of the Naive Bayes, we extract the best model for further inspection and results using Accuracy as our focused metric. Since our classes are balanced, Accuracy is the preferred testing metric. 
 
 ```{r metrics calc nb, include=FALSE, cache=TRUE, eval=FALSE}
-
+model_nb = readRDS("model_nb.rda")
 # Function to extract the best accuracy from each model
 extract_best_accuracy <- function(model) {
     max_accuracy <- max(model$results$Accuracy)
@@ -606,12 +608,14 @@ nb_best_model <- model_nb$finalModel
 # Print the name and details of the best model
 print(paste("Laplace smoothing value of the best model is:", nb_best_model$tuneValue$fL))
 print(nb_best_model)
+saveRDS(nb_best_model, "nb_best_model.rda")
 ```
 
 According to our HPO the best value for the Laplace Smoothing is 0. This means that a smoothing term is not helpful in our case. The automatic bayes model type configuration gives us a gaussian naive bayes model.
 
 
 ```{r plot cross-val hpo results, echo=FALSE, cache=TRUE}
+nb_best_model <- readRDS("nb_best_model.rda")
 plot(nb_best_model)
 #print(nb_best_model)
 ```
@@ -697,11 +701,11 @@ svm_model_accuracies <- sapply(svm_models, extract_best_accuracy)
 
 # Identify the model with the highest accuracy
 svm_best_model_name <- names(which.max(svm_model_accuracies))
-svm_best_model_m <- svm_models[[svm_best_model_name]]
+svm_best_model <- svm_models[[svm_best_model_name]]
 # Extract the best hyperparameters
-svm_best_hyperparameters <- svm_best_model_m$bestTune
+svm_best_hyperparameters <- svm_best_model$bestTune
 
-svm_best_model <- svm_best_model_m$finalModel
+svm_best_model <- svm_best_model$finalModel
 
 
 # Print the best hyperparameters
@@ -715,8 +719,12 @@ saveRDS(svm_best_model, file = "svm_best_model.rda")
 
 ```
 
-```{r plot cross-val hpo results, echo=FALSE, cache=TRUE}
-plot(svm_best_model_m)
+```{r plot cross-val hpo results svm, echo=FALSE, cache=TRUE}
+
+#set.seed(0)
+#library(caret)
+#svm_best_model <- readRDS("svm_best_model.rda")
+#plot(svm_best_model)
 ```
 
 
@@ -734,10 +742,15 @@ if one model performs better, is this improvement significant to a usual signifi
 ```{r Confusion Matrix of Naive Bayes,echo=FALSE, cache=TRUE}
 scaledRISK_test_no_target <- scaledRISK_test[, !names(scaledRISK_test) %in% c("suicidal_class")]
 # TODO:
-# nb_best_model_pred <- predict(nb_best_model, scaledRISK_test_no_target)
+nb_best_model_pred <- predict(nb_best_model, scaledRISK_test_no_target)
 
-# table(nb_best_model_pred, scaledRISK_test$suicidal_class, dnn=c("Prediction", "Actual"))   
-# confusionMatrix(table(nb_best_model_pred, scaledRISK_test$suicidal_class))
+levels(scaledRISK_test$suicidal_class) <- c("l1", "l2", "l3")
+scaledRISK_test$suicidal_class <- factor(scaledRISK_test$suicidal_class, ordered = TRUE)
+
+table(nb_best_model_pred, scaledRISK_test$suicidal_class, dnn=c("Prediction", "Actual"))   
+
+confusionMatrix(table(nb_best_model_pred, scaledRISK_test$suicidal_class))
+
 ```
 
 
@@ -746,19 +759,13 @@ scaledRISK_test_no_target <- scaledRISK_test[, !names(scaledRISK_test) %in% c("s
 ```{r Confusion Matrix of SVM,echo=FALSE, cache=TRUE}
 svm_best_model <- readRDS("svm_best_model.rda")
 
-# rename target levels 
-#levels(scaledRISK_test$suicidal_class) <- c("l1", "l2", "l3")
-scaledRISK_test$suicidal_class <- factor(scaledRISK_test$suicidal_class, ordered = TRUE)
+scaledRISK_test_no_target <- scaledRISK_test[, !names(scaledRISK_test) %in% c("suicidal_class")]
 
-svm_actual <- scaledRISK_test$suicidal_class
-
-scaledRISK_test$suicidal_class <- NULL
-scaledRISK_test$Stratum <- NULL
-scaledRISK_test$Prob <- NULL
-svm_best_model_pred <- predict(svm_best_model, newdata=scaledRISK_test)
-svm_best_model_pred
-table(svm_best_model_pred, svm_actual, dnn=c("Prediction", "Actual"))   
-confusionMatrix(table(svm_best_model_pred, svm_actual))
+scaledRISK_test_no_target$Stratum <- NULL
+scaledRISK_test_no_target$Prob <- NULL
+svm_best_model_pred <- predict(svm_best_model, newdata=scaledRISK_test_no_target)
+table(svm_best_model_pred, scaledRISK_test$suicidal_class, dnn=c("Prediction", "Actual"))   
+confusionMatrix(table(svm_best_model_pred, scaledRISK_test$suicidal_class))
 ```
 Given the Confusion Matrix we can see a Accuracy of around 60% meaning the predictions are around 60% correct. 
 ---> todo:
@@ -779,7 +786,7 @@ todo: check why confusion matrix output above gives different results...
 ```{r multiclass metrics, echo=FALSE, cache=TRUE}
 library(mltest)
 
-classifier_metrics <- ml_test(svm_best_model_pred, svm_actual, output.as.table = FALSE)
+classifier_metrics <- ml_test(svm_best_model_pred, scaledRISK_test$suicidal_class, output.as.table = FALSE)
 
 # overall classification accuracy
 # accuracy <- classifier_metrics$accuracy
@@ -788,7 +795,7 @@ classifier_metrics <- ml_test(svm_best_model_pred, svm_actual, output.as.table =
 SVM_F1 <- classifier_metrics$F1
 
 # tabular view of the metrics (except for 'accuracy' and 'error.rate')
-classifier_metrics <- ml_test(svm_best_model_pred, svm_actual, output.as.table = TRUE)
+classifier_metrics <- ml_test(svm_best_model_pred, scaledRISK_test$suicidal_class, output.as.table = TRUE)
 
 # cat(paste("Recall:  ", classifier_metrics$recall, "\nPrecision:", classifier_metrics$precision, "\nF1:      ", SVM_F1, "\n"))
 
@@ -833,15 +840,11 @@ svm_no_sc_best_model <- svm_no_sc_models[[svm_no_sc_best_model_name]]
 
 # Extract the best hyperparameters
 svm_no_sc_best_hyperparameters <- svm_no_sc_best_model$bestTune
+
+plot(svm_no_sc_best_model$finalModel)
 ```
 
 The best performing svm model on the non-scaled data is:
-
-```{r plot best model performance, echo=FALSE, cache=TRUE}
-# Print the name and details of the best model
-# print(svm_no_sc_best_model)
-plot(svm_no_sc_best_model)
-```
 
 
 #### 5.3 Overfitting 
@@ -889,7 +892,7 @@ todo
 
 To plot the ROC curves, we need to get the probabilities for our model predictions.
 Since we set a seed, we can retrain on our best model and its hyperparameters to get the probabilities. Unfortunately, this was not possible as an upstream task.
-```{r rename target levels, include=FALSE, cache=TRUE}
+```{r rename target levels svm, include=FALSE, cache=TRUE}
 # rename target levels 
 levels(scaledRISK_train$suicidal_class) <- c("l1", "l2", "l3")
 scaledRISK_train$suicidal_class <- factor(scaledRISK_train$suicidal_class, ordered = TRUE)
@@ -922,7 +925,7 @@ model_radial_probs <- train_svm_probs(scaledRISK_train, "svmRadial", grid_radial
 model_radial_probs_pred <- predict(model_radial_probs, newdata=scaledRISK_test_no_target, type = "prob")
 
 # binarize output
-testing_res_binary <- model.matrix(~ svm_actual - 1)
+testing_res_binary <- model.matrix(~ scaledRISK_test$suicidal_class - 1)
 
 
 # get ROC curve and AUC for each class

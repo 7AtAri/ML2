@@ -527,7 +527,6 @@ RISK_train$Stratum <- NULL
 RISK_train$Prob <- NULL
 scaledRISK_train <- scaleDataset(RISK_train)
 scaledRISK_test <- scaleDataset(RISK_test)
-#actual_pred <- 
 
 ```
 

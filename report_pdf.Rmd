@@ -15,14 +15,16 @@ output:
   start-page: 2
 ---
 
+```{=tex}
 \pagenumbering{gobble}
 \newpage
 \pagenumbering{arabic} 
 \centering
 \raggedright
 \newpage
+```
 
----
+------------------------------------------------------------------------
 
 ```{r setup, include=FALSE, cache=TRUE}
 params <- list(html=knitr::is_html_output())
@@ -36,24 +38,25 @@ source("Setup.R")
 
 ### 1. Introduction
 
-Our general idea was to work with LGBT-related data. This was not as easy as expected, since it seems there are not a lot of datasets openly available that have that kind of information. Finally, we found a US survey by the CDC, that regularly monitors the country's youth in a lot of dimensions, but among other questions also asks for sexual experiences and identification.   
+Our general idea was to work with LGBT-related data. This was not as easy as expected, since it seems there are not a lot of datasets openly available that have that kind of information. Finally, we found a US survey by the CDC, that regularly monitors the country's youth in a lot of dimensions, but among other questions also asks for sexual experiences and identification.
 
 ### 2. The Dataset
+
 \
-"The *[Youth Risk Behavior Survey (YRBS)](https://www.cdc.gov/healthyyouth/data/yrbs/data.htm)* measures health-related behaviors and experiences that can lead to death and disability among youth and adults.[...] Some of the health-related behaviors and experiences monitored are:
+"The [*Youth Risk Behavior Survey (YRBS)*](https://www.cdc.gov/healthyyouth/data/yrbs/data.htm) measures health-related behaviors and experiences that can lead to death and disability among youth and adults.[...] Some of the health-related behaviors and experiences monitored are:
 
-* Student demographics: sex, sexual identity, race, ethnicity, and grade
+-   Student demographics: sex, sexual identity, race, ethnicity, and grade
 
-* Youth health behaviors and conditions: sexual, injury and violence, bullying, diet and physical activity, obesity, and mental health, including suicide
+-   Youth health behaviors and conditions: sexual, injury and violence, bullying, diet and physical activity, obesity, and mental health, including suicide
 
-* Substance use behaviors: electronic vapor product and tobacco product use, alcohol use, and other drug use
+-   Substance use behaviors: electronic vapor product and tobacco product use, alcohol use, and other drug use
 
-* Student experiences: parental monitoring, school connectedness, unstable housing, and exposure to community violence [[1]](#1).
+-   Student experiences: parental monitoring, school connectedness, unstable housing, and exposure to community violence [[1]](#1).
 
 It is a national survey conducted by the CDC (Center for Disease Control and Prevention) and includes high school students from both private and public schools within the U.S. Data is collected from 1991 through 2021, we are only using the most recent data from 2021. If you want to learn more about the data there is an accompanying Data User Guide.[[2]](#2).
 
-
 #### 2.1 Preprocessing of the dataset
+
 \
 
 ```{r summary, include=FALSE, cache=TRUE}
@@ -61,20 +64,21 @@ It is a national survey conducted by the CDC (Center for Disease Control and Pre
 # summary(RISK) 
 # describe(RISK) # more detail
 ```
-To preprocess the dataset, we first ran a summary of our dataset. The number of NAs seems to depend very much on the question. The variable "orig_rec" only contained NAs and has therefore been removed, as well as the variable "site" which only contained "XX" entries. Variables q4 and q5 are already aggregated in "raceeth" and have also been deleted.
-The variable "record" seems to be an ID for the observations. This also has to be deleted since IDs do not hold predictive information that can be used for machine learning. 
+
+To preprocess the dataset, we first ran a summary of our dataset. The number of NAs seems to depend very much on the question. The variable "orig_rec" only contained NAs and has therefore been removed, as well as the variable "site" which only contained "XX" entries. Variables q4 and q5 are already aggregated in "raceeth" and have also been deleted. The variable "record" seems to be an ID for the observations. This also has to be deleted since IDs do not hold predictive information that can be used for machine learning.
 
 #### 2.2 Missing Data
+
 \
+
 ```{r variables overview, include =FALSE}
 na_ratio<-sum(is.na(RISK)==TRUE)/(dim(RISK)[1]*dim(RISK)[2])# ratio of NAs among all datapoints
 print(na_ratio*100) # % percentage of NAs in data
 sum(is.na(RISK)==TRUE) # sum of NAs in dataset
 ```
-We will first exclude all the observations with NAs in all the target-related variables q25 to q29. Since we want to build our target variable on these questions, the target variable cannot all be empty. The amount of data available should be enough to just exclude these observations. After removing the observations that have NAs in all the variables, that are used to create our target variable, we still have around 13.7% NAs in the dataset.
-\
-What if we had just excluded every NA in the dataset? We will try and see if this is a viable option, since this woul not just be quick and easy, but we would also just have "real" answers. The exclusion of NAs leads to a severe reduction in the number of observations. The original data consisted of 17232 observations, after reducing the target-related NAs only, we have 11753 observations left. If we omit all NAs, the reduced dataframe still has 4334 observations.
-\
+
+We will first exclude all the observations with NAs in all the target-related variables q25 to q29. Since we want to build our target variable on these questions, the target variable cannot all be empty. The amount of data available should be enough to just exclude these observations. After removing the observations that have NAs in all the variables, that are used to create our target variable, we still have around 13.7% NAs in the dataset.\
+What if we had just excluded every NA in the dataset? We will try and see if this is a viable option, since this woul not just be quick and easy, but we would also just have "real" answers. The exclusion of NAs leads to a severe reduction in the number of observations. The original data consisted of 17232 observations, after reducing the target-related NAs only, we have 11753 observations left. If we omit all NAs, the reduced dataframe still has 4334 observations.\
 
 ```{r check exclude NAs, include=FALSE, cache=TRUE}
 RISK_no_NAs <- na.omit(RISK)
@@ -93,18 +97,16 @@ sum(is.na(RISK$q28)==TRUE)/17138
 ```
 
 #### 2.2.2 Omitting NAs vs Data Imputation
+
 \
 
-If we can omit the NAs or if it may be necessary to impute the missing data points, depends on the type of missingness. If data is missing completely at random (MCAR), we can omit the NAs, if it is just missing at random (MAR) we would rather impute the data. If the data is missing not at random (MNAR), it would be a quite difficult problem because we cannot easily impute the missing data then. To find out if we can just omit the data, an MCAR test was applied. 
-\
-We test the target-related variables q25 to q29 for potential pattern(s) in the target related missing data. This results in a p-value of 0, which indicates, that the data is not missing completely at random. Omitting all NAs can be problematic and lead to bias.
-But imputing the target variable related data may be quite challenging and out of the scope of this project. We therefore decide to nevertheless drop the target related NAs.
+If we can omit the NAs or if it may be necessary to impute the missing data points, depends on the type of missingness. If data is missing completely at random (MCAR), we can omit the NAs, if it is just missing at random (MAR) we would rather impute the data. If the data is missing not at random (MNAR), it would be a quite difficult problem because we cannot easily impute the missing data then. To find out if we can just omit the data, an MCAR test was applied.\
+We test the target-related variables q25 to q29 for potential pattern(s) in the target related missing data. This results in a p-value of 0, which indicates, that the data is not missing completely at random. Omitting all NAs can be problematic and lead to bias. But imputing the target variable related data may be quite challenging and out of the scope of this project. We therefore decide to nevertheless drop the target related NAs.
 
 ```{r MCAR test for target columns, cache=TRUE}
 result <- mcar_test(RISK[, c("q25", "q26", "q27", "q28", "q29")])
 print(result)
 ```
-
 
 ```{r analyse missingness, include=FALSE, cache=TRUE}
 plot_missing(RISK[1:20])
@@ -115,13 +117,13 @@ plot_missing(RISK[80:100])
 plot_missing(RISK)
 ```
 
-We will use a rule base approach to create the target variable and impute the predictive variables afterwards. To ensure a good imputation, we need to impute our NAs before reducing the dataset to 2000 observations. To run the imputation properly we need to factorize our nominal and ordinal variables first.
-\
+We will use a rule base approach to create the target variable and impute the predictive variables afterwards. To ensure a good imputation, we need to impute our NAs before reducing the dataset to 2000 observations. To run the imputation properly we need to factorize our nominal and ordinal variables first.\
 
 #### 2.3 Target Variable
+
 \
 
-As a target variable, we decided to calculate a score from 5 questions that reflect the suicide risk of the person (observation) in question. This score is aggregated with a rule-based approach. 
+As a target variable, we decided to calculate a score from 5 questions that reflect the suicide risk of the person (observation) in question. This score is aggregated with a rule-based approach.
 
 ```{r creating the target variable, include=FALSE, cache=TRUE}
 RISK_num<-RISK
@@ -162,10 +164,9 @@ RISK_s5$suicidal_class<-factor(RISK_s3$suicidal_class, ordered = TRUE)
 
 ```
 
-After creating the target variable we need to exclude the variables q25 to q29, which were used for creating it, from our dataset. After originally starting with 5 classes (no risk, low risk, moderate risk, high risk, very high risk) for our target variable we reduced it to 3 classes (no risk, low or moderate risk, high risk). 
+After creating the target variable we need to exclude the variables q25 to q29, which were used for creating it, from our dataset. After originally starting with 5 classes (no risk, low risk, moderate risk, high risk, very high risk) for our target variable we reduced it to 3 classes (no risk, low or moderate risk, high risk).
 
 #### 2.4 Imputation
-
 
 ```{r imputing, include= FALSE,cache=TRUE}
 set.seed(0)
@@ -173,14 +174,16 @@ set.seed(0)
 # RISK_imp_s3 <- missRanger(RISK_s3, pmm.k = 200, num.trees = 500, sample.fraction = 1)
 # write_csv(RISK_imp_s3, "RISK_imp_s3.csv")
 ```
+
 \
 
-For the imputation of the missing data, we used a random forest approach with 500 trees and a predictive mean matching with observed values of 200 similar cases. 
+For the imputation of the missing data, we used a random forest approach with 500 trees and a predictive mean matching with observed values of 200 similar cases.
 
 #### 2.5 Reducing and balancing the dataset to 2000 observations
+
 \
 
-We need to reduce our data to the maximum allowed size of 2000 observations. To ensure the best possible data quality, we want to balance our dataset. We therefore use stratified sampling to create a dataset, that has the same number of observations for all classes of the target variable. 
+We need to reduce our data to the maximum allowed size of 2000 observations. To ensure the best possible data quality, we want to balance our dataset. We therefore use stratified sampling to create a dataset, that has the same number of observations for all classes of the target variable.
 
 ```{r stratified sampling, include=FALSE, cache=TRUE}
 # this code snipped was produced with the help of AI
@@ -199,7 +202,6 @@ RISK_2000_3 <- getdata(RISK_imp_s3, sample_obj)
 
 ```
 
-
 #### 2.6 Simple Synopsis of the Dataset
 
 ```{r RISK_2000_5 load and inspect, include=FALSE, cache=TRUE}
@@ -212,31 +214,31 @@ table(variable_types$factor.ordered) # summary on factor variables
 variable_types[variable_types$skim_type=="numeric",]
 # introduce(RISK_2000_3)
 ```
+
 \
 
-* number of observations: 2000 
+-   number of observations: 2000
 
-* number of variables: 100
+-   number of variables: 100
 
-* datatypes:
+-   datatypes:
 
-  + factor: 96
-  
-    - nominal variables: 29
-    
-    - ordinal variables: 67
-    
-  + numeric variables: 4
+    -   factor: 96
 
-    - discrete variables: 96 (here all factor variables)
-    
-    - continuous variables: 4 (here all numeric variables)
+        -   nominal variables: 29
 
+        -   ordinal variables: 67
+
+    -   numeric variables: 4
+
+        -   discrete variables: 96 (here all factor variables)
+
+        -   continuous variables: 4 (here all numeric variables)
 
 ### 3. Additional Data Preparation
+
 \
 question: would it introduce information leakage to reduce the features before splitting the data?
-
 
 ```{r check for constant or near zero variance features and eliminate them, include=FALSE, cache=TRUE}
 
@@ -273,13 +275,14 @@ rm(nzvFeatures, constantFeatureNames, constantFeatures, nzvFeatureNames)
 write_csv(RISK_reduced,"RISK_2000_3s_red.csv")
 ```
 
-
 #### 3.1 Feature Reduction
+
 \
 Since our dataset has lots of variables, we decided to start by excluding some variables depending on the estimated feature importance.
 
-#### 3.1.1 Correlations 
-\ 
+#### 3.1.1 Correlations
+
+ 
 
 Unfortunately at this point we have to many variables to do a pairs plot or correlation plot with a visually usable outcome. We will therefore perform a correlation analysis only with respect to the target variable and in numeric format instead of any visual plot.
 
@@ -329,26 +332,21 @@ plot_correlation(RISK_red)
 rm(sorted_corr_data, corr_data)
 ```
 
-
 ```{r, include=FALSE, cache=TRUE, eval=FALSE}
 print(corr_vars)
 ```
 
-The 18 variables with high correlations (>0.25) with our target variable are:
-`q19`, `q20`, `q24`, `q30`, `q34`, `q35`, `q36`, `q39`, `q41`, `q43`, `q44`, `q45`, `q46`, `q47`, `q64`, `q85`, `q93`, `q98`.
-
+The 18 variables with high correlations (\>0.25) with our target variable are: `q19`, `q20`, `q24`, `q30`, `q34`, `q35`, `q36`, `q39`, `q41`, `q43`, `q44`, `q45`, `q46`, `q47`, `q64`, `q85`, `q93`, `q98`.
 
 #### 3.1.2 Feature Selection Algorithm
+
 \
 
-Since the data still has a lot of variables, we need to use a feature selection technique to reduce the features before using a machine learning method. We chose to use model agnostic methods, because the feature selection should be valid for all methods that are later compared. In an earlier step the variables most correlated with the target variable were already identified. Unfortunately this captures only linear monotonous relationships in the data and does not work well for our nominal categorical features. 
+Since the data still has a lot of variables, we need to use a feature selection technique to reduce the features before using a machine learning method. We chose to use model agnostic methods, because the feature selection should be valid for all methods that are later compared. In an earlier step the variables most correlated with the target variable were already identified. Unfortunately this captures only linear monotonous relationships in the data and does not work well for our nominal categorical features.
 
 To capture non-linear relationships as well, information gain between the target and the predictor variables is measured as well. The variables with high information gain with respect to the target variable are kept, because they can contribute more in predicting the target variable.
 
-
-
 #### 3.1.3 Information gain for feature selection
-
 
 ```{r mutual information, include=FALSE, cache=TRUE}
 
@@ -375,8 +373,8 @@ named_top_20_features <- setNames(top_20_features , top_20_feature_names)
 print(named_top_20_features)
 rm(scores, sorted_scores, top_20_feature_names, top_20_features, feature_names)
 ```
-\ 
-Information Gain can be used in the construction of decision trees but also for feature selection [[3]](#3). Therefore the informtaion gain for each variable with regard to the target variable is calculated.
+
+  Information Gain can be used in the construction of decision trees but also for feature selection [[3]](#3). Therefore the informtaion gain for each variable with regard to the target variable is calculated.
 
 #### 3.1.4 Domain knowledge for final feature selection
 
@@ -385,9 +383,9 @@ setdiff(names(named_top_20_features), corr_vars)
 
 #note: q6orig and q7orig do not have descriptions in the data manual and were discarded
 ```
+
 \
-If we compare the features that came up in the correlation analysis and in the information gain calculations, we find only three meaningful variables that come up, "PSU", "q22" and "q40".
-According to the data manual, "PSUs consist of counties, groups of smaller adjacent counties, or sub-areas of very large counties. “PSU” indicates the PSU the school the student attends was assigned to." (p.14). It is possible, that the district/locality of a school plays a role in the risk of suicide. For example for queer students in a very religious place. Q22 is the variable that describes physical dating violence. Therefore q22 is also a valid choice as a predictor variable for our suicidal score target variable. Q40 encodes the range of age when a student first got into contact with drinking alcohol. This might be an indicator for a negligent social surrounding if someone is exposed to an alcoholic drink in an early age and therefore also could be a valid predictor variable in our case. We will use the intersection of our tests and also the three extra variables. 
+If we compare the features that came up in the correlation analysis and in the information gain calculations, we find only three meaningful variables that come up, "PSU", "q22" and "q40". According to the data manual, "PSUs consist of counties, groups of smaller adjacent counties, or sub-areas of very large counties. "PSU" indicates the PSU the school the student attends was assigned to." (p.14). It is possible, that the district/locality of a school plays a role in the risk of suicide. For example for queer students in a very religious place. Q22 is the variable that describes physical dating violence. Therefore q22 is also a valid choice as a predictor variable for our suicidal score target variable. Q40 encodes the range of age when a student first got into contact with drinking alcohol. This might be an indicator for a negligent social surrounding if someone is exposed to an alcoholic drink in an early age and therefore also could be a valid predictor variable in our case. We will use the intersection of our tests and also the three extra variables.
 
 ```{r setup final reduced dataframe, include=FALSE, cache=TRUE}
 
@@ -402,8 +400,8 @@ RISK_red<-RISK_reduced[,unlist(final_vars)]
 
 ```
 
-
 #### 3.2 Naming the variables and the factor levels
+
 \
 For an easy understanding of their values, the variables and levels are named according to their content. This is an optional step. Please uncomment the names.R file and source it if you want to name the encoded variables according to their content. It can lead to a better readability of our data frame.
 
@@ -413,12 +411,10 @@ rm(significant_vars, corr_vars, named_top_20_features, RISK_reduced)
 write_csv(RISK_red, "RISK_red.csv")
 ```
 
-
-
 #### 3.3 Splitting the Data
+
 \
-According to the project requirements we split our data in 60% Training, 20% Validation and 20% Testing Data. 
-Since we want to do a cross validation we will split into 80% Training and 20% Testing Data.
+According to the project requirements we split our data in 60% Training, 20% Validation and 20% Testing Data. Since we want to do a cross validation we will split into 80% Training and 20% Testing Data.
 
 ```{r splitting the data, include=FALSE, cache=TRUE}
 # import as dataframe
@@ -449,55 +445,40 @@ RISK_test <- RISK_red[inds$test, ]
 rm(inds)
 ```
 
-
-
 ### 4. Machine Learning Models
 
-
--> not linearly separable
--> chose models that are good in separating non-linear relationships
--> chose model preferably from ML2 (at least 1)
--> chose a model preferable with results that can be visualized 
+-\> not linearly separable -\> chose models that are good in separating non-linear relationships -\> chose model preferably from ML2 (at least 1) -\> chose a model preferable with results that can be visualized
 
 SVM and Naive Bayes
 
-
 #### 4.1 Short Mathematical Overview on the used Methods
+
 \
 
 #### 4.1.1 Naive Bayes Classification
-\ 
 
-Ideally a classifier is able to detect the class k which maximizes the conditional probability $P(Y=k|X=x_{1},...,x_{p})$. A Bayes Classifier would calculate these probabilities for each of the classes exactly, but usually it is only possible to approximate those. The Naive Bayes Classifier is one method of approximation. It  approximates by "naively" assuming the conditional independence of predictor variables. This leads to simpler calculations. The joint probability of two events A and B $P(A \cap B)= P(A \mid B) * P(B)$ can be simplified to $P(A \cap B)= P(A) * P(B)$ under the independence assumption, since conditional independence means $P(A \mid B) = P(A)$. The conditional probabilities of a class k can be calculated with the Bayes Theorem. It states that: $$P(k \mid X) = \frac {P(X\mid k) \cdot P(k)}{P(X)}$$
-Since the denominator only uses our predictor variables, we only need to focus on the nominator and find the maximum class for each observation to be classified. We can express this relationship with the proportionality operator:
-$$P(k|X) \propto P(X|k) \cdot P(k)$$
-At this point, the assumption of independent predictor variables simplifies the calculations if there is more than one predictor variable. Instead of calculating $P(k|x_{1},...,x_{p}) \propto P(x_{1},...,x_{p}|k) \cdot P(k)$ where $P(x_{1},...,x_{p}|k)$ is quite complicated to calculate because of all the possible dependencies among the variables, the independence assumption leads to: $$P(k|x_{1},...,x_{p}) \propto P(k) \cdot  \prod_{i=1}^{p} P(x_{i}|k) $$
+ 
+
+Ideally a classifier is able to detect the class k which maximizes the conditional probability $P(Y=k|X=x_{1},...,x_{p})$. A Bayes Classifier would calculate these probabilities for each of the classes exactly, but usually it is only possible to approximate those. The Naive Bayes Classifier is one method of approximation. It approximates by "naively" assuming the conditional independence of predictor variables. This leads to simpler calculations. The joint probability of two events A and B $P(A \cap B)= P(A \mid B) * P(B)$ can be simplified to $P(A \cap B)= P(A) * P(B)$ under the independence assumption, since conditional independence means $P(A \mid B) = P(A)$. The conditional probabilities of a class k can be calculated with the Bayes Theorem. It states that: $$P(k \mid X) = \frac {P(X\mid k) \cdot P(k)}{P(X)}$$ Since the denominator only uses our predictor variables, we only need to focus on the nominator and find the maximum class for each observation to be classified. We can express this relationship with the proportionality operator: $$P(k|X) \propto P(X|k) \cdot P(k)$$ At this point, the assumption of independent predictor variables simplifies the calculations if there is more than one predictor variable. Instead of calculating $P(k|x_{1},...,x_{p}) \propto P(x_{1},...,x_{p}|k) \cdot P(k)$ where $P(x_{1},...,x_{p}|k)$ is quite complicated to calculate because of all the possible dependencies among the variables, the independence assumption leads to: $$P(k|x_{1},...,x_{p}) \propto P(k) \cdot  \prod_{i=1}^{p} P(x_{i}|k) $$
 
 Often this yields good results even if the quite strong assumption of conditional independence is not met. If the dependencies do not contribute that much to the outcome, the approximation is still quite good.
 
 #### 4.1.2 Support Vector Machines (SVM)
-\ 
 
-The name Support Vector Machines already describes some elements of this method. A certain number of data points will define the (linear) boundary between two classification regions, these are called the support vectors. The support vectors are the datapoints (observations) that lie closest to our decision boundary. The boundary in two dimensional space is a line, in three dimensions a plane and in more than three dimensional space a hyperplane. For our dataset, we need a multidimensional hyperplane. The number of dimensions depend on the number of our predictor variables. We need to find the hyperplane, that separate our data into the classes of our target variable best. The best hyperplane is the one that maximizes the margin between the support vectors of the different classes. The margin is a strip on each of the boundaries sides. In the case of a hard classifier this strip does not contain any points. But we will have a soft classifier with the cost C as a hyperparameter. This cost C describes a budget that we allow for points within the margin or on the other side of the boundary. Depending on the position of the point, the amount it attributes to the total cost changes. A point on the correct side of the margin will not attribute to the total cost at all. If it is in the margin, but on the correct side of the boundary it will attribute between zero and one, if on the wrong side of the boundary but within the margin it will attribute with one to two and if on the wrong side of the margin it will cost more than two.
-Mathematically we need to maximize the Margin M with respect to $\alpha_{0}, \alpha_{i}$ and $\epsilon_{i}$ in the following objective function:
-$$y_{i}\left(\alpha_{0}+\sum_{j=1}^{n} \alpha_{i} K(\mathbf x_{i}, \mathbf x_{j})\right ) \ge M(1-\epsilon_{i})$$  The following constraints are given: $\sum_{i=1}^{n} \alpha_{i}^{2}=1$ , $\epsilon_{i} \ge 0$ and $\sum_{i=1}^{n} \epsilon_{i} < C$ with C $\ge 0$ and $i=1,...,n$
-\
+ 
+
+The name Support Vector Machines already describes some elements of this method. A certain number of data points will define the (linear) boundary between two classification regions, these are called the support vectors. The support vectors are the datapoints (observations) that lie closest to our decision boundary. The boundary in two dimensional space is a line, in three dimensions a plane and in more than three dimensional space a hyperplane. For our dataset, we need a multidimensional hyperplane. The number of dimensions depend on the number of our predictor variables. We need to find the hyperplane, that separate our data into the classes of our target variable best. The best hyperplane is the one that maximizes the margin between the support vectors of the different classes. The margin is a strip on each of the boundaries sides. In the case of a hard classifier this strip does not contain any points. But we will have a soft classifier with the cost C as a hyperparameter. This cost C describes a budget that we allow for points within the margin or on the other side of the boundary. Depending on the position of the point, the amount it attributes to the total cost changes. A point on the correct side of the margin will not attribute to the total cost at all. If it is in the margin, but on the correct side of the boundary it will attribute between zero and one, if on the wrong side of the boundary but within the margin it will attribute with one to two and if on the wrong side of the margin it will cost more than two. Mathematically we need to maximize the Margin M with respect to $\alpha_{0}, \alpha_{i}$ and $\epsilon_{i}$ in the following objective function: $$y_{i}\left(\alpha_{0}+\sum_{j=1}^{n} \alpha_{i} K(\mathbf x_{i}, \mathbf x_{j})\right ) \ge M(1-\epsilon_{i})$$ The following constraints are given: $\sum_{i=1}^{n} \alpha_{i}^{2}=1$ , $\epsilon_{i} \ge 0$ and $\sum_{i=1}^{n} \epsilon_{i} < C$ with C $\ge 0$ and $i=1,...,n$\
 
 For our SVM approach, we will try different kernels K as hyperparameters:
 
 \
-A linear Kernel $$ K(u,v) = \langle \mathbf u, \mathbf v \rangle = \sum_{j=1}^{p}u_{j}v_{j}$$
-a polynomial Kernel $$ K(u,v) = (c + \langle \mathbf u, \mathbf v \rangle)^{d}, \ with \ d > 1$$
-\
+A linear Kernel $$ K(u,v) = \langle \mathbf u, \mathbf v \rangle = \sum_{j=1}^{p}u_{j}v_{j}$$ a polynomial Kernel $$ K(u,v) = (c + \langle \mathbf u, \mathbf v \rangle)^{d}, \ with \ d > 1$$\
 and a radial Kernel $$ K(u,v)= \exp \left(-\gamma \sum_{i=1}^{p}(u_{i}-v_{i} \right)$$
 
-
-
 #### 4.2 Preprocessing
+
 \
-svm in R tutorial + nice visualization:
-https://www.datacamp.com/tutorial/support-vector-machines-r
-\
+svm in R tutorial + nice visualization: <https://www.datacamp.com/tutorial/support-vector-machines-r>\
 
 We scale the data as part of pre-processing. Scaling transforms the data to have unit variance, further contributing to uniformity across different scales and improving algorithm performance.
 
@@ -523,6 +504,11 @@ scaleDataset <- function(dataset){
 RISK_train$suicidal_class <- factor(RISK_train$suicidal_class, ordered = TRUE)
 RISK_test$suicidal_class <- factor(RISK_test$suicidal_class, ordered = TRUE)
 
+levels(RISK_train$suicidal_class) <- c("l1", "l2", "l3")
+RISK_train$suicidal_class <- factor(RISK_train$suicidal_class, ordered = TRUE)
+levels(RISK_test$suicidal_class) <- c("l1", "l2", "l3")
+RISK_test$suicidal_class <- factor(RISK_test$suicidal_class, ordered = TRUE)
+
 RISK_train$Stratum <- NULL
 RISK_train$Prob <- NULL
 scaledRISK_train <- scaleDataset(RISK_train)
@@ -531,28 +517,17 @@ scaledRISK_test <- scaleDataset(RISK_test)
 
 ```
 
-
-
 #### 4.3 Hyperparameter Optimization
+
 \
-Hyperparameter Optimization (HPO) enables the testing of various hyperparameter combinations to identify the optimal settings that maximize our target evaluation metric, namely the model's accuracy. The grid search method allows for the exhaustive pairing of each hyperparameter with every other, albeit at a significant computational cost. This approach, however, offers the advantage of explicitly specifying the values for testing. 
-\
-Additional to scaling we also use centering as a part of preprocessing. Centering the data ensures that each feature has a mean of zero. This is particularly useful when features are on different scales and can improve the performance by removing bias due to the scale of the features. 
+Hyperparameter Optimization (HPO) enables the testing of various hyperparameter combinations to identify the optimal settings that maximize our target evaluation metric, namely the model's accuracy. The grid search method allows for the exhaustive pairing of each hyperparameter with every other, albeit at a significant computational cost. This approach, however, offers the advantage of explicitly specifying the values for testing.\
+Additional to scaling we also use centering as a part of preprocessing. Centering the data ensures that each feature has a mean of zero. This is particularly useful when features are on different scales and can improve the performance by removing bias due to the scale of the features.
 
 ##### 4.3.1 HPO of Naive Bayes
 
 \
-Naive Bayes is quite simple and only has one hyperparameter that we need to consider:
-the use of Laplace smoothing. The type of Naive Bayes model is automatically estimated by our package (naivebayes). 
-\
-Laplace smoothing is used to obtain "more smooth" class distribution and avoid zero probabilities.
-It is a numeric parameter. We examine three common values for that parameter: 0 (leading to Max-likelihood estimation), 0.5 and 1.
-
-```{r rename target levels, include=FALSE, cache=TRUE}
-# rename target levels 
-levels(scaledRISK_train$suicidal_class) <- c("l1", "l2", "l3")
-scaledRISK_train$suicidal_class <- factor(scaledRISK_train$suicidal_class, ordered = TRUE)
-```
+Naive Bayes is quite simple and only has one hyperparameter that we need to consider: the use of Laplace smoothing. The type of Naive Bayes model is automatically estimated by our package (naivebayes).\
+Laplace smoothing is used to obtain "more smooth" class distribution and avoid zero probabilities. It is a numeric parameter. We examine three common values for that parameter: 0 (leading to Max-likelihood estimation), 0.5 and 1.
 
 ```{r training naive bayes, include=FALSE, cache=TRUE}
 
@@ -586,7 +561,7 @@ saveRDS(model_nb, file = "model_nb.rda")
 
 ```
 
-Given the list of all resulting models, coming from the HPO of the Naive Bayes, we extract the best model for further inspection and results using Accuracy as our focused metric. Since our classes are balanced, Accuracy is the preferred testing metric. 
+Given the list of all resulting models, coming from the HPO of the Naive Bayes, we extract the best model for further inspection and results using Accuracy as our focused metric. Since our classes are balanced, Accuracy is the preferred testing metric.
 
 ```{r metrics calc nb, include=FALSE, cache=TRUE, eval=FALSE}
 
@@ -603,6 +578,7 @@ nb_model_accuracy <- extract_best_accuracy(model_nb)
 nb_best_hyperparameters <- model_nb$bestTune
 
 nb_best_model <- model_nb$finalModel
+saveRDS(nb_best_model, file = "nb_best_model.rda")
 
 # Print the name and details of the best model
 print(paste("Laplace smoothing value of the best model is:", nb_best_model$tuneValue$fL))
@@ -611,24 +587,18 @@ print(nb_best_model)
 
 According to our HPO the best value for the Laplace Smoothing is 0. This means that a smoothing term is not helpful in our case. The automatic bayes model type configuration gives us a gaussian naive bayes model.
 
-
 ```{r plot cross-val hpo results, echo=FALSE, cache=TRUE}
 plot(nb_best_model)
 #print(nb_best_model)
 ```
 
-
 ##### 4.3.2 HPO of SVM
-\
-For the SVM we examine three distinct kernel types - linear, radial, and polynomial - each characterized by unique parameters, in addition to the common cost parameter.
-\
-Kernel and the cost parameter C have a significantly impact on the model's performance and need to be tuned carefully.
-\
-Additionally to scaling we're also centering the data, which involves subtracting the mean from each feature, ensuring that each feature has a mean of zero. This is particularly useful when features are on different scales and can improve the performance of support vector machines by removing bias due to the scale of the features. 
-For programming purposes we use the build-in preProcess parameter of the train function where the training data is automatically scaled and centered.
-\
-A large value of C leads to points within the margin or on the other side of the boundary being heavily penalized so there are few points in the margin/missclassified (Lecture 7, p.5)
 
+\
+For the SVM we examine three distinct kernel types - linear, radial, and polynomial - each characterized by unique parameters, in addition to the common cost parameter.\
+Kernel and the cost parameter C have a significantly impact on the model's performance and need to be tuned carefully.\
+Additionally to scaling we're also centering the data, which involves subtracting the mean from each feature, ensuring that each feature has a mean of zero. This is particularly useful when features are on different scales and can improve the performance of support vector machines by removing bias due to the scale of the features. For programming purposes we use the build-in preProcess parameter of the train function where the training data is automatically scaled and centered.\
+A large value of C leads to points within the margin or on the other side of the boundary being heavily penalized so there are few points in the margin/missclassified (Lecture 7, p.5)
 
 ```{r training svm, include=FALSE, cache=TRUE}
 
@@ -682,8 +652,7 @@ svm_models <- list(linear = model_linear, radial = model_radial, polynomial = mo
 
 ```
 
-Given the list of all resulting models, coming from the HPO of the SVM, we extract the best model for further inspection and results using Accuracy as our focused metric.
-Since our classes are balanced, Accuracy is the preferred testing metric. 
+Given the list of all resulting models, coming from the HPO of the SVM, we extract the best model for further inspection and results using Accuracy as our focused metric. Since our classes are balanced, Accuracy is the preferred testing metric.
 
 ```{r metrics calc svm, include=FALSE, cache=TRUE, eval=FALSE}
 
@@ -720,30 +689,31 @@ saveRDS(svm_best_model, file = "svm_best_model.rda")
 plot(svm_best_model_m)
 ```
 
-
-
 ### 5. Comparison of the Models / Model's Performance on Test Data
+
 \
 if one model performs better, is this improvement significant to a usual significance level?
 
-#### 5.1 Quantitative 
+#### 5.1 Quantitative
 
 ##### 5.1.1 Confusion Matrix
+
 \
-###### 5.1.1.2 Naive Bayes
-\
+\###### 5.1.1.1 Naive Bayes\
+
 ```{r Confusion Matrix of Naive Bayes,echo=FALSE, cache=TRUE}
 scaledRISK_test_no_target <- scaledRISK_test[, !names(scaledRISK_test) %in% c("suicidal_class")]
-# TODO:
-# nb_best_model_pred <- predict(nb_best_model, scaledRISK_test_no_target)
 
-# table(nb_best_model_pred, scaledRISK_test$suicidal_class, dnn=c("Prediction", "Actual"))   
-# confusionMatrix(table(nb_best_model_pred, scaledRISK_test$suicidal_class))
+nb_best_model_pred <- predict(nb_best_model, scaledRISK_test_no_target)
+
+table(nb_best_model_pred, scaledRISK_test$suicidal_class, dnn=c("Prediction", "Actual"))   
+confusionMatrix(table(nb_best_model_pred, scaledRISK_test$suicidal_class))
 ```
 
+###### 5.1.1.2 SVM
 
-###### 5.1.1.2 SVM 
 \
+
 ```{r Confusion Matrix of SVM,echo=FALSE, cache=TRUE}
 svm_best_model <- readRDS("svm_best_model.rda")
 
@@ -761,23 +731,55 @@ svm_best_model_pred
 table(svm_best_model_pred, svm_actual, dnn=c("Prediction", "Actual"))   
 confusionMatrix(table(svm_best_model_pred, svm_actual))
 ```
-Given the Confusion Matrix we can see a Accuracy of around 60% meaning the predictions are around 60% correct. 
----> todo:
-In this context, a p-value of less than 2.2e−16 for the hypothesis that "Accuracy is greater than No Information Rate" suggests that there is extremely strong statistical evidence that the accuracy of the model is better than what would be achieved by always predicting the most frequent class. This implies that the model has predictive power beyond mere chance and is effectively learning from the features in the dataset.
 
+Given the Confusion Matrix we can see a Accuracy of around 60% meaning the predictions are around 60% correct. ---\> todo: In this context, a p-value of less than 2.2e−16 for the hypothesis that "Accuracy is greater than No Information Rate" suggests that there is extremely strong statistical evidence that the accuracy of the model is better than what would be achieved by always predicting the most frequent class. This implies that the model has predictive power beyond mere chance and is effectively learning from the features in the dataset.
 
 ##### 5.1.2 Precision, Recall and F1-Score
+
 \
-###### 5.1.2.1 Naive Bayes
-\
-###### 5.1.2.2 SVM 
+\###### 5.1.2.1 Naive Bayes\
+
+```{r nb multiclass metrics, echo=FALSE, cache=TRUE}
+library(mltest)
+
+classifier_metrics <- ml_test(nb_best_model_pred, scaledRISK_test$suicidal_class, output.as.table = FALSE)
+
+# overall classification accuracy
+# accuracy <- classifier_metrics$accuracy
+
+# F1-measures for classes "cat", "dog" and "rat"
+NB_F1 <- classifier_metrics$F1
+
+# tabular view of the metrics (except for 'accuracy' and 'error.rate')
+nb_classifier_metrics <- ml_test(nb_best_model_pred, scaledRISK_test$suicidal_class, output.as.table = TRUE)
+
+# cat(paste("Recall:  ", classifier_metrics$recall, "\nPrecision:", classifier_metrics$precision, "\nF1:      ", SVM_F1, "\n"))
+
+# multiclass metrics inspired by: https://rdrr.io/cran/mltest/man/ml_test.html
+
+# Assuming the classes are "cat", "dog", and "rat"
+class_names <- c("no risk (1)", "low to moderate risk (2)", "high risk (3)")
+
+# Assuming classifier_metrics has metrics in the same order as class_names
+for (i in 1:length(class_names)) {
+    cat(paste("Class:", class_names[i], "\n"))
+    cat(paste("  Recall:   ", nb_classifier_metrics$recall[i], "\n"))
+    cat(paste("  Precision:", nb_classifier_metrics$precision[i], "\n"))
+    cat(paste("  F1:       ", NB_F1[i], "\n"))
+    cat("\n") # Adds a blank line for readability
+}
+
+```
+
+###### 5.1.2.2 SVM
+
 \
 
-Since we have a multi class classification problem, we also evaluate our metrics separately for each of our classes. 
+Since we have a multi class classification problem, we also evaluate our metrics separately for each of our classes.
 
 todo: check why confusion matrix output above gives different results...
 
-```{r multiclass metrics, echo=FALSE, cache=TRUE}
+```{r svm multiclass metrics, echo=FALSE, cache=TRUE}
 library(mltest)
 
 classifier_metrics <- ml_test(svm_best_model_pred, svm_actual, output.as.table = FALSE)
@@ -791,11 +793,8 @@ SVM_F1 <- classifier_metrics$F1
 # tabular view of the metrics (except for 'accuracy' and 'error.rate')
 classifier_metrics <- ml_test(svm_best_model_pred, svm_actual, output.as.table = TRUE)
 
-# cat(paste("Recall:  ", classifier_metrics$recall, "\nPrecision:", classifier_metrics$precision, "\nF1:      ", SVM_F1, "\n"))
-
 # multiclass metrics inspired by: https://rdrr.io/cran/mltest/man/ml_test.html
 
-# Assuming the classes are "cat", "dog", and "rat"
 class_names <- c("no risk (1)", "low to moderate risk (2)", "high risk (3)")
 
 # Assuming classifier_metrics has metrics in the same order as class_names
@@ -810,10 +809,35 @@ for (i in 1:length(class_names)) {
 ```
 
 #### 5.2 Qualitative
+
 \
 We will compare our results with the results of svm models for non-scaled data.
 
-##### 5.2.2 SVM without scaling 
+##### 5.2.1 NB without scaling
+
+```{r NB no scaling, echo=FALSE, cache=TRUE, eval=FALSE}
+set.seed(0)  # set the seed
+
+# Train models for each kernel
+model_nb <- train_nb(RISK_train)
+
+# Output the best model's performance
+
+nb_model_no_sc_accuracy <- extract_best_accuracy(model_nb)
+
+# Extract the best hyperparameters
+nb_no_sc_best_hyperparameters <- model_nb$bestTune
+```
+
+The best performing nb model on the non-scaled data is:
+
+```{r plot best model performance, echo=FALSE, cache=TRUE}
+# Print the name and details of the best model
+# print(svm_no_sc_best_model)
+plot(model_nb$finalModel)
+```
+
+##### 5.2.2 SVM without scaling
 
 ```{r SVM no scaling, echo=FALSE, cache=TRUE, eval=FALSE}
 set.seed(0)  # set the seed
@@ -844,18 +868,18 @@ The best performing svm model on the non-scaled data is:
 plot(svm_no_sc_best_model)
 ```
 
+#### 5.3 Overfitting
 
-#### 5.3 Overfitting 
 \
-Overfitting is a frequent problem in machine learning. It happens when a model learns the training data too well, including all its quirks and noise. As a result, its ability to generalize weakens. When the model is tested with new data, its performance often drops significantly. This is because it's overly tuned to the training data and doesn't adapt well to new, unseen data. We take a number of measures trying to prevent overfitting on our training data.
-\
-By employing Cross-Validation (CV) and utilizing a range of performance metrics such as recall, precision, and F1-score, we try to avoid overfitting in our models. Additionally, our experiments with different kernels reveal that the linear kernel maintains robust performance, even when compared to the more complex radial and polynomial kernels. Prior to modeling, we also took the precaution of reducing the number of features, which further diminishes the risk of overfitting. Moreover, setting the cost parameter C to a moderate level – in our case, 1, which is the default value – lessens the likelihood of overfitting. Considering these factors collectively, we are confident that our models are unlikely to overfit on our training data.
-
+Overfitting is a frequent problem in machine learning. It happens when a model learns the training data too well, including all its quirks and noise. As a result, its ability to generalize weakens. When the model is tested with new data, its performance often drops significantly. This is because it's overly tuned to the training data and doesn't adapt well to new, unseen data. We take a number of measures trying to prevent overfitting on our training data.\
+By employing Cross-Validation (CV) and utilizing a range of performance metrics such as recall, precision, and F1-score, we try to avoid overfitting in our models. Additionally, our experiments with different kernels reveal that the linear kernel maintains robust performance, even when compared to the more complex radial and polynomial kernels. Prior to modeling, we also took the precaution of reducing the number of features, which further diminishes the risk of overfitting. Moreover, setting the cost parameter C to a moderate level -- in our case, 1, which is the default value -- lessens the likelihood of overfitting. Considering these factors collectively, we are confident that our models are unlikely to overfit on our training data.
 
 ##### 5.3.1 Naive Bayes
+
 \
 
 ##### 5.3.2 SVM
+
 ```{r Train and Test curve of SVM, echo=FALSE, cache=TRUE, include=FALSE}
 # read the models:
 model_linear <- readRDS("model_linear.rda")
@@ -884,18 +908,26 @@ To further visually assess our classifier we plot the ROC curves for our classes
 
 #### 5.4.2 ROC for best Naive Bayes Model
 
-todo
+```{r ROC curves, include=FALSE, cache=TRUE }
+library(pROC)
+
+# get predictions from best model
+nb_best_model_pred <- predict(nb_best_model, scaledRISK_test_no_target, type = "prob")
+
+# binarize output
+testing_res_binary <- model.matrix(~ scaledRISK_test$suicidal_class - 1)
+
+roc_multiclass <- multiclass.roc(response = scaledRISK_test$suicidal_class, predictor = nb_best_model_pred,
+                                 levels = c("l1", "l2", "l3"))
+
+rs <- roc_multiclass[['rocs']]
+
+# TODO: plot roc curves
+```
 
 #### 5.4.2 ROC for best SVM model
 
-To plot the ROC curves, we need to get the probabilities for our model predictions.
-Since we set a seed, we can retrain on our best model and its hyperparameters to get the probabilities. Unfortunately, this was not possible as an upstream task.
-```{r rename target levels, include=FALSE, cache=TRUE}
-# rename target levels 
-levels(scaledRISK_train$suicidal_class) <- c("l1", "l2", "l3")
-scaledRISK_train$suicidal_class <- factor(scaledRISK_train$suicidal_class, ordered = TRUE)
-```
-todo:
+To plot the ROC curves, we need to get the probabilities for our model predictions. Since we set a seed, we can retrain on our best model and its hyperparameters to get the probabilities. Unfortunately, this was not possible as an upstream task. todo:
 
 ```{r ROC curves, include=FALSE, cache=TRUE }
 library(pROC)
@@ -933,6 +965,7 @@ for(i in 1:ncol(testing_res_binary)) {
 }
 
 ```
+
 ```{r plotting and saving the ROC curves, echo=FALSE, cache=TRUE}
 # ** this code snipped is created with the help of AI** ##
 # Set up the PNG output
@@ -954,19 +987,15 @@ dev.off()
 ## ** end of AI created code snipped ** 
 ```
 
-
-
-
 ### 6. Visual Representation
 
-
 ### 7. Final Discussion
+
 After training, testing, and interpreting our final machine learning models, it becomes evident that these models do not achieve the necessary accuracy for practical application, particularly given the critical nature of the target variable.
 
 Misclassifying individuals, especially those at high risk of suicide, can lead to dire consequences. When someone at moderate to high risk (Class 3) is incorrectly categorized as low to moderate risk (Class 2) or no risk (Class 1), they may not receive the urgent care and intervention they need.
 
 Furthermore, it's crucial to understand that accuracy alone is not a sufficient metric in this context. Both Type I (False Positive) and Type II (False Negative) Errors need to be carefully considered. Here, Type II Errors are of greater significance than Type I Errors. While Type I errors might result in over-treatment or undue anxiety, Type II errors are more serious as they could lead to a lack of necessary support for individuals at high risk of suicide. Therefore, it is essential to particularly focus on minimizing Type II errors in predictive models dealing with mental health and suicide risk.
-
 
 ### 8. References
 

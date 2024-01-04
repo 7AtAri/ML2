@@ -4,6 +4,7 @@
 
 # Function to safely convert to factor if the column exists
 safely_convert_to_factor <- function(df, column_name, ordered = FALSE) {
+  column_name
   if (column_name %in% names(df)) {
     df[[column_name]] <- factor(df[[column_name]], ordered = ordered)
   }
@@ -48,6 +49,7 @@ convert_columns_to_factors <- function(dataframe_name) {
     "q46", "marijuana_age", # q46 renamed to marijuana_age
     "q47", "marijuana_30d", # q47 renamed to marijuana_30d
     "q48", "marijuana_synth_30d", # q48 renamed to marijuana_synth_30d
+    "q65", "Sexual_identity",# q65 renamed to Sexual_identity
     "q93", "Mental_health_during_pandemic", # q93 renamed to Mental_health_during_pandemic
     "q98", "Difficulty_concentrating", # q98 renamed to Difficulty_concentrating
     "q85", "Current_mental_health", # q85 renamed to Current_mental_health

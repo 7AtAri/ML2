@@ -357,6 +357,8 @@ To capture non-linear relationships as well, information gain between the target
 ```{r mutual information, include=FALSE, cache=TRUE}
 
 set.seed(0)  # set the seed
+RISK_2000_3$Stratum <- NULL 
+RISK_2000_3$Prob <- NULL
 
 # compute information gain
 scores <- information.gain(suicidal_class ~ ., RISK_2000_3)
@@ -377,7 +379,7 @@ top_20_feature_names <- feature_names[order(-scores$attr_importance)[1:20]]
 named_top_20_features <- setNames(top_20_features , top_20_feature_names)
 
 print(named_top_20_features)
-rm(scores, sorted_scores, top_20_feature_names, top_20_features, feature_names)
+rm(scores, sorted_scores, top_20_features, feature_names)
 ```
 \ 
 Information Gain can be used in the construction of decision trees but also for feature selection [[3]](#3). Therefore the information gain for each variable with regard to the target variable is calculated.
@@ -509,6 +511,8 @@ https://www.datacamp.com/tutorial/support-vector-machines-r
 
 We scale the data as part of pre-processing. Scaling transforms the data to have unit variance, further contributing to uniformity across different scales and improving algorithm performance.
 
+Nevertheless our extracted top features consist only of (ordered) factors. But for the case of increasing the amount of features we keep the scaling function and apply it anyways. After that we check for constant variables. 
+
 ```{r scaling and normalizing, include=FALSE, cache=TRUE}
 
 set.seed(0)  # set the seed for the shuffling
@@ -536,8 +540,12 @@ RISK_train$Prob <- NULL
 scaledRISK_train <- scaleDataset(RISK_train)
 scaledRISK_test <- scaleDataset(RISK_test)
 levels(scaledRISK_train$suicidal_class) <- c("l1", "l2", "l3")
+levels(scaledRISK_test$suicidal_class) <- c("l1", "l2", "l3")
 scaledRISK_train$suicidal_class <- factor(scaledRISK_train$suicidal_class, ordered = TRUE)
+scaledRISK_test$suicidal_class <- factor(scaledRISK_test$suicidal_class, ordered = TRUE)
 
+constant_vars <- sapply(scaledRISK_train, function(x) all(duplicated(x)[-1L]))
+constant_vars
 ```
 
 
@@ -558,11 +566,6 @@ the use of Laplace smoothing. The type of Naive Bayes model is automatically est
 Laplace smoothing is used to obtain "more smooth" class distribution and avoid zero probabilities.
 It is a numeric parameter. We examine three common values for that parameter: 0 (leading to Max-likelihood estimation), 0.5 and 1.
 
-```{r rename target levels, include=FALSE, cache=TRUE}
-# rename target levels 
-levels(scaledRISK_train$suicidal_class) <- c("l1", "l2", "l3")
-scaledRISK_train$suicidal_class <- factor(scaledRISK_train$suicidal_class, ordered = TRUE)
-```
 
 ```{r training naive bayes, include=FALSE, cache=TRUE}
 
@@ -652,7 +655,7 @@ library(caret)
 
 
 # linear kernel
-C <- c(0.1, 1, 10, 100)
+C <- c(0.01, 0.1, 1, 10)
 
 grid_linear <- expand.grid(.C = C)
 
@@ -726,40 +729,41 @@ cat(paste("Best hyperparameters for the model with", svm_best_model_name, "kerne
 # Print the name and details of the best model
 print(paste("Best performing model is:", svm_best_model_name))
 print(svm_best_model)
+print(paste("Accuracy:", max(svm_model_accuracies)))
 saveRDS(svm_best_model, file = "svm_best_model.rda")
 
 ```
 
-```{r plot cross-val hpo results svm, echo=FALSE, cache=TRUE}
-
-#set.seed(0)
-#library(caret)
-#svm_best_model <- readRDS("svm_best_model.rda")
-#plot(svm_best_model)
-```
-
-
 
 ### 5. Comparison of the Models / Model's Performance on Test Data
 \
-if one model performs better, is this improvement significant to a usual significance level?
 
 #### 5.1 Quantitative 
 \
 
 ##### 5.1.1 Confusion Matrix
+<<<<<<< HEAD
 \
+=======
+
+
+A confusion matrix is a fundamental tool in statistical classification and machine learning, used to visualize the performance of an algorithm. It's a table used to describe the performance of a classification model on a set of test data for which the true values are known. Here’s a brief overview of its components:
+
+From the confusion matrix, various metrics such as accuracy, precision, recall (sensitivity), and F1-score can be calculated to evaluate the model’s performance. These metrics provide insights into aspects like how many instances are correctly classified, the balance between the sensitivity and precision of the model, and the overall effectiveness of the classifier.
+>>>>>>> 1a48df55b958d8d61a13dadf19bec679009fd3fc
 
 ###### 5.1.1.2 Naive Bayes
 \
 
 ```{r Confusion Matrix of Naive Bayes,echo=FALSE, cache=TRUE}
+set.seed(0)
+library(caret)
+nb_best_model <- readRDS("nb_best_model.rda")
 scaledRISK_test_no_target <- scaledRISK_test[, !names(scaledRISK_test) %in% c("suicidal_class")]
+
+
 # TODO:
 nb_best_model_pred <- predict(nb_best_model, scaledRISK_test_no_target)
-
-levels(scaledRISK_test$suicidal_class) <- c("l1", "l2", "l3")
-scaledRISK_test$suicidal_class <- factor(scaledRISK_test$suicidal_class, ordered = TRUE)
 
 table(nb_best_model_pred, scaledRISK_test$suicidal_class, dnn=c("Prediction", "Actual"))   
 
@@ -776,8 +780,6 @@ svm_best_model <- readRDS("svm_best_model.rda")
 
 scaledRISK_test_no_target <- scaledRISK_test[, !names(scaledRISK_test) %in% c("suicidal_class")]
 
-scaledRISK_test_no_target$Stratum <- NULL
-scaledRISK_test_no_target$Prob <- NULL
 svm_best_model_pred <- predict(svm_best_model, newdata=scaledRISK_test_no_target)
 table(svm_best_model_pred, scaledRISK_test$suicidal_class, dnn=c("Prediction", "Actual"))   
 confusionMatrix(table(svm_best_model_pred, scaledRISK_test$suicidal_class))
@@ -786,6 +788,23 @@ Given the Confusion Matrix we can see a Accuracy of around 60% meaning the predi
 \
 ---> todo:
 In this context, a p-value of less than 2.2e−16 for the hypothesis that "Accuracy is greater than No Information Rate" suggests that there is extremely strong statistical evidence that the accuracy of the model is better than what would be achieved by always predicting the most frequent class. This implies that the model has predictive power beyond mere chance and is effectively learning from the features in the dataset.
+
+```{r plot svm, echo=FALSE, cache=TRUE}
+
+set.seed(0)
+library(caret)
+svm_best_model <- readRDS("svm_best_model.rda")
+
+plot(svm_best_model, scaledRISK_train, col = svm_best_model_pred)
+
+
+library(ggplot2)
+
+# Assuming 'test_data' contains your test features and 'svm_pred' are the predictions
+ggplot() +
+  geom_point(data = test_data, aes(x = feature1, y = feature2, color = svm_pred)) +
+  # Add additional layers for decision boundaries, support vectors, etc.
+```
 
 
 ##### 5.1.2 Precision, Recall and F1-Score
@@ -985,6 +1004,8 @@ dev.off()
 
 
 ### 6. Visual Representation
+/ 
+todo: try to make svm plot (link above from Ari)
 
 
 ### 7. Final Discussion
@@ -993,7 +1014,16 @@ After training, testing, and interpreting our final machine learning models, it 
 Misclassifying individuals, especially those at high risk of suicide, can lead to dire consequences. When someone at moderate to high risk (Class 3) is incorrectly categorized as low to moderate risk (Class 2) or no risk (Class 1), they may not receive the urgent care and intervention they need.
 
 Furthermore, it's crucial to understand that accuracy alone is not a sufficient metric in this context. Both Type I (False Positive) and Type II (False Negative) Errors need to be carefully considered. Here, Type II Errors are of greater significance than Type I Errors. While Type I errors might result in over-treatment or undue anxiety, Type II errors are more serious as they could lead to a lack of necessary support for individuals at high risk of suicide. Therefore, it is essential to particularly focus on minimizing Type II errors in predictive models dealing with mental health and suicide risk.
-
+\
+Given that the current models are not meeting the necessary standards, it's imperative to investigate other machine learning models. Each model has its strengths and weaknesses, and finding the right fit for your specific dataset is crucial. This exploration could include models that are potentially more adept at handling imbalanced datasets or complex patterns.
+\
+The method of handling missing data can significantly impact model performance. Current imputation techniques may be leading to the selection of non-representative features, adversely affecting the model's predictive ability. Testing different imputation methods could help in identifying more descriptive features, thereby enhancing model accuracy. This aspect might warrant a separate project due to its complexity and potential impact.
+\
+Introducing an additional category in the target variable for missing responses is a thoughtful consideration. However, the underlying reasons for non-responses to questions about suicide need careful analysis. These missing responses could indicate a range of possibilities, from a lack of concern about the subject (possibly classifiable as low risk) to a reluctance to discuss a sensitive topic (potentially indicative of moderate to high risk). Understanding the nuances behind these non-responses is crucial for accurate classification.
+\
+The current dataset size of 2000 observations may be insufficient for training robust models. A larger and more comprehensive dataset could significantly improve model performance. However, this expansion was not feasible in your current project due to computational limitations and project scope. For future iterations of the project, seeking larger datasets or finding ways to augment the existing dataset could be highly beneficial.
+\
+Overall, these proposed measures aim to address the current limitations and enhance the predictive power of your models, which is vital given the serious implications of misclassifying individuals at risk of suicide.
 
 ### 8. References
 

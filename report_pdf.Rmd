@@ -534,7 +534,9 @@ RISK_train$Prob <- NULL
 scaledRISK_train <- scaleDataset(RISK_train)
 scaledRISK_test <- scaleDataset(RISK_test)
 levels(scaledRISK_train$suicidal_class) <- c("l1", "l2", "l3")
+levels(scaledRISK_test$suicidal_class) <- c("l1", "l2", "l3")
 scaledRISK_train$suicidal_class <- factor(scaledRISK_train$suicidal_class, ordered = TRUE)
+scaledRISK_test$suicidal_class <- factor(scaledRISK_test$suicidal_class, ordered = TRUE)
 
 ```
 
@@ -730,7 +732,8 @@ saveRDS(svm_best_model, file = "svm_best_model.rda")
 set.seed(0)
 library(caret)
 svm_best_model <- readRDS("svm_best_model.rda")
-plot(svm_best_model, )
+
+#plot(svm_best_model, )
 ```
 
 
@@ -747,11 +750,9 @@ if one model performs better, is this improvement significant to a usual signifi
 \
 ```{r Confusion Matrix of Naive Bayes,echo=FALSE, cache=TRUE}
 scaledRISK_test_no_target <- scaledRISK_test[, !names(scaledRISK_test) %in% c("suicidal_class")]
+
 # TODO:
 nb_best_model_pred <- predict(nb_best_model, scaledRISK_test_no_target)
-
-levels(scaledRISK_test$suicidal_class) <- c("l1", "l2", "l3")
-scaledRISK_test$suicidal_class <- factor(scaledRISK_test$suicidal_class, ordered = TRUE)
 
 table(nb_best_model_pred, scaledRISK_test$suicidal_class, dnn=c("Prediction", "Actual"))   
 
@@ -966,6 +967,8 @@ dev.off()
 
 
 ### 6. Visual Representation
+/ 
+todo: try to make svm plot (link above from Ari)
 
 
 ### 7. Final Discussion
@@ -974,7 +977,16 @@ After training, testing, and interpreting our final machine learning models, it 
 Misclassifying individuals, especially those at high risk of suicide, can lead to dire consequences. When someone at moderate to high risk (Class 3) is incorrectly categorized as low to moderate risk (Class 2) or no risk (Class 1), they may not receive the urgent care and intervention they need.
 
 Furthermore, it's crucial to understand that accuracy alone is not a sufficient metric in this context. Both Type I (False Positive) and Type II (False Negative) Errors need to be carefully considered. Here, Type II Errors are of greater significance than Type I Errors. While Type I errors might result in over-treatment or undue anxiety, Type II errors are more serious as they could lead to a lack of necessary support for individuals at high risk of suicide. Therefore, it is essential to particularly focus on minimizing Type II errors in predictive models dealing with mental health and suicide risk.
-
+\
+Given that the current models are not meeting the necessary standards, it's imperative to investigate other machine learning models. Each model has its strengths and weaknesses, and finding the right fit for your specific dataset is crucial. This exploration could include models that are potentially more adept at handling imbalanced datasets or complex patterns.
+\
+The method of handling missing data can significantly impact model performance. Current imputation techniques may be leading to the selection of non-representative features, adversely affecting the model's predictive ability. Testing different imputation methods could help in identifying more descriptive features, thereby enhancing model accuracy. This aspect might warrant a separate project due to its complexity and potential impact.
+\
+Introducing an additional category in the target variable for missing responses is a thoughtful consideration. However, the underlying reasons for non-responses to questions about suicide need careful analysis. These missing responses could indicate a range of possibilities, from a lack of concern about the subject (possibly classifiable as low risk) to a reluctance to discuss a sensitive topic (potentially indicative of moderate to high risk). Understanding the nuances behind these non-responses is crucial for accurate classification.
+\
+The current dataset size of 2000 observations may be insufficient for training robust models. A larger and more comprehensive dataset could significantly improve model performance. However, this expansion was not feasible in your current project due to computational limitations and project scope. For future iterations of the project, seeking larger datasets or finding ways to augment the existing dataset could be highly beneficial.
+\
+Overall, these proposed measures aim to address the current limitations and enhance the predictive power of your models, which is vital given the serious implications of misclassifying individuals at risk of suicide.
 
 ### 8. References
 

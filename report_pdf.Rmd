@@ -742,15 +742,11 @@ saveRDS(svm_best_model, file = "svm_best_model.rda")
 \
 
 ##### 5.1.1 Confusion Matrix
-<<<<<<< HEAD
-\
-=======
-
 
 A confusion matrix is a fundamental tool in statistical classification and machine learning, used to visualize the performance of an algorithm. It's a table used to describe the performance of a classification model on a set of test data for which the true values are known. Here’s a brief overview of its components:
 
 From the confusion matrix, various metrics such as accuracy, precision, recall (sensitivity), and F1-score can be calculated to evaluate the model’s performance. These metrics provide insights into aspects like how many instances are correctly classified, the balance between the sensitivity and precision of the model, and the overall effectiveness of the classifier.
->>>>>>> 1a48df55b958d8d61a13dadf19bec679009fd3fc
+
 
 ###### 5.1.1.2 Naive Bayes
 \

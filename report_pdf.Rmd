@@ -353,6 +353,8 @@ To capture non-linear relationships as well, information gain between the target
 ```{r mutual information, include=FALSE, cache=TRUE}
 
 set.seed(0)  # set the seed
+RISK_2000_3$Stratum <- NULL 
+RISK_2000_3$Prob <- NULL
 
 # compute information gain
 scores <- information.gain(suicidal_class ~ ., RISK_2000_3)
@@ -373,7 +375,7 @@ top_20_feature_names <- feature_names[order(-scores$attr_importance)[1:20]]
 named_top_20_features <- setNames(top_20_features , top_20_feature_names)
 
 print(named_top_20_features)
-rm(scores, sorted_scores, top_20_feature_names, feature_names)
+rm(scores, sorted_scores, top_20_features, feature_names)
 ```
 \ 
 Information Gain can be used in the construction of decision trees but also for feature selection [[3]](#3). Therefore the informtaion gain for each variable with regard to the target variable is calculated.
@@ -501,6 +503,8 @@ https://www.datacamp.com/tutorial/support-vector-machines-r
 
 We scale the data as part of pre-processing. Scaling transforms the data to have unit variance, further contributing to uniformity across different scales and improving algorithm performance.
 
+Nevertheless our extracted top features consist only of (ordered) factors. But for the case of increasing the amount of features we keep the scaling function and apply it anyways. After that we check for constant variables. 
+
 ```{r scaling and normalizing, include=FALSE, cache=TRUE}
 
 set.seed(0)  # set the seed for the shuffling
@@ -520,12 +524,6 @@ scaleDataset <- function(dataset){
   return (scaledDataset)
 }
 
-source("factorize.R")
-
-# Use the function for a specific dataframe
-RISK_train <- convert_columns_to_factors("RISK_train")
-RISK_test <- convert_columns_to_factors("RISK_test")
-
 RISK_train$suicidal_class <- factor(RISK_train$suicidal_class, ordered = TRUE)
 RISK_test$suicidal_class <- factor(RISK_test$suicidal_class, ordered = TRUE)
 
@@ -538,6 +536,8 @@ levels(scaledRISK_test$suicidal_class) <- c("l1", "l2", "l3")
 scaledRISK_train$suicidal_class <- factor(scaledRISK_train$suicidal_class, ordered = TRUE)
 scaledRISK_test$suicidal_class <- factor(scaledRISK_test$suicidal_class, ordered = TRUE)
 
+constant_vars <- sapply(scaledRISK_train, function(x) all(duplicated(x)[-1L]))
+constant_vars
 ```
 
 
@@ -557,11 +557,6 @@ the use of Laplace smoothing. The type of Naive Bayes model is automatically est
 Laplace smoothing is used to obtain "more smooth" class distribution and avoid zero probabilities.
 It is a numeric parameter. We examine three common values for that parameter: 0 (leading to Max-likelihood estimation), 0.5 and 1.
 
-```{r rename target levels, include=FALSE, cache=TRUE}
-# rename target levels 
-levels(scaledRISK_train$suicidal_class) <- c("l1", "l2", "l3")
-scaledRISK_train$suicidal_class <- factor(scaledRISK_train$suicidal_class, ordered = TRUE)
-```
 
 ```{r training naive bayes, include=FALSE, cache=TRUE}
 
@@ -649,7 +644,7 @@ library(caret)
 
 
 # linear kernel
-C <- c(0.1, 1, 10, 100)
+C <- c(0.01, 0.1, 1, 10)
 
 grid_linear <- expand.grid(.C = C)
 
@@ -723,33 +718,32 @@ cat(paste("Best hyperparameters for the model with", svm_best_model_name, "kerne
 # Print the name and details of the best model
 print(paste("Best performing model is:", svm_best_model_name))
 print(svm_best_model)
+print(paste("Accuracy:", max(svm_model_accuracies)))
 saveRDS(svm_best_model, file = "svm_best_model.rda")
 
 ```
 
-```{r plot cross-val hpo results svm, echo=FALSE, cache=TRUE}
-
-set.seed(0)
-library(caret)
-svm_best_model <- readRDS("svm_best_model.rda")
-
-#plot(svm_best_model, )
-```
-
-
 
 ### 5. Comparison of the Models / Model's Performance on Test Data
 \
-if one model performs better, is this improvement significant to a usual significance level?
 
 #### 5.1 Quantitative 
 
 ##### 5.1.1 Confusion Matrix
-\
+
+
+A confusion matrix is a fundamental tool in statistical classification and machine learning, used to visualize the performance of an algorithm. It's a table used to describe the performance of a classification model on a set of test data for which the true values are known. Here’s a brief overview of its components:
+
+From the confusion matrix, various metrics such as accuracy, precision, recall (sensitivity), and F1-score can be calculated to evaluate the model’s performance. These metrics provide insights into aspects like how many instances are correctly classified, the balance between the sensitivity and precision of the model, and the overall effectiveness of the classifier.
+
 ###### 5.1.1.2 Naive Bayes
 \
 ```{r Confusion Matrix of Naive Bayes,echo=FALSE, cache=TRUE}
+set.seed(0)
+library(caret)
+nb_best_model <- readRDS("nb_best_model.rda")
 scaledRISK_test_no_target <- scaledRISK_test[, !names(scaledRISK_test) %in% c("suicidal_class")]
+
 
 # TODO:
 nb_best_model_pred <- predict(nb_best_model, scaledRISK_test_no_target)
@@ -768,8 +762,6 @@ svm_best_model <- readRDS("svm_best_model.rda")
 
 scaledRISK_test_no_target <- scaledRISK_test[, !names(scaledRISK_test) %in% c("suicidal_class")]
 
-scaledRISK_test_no_target$Stratum <- NULL
-scaledRISK_test_no_target$Prob <- NULL
 svm_best_model_pred <- predict(svm_best_model, newdata=scaledRISK_test_no_target)
 table(svm_best_model_pred, scaledRISK_test$suicidal_class, dnn=c("Prediction", "Actual"))   
 confusionMatrix(table(svm_best_model_pred, scaledRISK_test$suicidal_class))
@@ -777,6 +769,23 @@ confusionMatrix(table(svm_best_model_pred, scaledRISK_test$suicidal_class))
 Given the Confusion Matrix we can see a Accuracy of around 60% meaning the predictions are around 60% correct. 
 ---> todo:
 In this context, a p-value of less than 2.2e−16 for the hypothesis that "Accuracy is greater than No Information Rate" suggests that there is extremely strong statistical evidence that the accuracy of the model is better than what would be achieved by always predicting the most frequent class. This implies that the model has predictive power beyond mere chance and is effectively learning from the features in the dataset.
+
+```{r plot svm, echo=FALSE, cache=TRUE}
+
+set.seed(0)
+library(caret)
+svm_best_model <- readRDS("svm_best_model.rda")
+
+plot(svm_best_model, scaledRISK_train, col = svm_best_model_pred)
+
+
+library(ggplot2)
+
+# Assuming 'test_data' contains your test features and 'svm_pred' are the predictions
+ggplot() +
+  geom_point(data = test_data, aes(x = feature1, y = feature2, color = svm_pred)) +
+  # Add additional layers for decision boundaries, support vectors, etc.
+```
 
 
 ##### 5.1.2 Precision, Recall and F1-Score

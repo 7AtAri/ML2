@@ -71,9 +71,11 @@ na_ratio<-sum(is.na(RISK)==TRUE)/(dim(RISK)[1]*dim(RISK)[2])# ratio of NAs among
 print(na_ratio*100) # % percentage of NAs in data
 sum(is.na(RISK)==TRUE) # sum of NAs in dataset
 ```
-We will first exclude all the observations with NAs in all the target-related variables q25 to q29. Since we want to build our target variable on these questions, the target variable cannot all be empty. The amount of data available should be enough to just exclude these observations. After removing the observations that have NAs in all the variables, that are used to create our target variable, we still have around 13.7% NAs in the dataset.
+We will first exclude all the observations with NAs in all the target-related variables q25 to q29. Since we want to build our target variable on these questions, the target variable cannot all be empty. Since our target variable will be a score indicating the risk of suicide among teenagers, unfortunately it is probably not helpful for any relevant application of our Machine Learning model to define a specific missing category for the NAs related in the target variable, as discussed in the lecture.
 \
-What if we had just excluded every NA in the dataset? We will try and see if this is a viable option, since this woul not just be quick and easy, but we would also just have "real" answers. The exclusion of NAs leads to a severe reduction in the number of observations. The original data consisted of 17232 observations, after reducing the target-related NAs only, we have 11753 observations left. If we omit all NAs, the reduced dataframe still has 4334 observations.
+The amount of data available should be enough to just exclude these observations. After removing the observations that have NAs in all the variables, that are used to create our target variable, we still have around 13.7% NAs in the dataset.
+\
+What if we had just excluded every NA in the dataset? We will try and see if this is a viable option, since this woul not just be quick and easy, but we would also just have "real" answers. The exclusion of NAs leads to a severe reduction in the number of observations. The original data consisted of 17232 observations, if we reduce the target-related NAs only, we have 11753 observations left. If we omit all NAs, the reduced dataframe has 4334 observations.
 \
 
 ```{r check exclude NAs, include=FALSE, cache=TRUE}
@@ -92,13 +94,15 @@ table(RISK$q28)/17138
 sum(is.na(RISK$q28)==TRUE)/17138
 ```
 
-#### 2.2.2 Omitting NAs vs Data Imputation
-\
+#### 2.2.2 Discussion on omitting NAs vs data imputation for the target variable
 
-If we can omit the NAs or if it may be necessary to impute the missing data points, depends on the type of missingness. If data is missing completely at random (MCAR), we can omit the NAs, if it is just missing at random (MAR) we would rather impute the data. If the data is missing not at random (MNAR), it would be a quite difficult problem because we cannot easily impute the missing data then. To find out if we can just omit the data, an MCAR test was applied. 
+\
+If we can omit the NAs or if it may be necessary to impute the missing data points, in general depends on the type of missingness. If data is missing completely at random (MCAR), we can omit the NAs, if it is just missing at random (MAR) we would rather impute the data. If the data is missing not at random (MNAR), it would be a quite difficult problem because we cannot easily impute the missing data then. To find out if we can just omit the data without introducing any bias, an MCAR test was applied. 
 \
 We test the target-related variables q25 to q29 for potential pattern(s) in the target related missing data. This results in a p-value of 0, which indicates, that the data is not missing completely at random. Omitting all NAs can be problematic and lead to bias.
-But imputing the target variable related data may be quite challenging and out of the scope of this project. We therefore decide to nevertheless drop the target related NAs.
+\
+But imputing the target variable related data may be an arguable choice and quite challenging to do well. We therefore decide to use the information at hand to decide for a class of the target variable, starting with the most severe question (q29 to q25). This means we check if q29 ("If you attempted suicide...") was answered positively. If yes, we use the answer for the labeling, if not, we check the next less severe question to base our choice of class label on and so on. This means that NAs are treated similar than answering negatively to the question. We hope to introduce less bias this way. 
+
 
 ```{r MCAR test for target columns, cache=TRUE}
 result <- mcar_test(RISK[, c("q25", "q26", "q27", "q28", "q29")])
@@ -115,7 +119,7 @@ plot_missing(RISK[80:100])
 plot_missing(RISK)
 ```
 
-We will use a rule base approach to create the target variable and impute the predictive variables afterwards. To ensure a good imputation, we need to impute our NAs before reducing the dataset to 2000 observations. To run the imputation properly we need to factorize our nominal and ordinal variables first.
+We will use a rule base approach as described to create the target variable and impute the predictive variables afterwards. To ensure a good imputation, we need to impute our NAs before reducing the dataset to 2000 observations. To run the imputation properly we need to factorize our nominal and ordinal variables first.
 \
 
 #### 2.3 Target Variable
@@ -132,12 +136,13 @@ RISK_num$q28 <- as.numeric(RISK_num$q28)
 RISK_num$q29 <- as.numeric(RISK_num$q29)
 
 # TODO: think about reducing to 3 classes 
-RISK_s3 <- RISK_num
+RISK_s3 <- RISK_num 
 RISK_s3$suicidal_class <- ifelse(RISK_s3$q29 > 1, 3,
                           ifelse(RISK_s3$q28 > 1, 3, 
                           ifelse(RISK_s3$q27 == 1, 3,
                           ifelse(RISK_s3$q26 == 1, 2,
-                          ifelse(RISK_s3$q25 == 1, 2, 1)))))
+                          ifelse(RISK_s3$q25 == 1, 2,
+                                                  1)))))
 
 RISK_s5 <- RISK_s3 %>% 
   mutate(suicidal_class = ifelse(q29 > 1,   5, # 3
@@ -235,8 +240,6 @@ variable_types[variable_types$skim_type=="numeric",]
 
 ### 3. Additional Data Preparation
 \
-question: would it introduce information leakage to reduce the features before splitting the data?
-
 
 ```{r check for constant or near zero variance features and eliminate them, include=FALSE, cache=TRUE}
 
@@ -276,6 +279,7 @@ write_csv(RISK_reduced,"RISK_2000_3s_red.csv")
 
 #### 3.1 Feature Reduction
 \
+
 Since our dataset has lots of variables, we decided to start by excluding some variables depending on the estimated feature importance.
 
 #### 3.1.1 Correlations 
@@ -348,7 +352,7 @@ To capture non-linear relationships as well, information gain between the target
 
 
 #### 3.1.3 Information gain for feature selection
-
+\
 
 ```{r mutual information, include=FALSE, cache=TRUE}
 
@@ -376,16 +380,17 @@ print(named_top_20_features)
 rm(scores, sorted_scores, top_20_feature_names, top_20_features, feature_names)
 ```
 \ 
-Information Gain can be used in the construction of decision trees but also for feature selection [[3]](#3). Therefore the informtaion gain for each variable with regard to the target variable is calculated.
+Information Gain can be used in the construction of decision trees but also for feature selection [[3]](#3). Therefore the information gain for each variable with regard to the target variable is calculated.
 
 #### 3.1.4 Domain knowledge for final feature selection
 
-```{r difference between correlation and information gain feature selection,echo=FALSE, cache=TRUE}
+```{r difference between correlation and information gain feature selection,echo=FALSE, include=FALSE, cache=TRUE}
 setdiff(names(named_top_20_features), corr_vars)
 
 #note: q6orig and q7orig do not have descriptions in the data manual and were discarded
 ```
 \
+
 If we compare the features that came up in the correlation analysis and in the information gain calculations, we find only three meaningful variables that come up, "PSU", "q22" and "q40".
 According to the data manual, "PSUs consist of counties, groups of smaller adjacent counties, or sub-areas of very large counties. “PSU” indicates the PSU the school the student attends was assigned to." (p.14). It is possible, that the district/locality of a school plays a role in the risk of suicide. For example for queer students in a very religious place. Q22 is the variable that describes physical dating violence. Therefore q22 is also a valid choice as a predictor variable for our suicidal score target variable. Q40 encodes the range of age when a student first got into contact with drinking alcohol. This might be an indicator for a negligent social surrounding if someone is exposed to an alcoholic drink in an early age and therefore also could be a valid predictor variable in our case. We will use the intersection of our tests and also the three extra variables. 
 
@@ -405,6 +410,7 @@ RISK_red<-RISK_reduced[,unlist(final_vars)]
 
 #### 3.2 Naming the variables and the factor levels
 \
+
 For an easy understanding of their values, the variables and levels are named according to their content. This is an optional step. Please uncomment the names.R file and source it if you want to name the encoded variables according to their content. It can lead to a better readability of our data frame.
 
 ```{r naming variables, include=FALSE, cache=TRUE}
@@ -417,6 +423,7 @@ write_csv(RISK_red, "RISK_red.csv")
 
 #### 3.3 Splitting the Data
 \
+
 According to the project requirements we split our data in 60% Training, 20% Validation and 20% Testing Data. 
 Since we want to do a cross validation we will split into 80% Training and 20% Testing Data.
 
@@ -426,23 +433,26 @@ Since we want to do a cross validation we will split into 80% Training and 20% T
 set.seed(0)  # set the seed
 RISK_red <- read_csv("RISK_red.csv", show_col_types = FALSE)
 
+print(sapply(RISK_red, class))
+
+
 # Source the factor conversion file
 source("factorize.R")
 
 # Use the function for a specific dataframe
-RISK_red <- convert_columns_to_factors("RISK_red")
+RISK_red_new <- convert_columns_to_factors("RISK_red")
 
 # ensure stratum and prob are not in the dataframe
-RISK_red$Stratum <- NULL
-RISK_red$Prob <- NULL
+RISK_red_new$Stratum <- NULL
+RISK_red_new$Prob <- NULL
 
 # https://cran.r-project.org/web/packages/splitTools/vignettes/splitTools.html
-inds <- partition(RISK_red$suicidal_class, p = c(train = 0.8, test = 0.2))
+inds <- partition(RISK_red_new$suicidal_class, p = c(train = 0.8, test = 0.2))
 
 # since we cross-validate for HPO and RFE, we will combine the test and val dataset
-RISK_train <- RISK_red[inds$train, ]
+RISK_train <- RISK_red_new[inds$train, ]
 
-RISK_test <- RISK_red[inds$test, ]
+RISK_test <- RISK_red_new[inds$test, ]
 
 
 
@@ -454,16 +464,11 @@ rm(inds)
 ### 4. Machine Learning Models
 
 
--> not linearly separable
--> chose models that are good in separating non-linear relationships
--> chose model preferably from ML2 (at least 1)
--> chose a model preferable with results that can be visualized 
-
-SVM and Naive Bayes
-
-
 #### 4.1 Short Mathematical Overview on the used Methods
 \
+
+In the following section we describe the two methods used for our machine learning project.
+
 
 #### 4.1.1 Naive Bayes Classification
 \ 
@@ -474,6 +479,7 @@ $$P(k|X) \propto P(X|k) \cdot P(k)$$
 At this point, the assumption of independent predictor variables simplifies the calculations if there is more than one predictor variable. Instead of calculating $P(k|x_{1},...,x_{p}) \propto P(x_{1},...,x_{p}|k) \cdot P(k)$ where $P(x_{1},...,x_{p}|k)$ is quite complicated to calculate because of all the possible dependencies among the variables, the independence assumption leads to: $$P(k|x_{1},...,x_{p}) \propto P(k) \cdot  \prod_{i=1}^{p} P(x_{i}|k) $$
 
 Often this yields good results even if the quite strong assumption of conditional independence is not met. If the dependencies do not contribute that much to the outcome, the approximation is still quite good.
+\
 
 #### 4.1.2 Support Vector Machines (SVM)
 \ 
@@ -495,6 +501,8 @@ and a radial Kernel $$ K(u,v)= \exp \left(-\gamma \sum_{i=1}^{p}(u_{i}-v_{i} \ri
 
 #### 4.2 Preprocessing
 \
+
+todo maluna:
 svm in R tutorial + nice visualization:
 https://www.datacamp.com/tutorial/support-vector-machines-r
 \
@@ -536,13 +544,14 @@ scaledRISK_train$suicidal_class <- factor(scaledRISK_train$suicidal_class, order
 
 #### 4.3 Hyperparameter Optimization
 \
+
 Hyperparameter Optimization (HPO) enables the testing of various hyperparameter combinations to identify the optimal settings that maximize our target evaluation metric, namely the model's accuracy. The grid search method allows for the exhaustive pairing of each hyperparameter with every other, albeit at a significant computational cost. This approach, however, offers the advantage of explicitly specifying the values for testing. 
 \
 Additional to scaling we also use centering as a part of preprocessing. Centering the data ensures that each feature has a mean of zero. This is particularly useful when features are on different scales and can improve the performance by removing bias due to the scale of the features. 
 
 ##### 4.3.1 HPO of Naive Bayes
-
 \
+
 Naive Bayes is quite simple and only has one hyperparameter that we need to consider:
 the use of Laplace smoothing. The type of Naive Bayes model is automatically estimated by our package (naivebayes). 
 \
@@ -614,8 +623,9 @@ saveRDS(nb_best_model, "nb_best_model.rda")
 According to our HPO the best value for the Laplace Smoothing is 0. This means that a smoothing term is not helpful in our case. The automatic bayes model type configuration gives us a gaussian naive bayes model.
 
 
-```{r plot cross-val hpo results, echo=FALSE, cache=TRUE}
+```{r plot cross-val hpo results, echo=FALSE, cache=TRUE, fig.width=11, fig.height=8}
 nb_best_model <- readRDS("nb_best_model.rda")
+par(mfrow=c(4,5))
 plot(nb_best_model)
 #print(nb_best_model)
 ```
@@ -623,6 +633,7 @@ plot(nb_best_model)
 
 ##### 4.3.2 HPO of SVM
 \
+
 For the SVM we examine three distinct kernel types - linear, radial, and polynomial - each characterized by unique parameters, in addition to the common cost parameter.
 \
 Kernel and the cost parameter C have a significantly impact on the model's performance and need to be tuned carefully.
@@ -734,11 +745,14 @@ saveRDS(svm_best_model, file = "svm_best_model.rda")
 if one model performs better, is this improvement significant to a usual significance level?
 
 #### 5.1 Quantitative 
+\
 
 ##### 5.1.1 Confusion Matrix
 \
+
 ###### 5.1.1.2 Naive Bayes
 \
+
 ```{r Confusion Matrix of Naive Bayes,echo=FALSE, cache=TRUE}
 scaledRISK_test_no_target <- scaledRISK_test[, !names(scaledRISK_test) %in% c("suicidal_class")]
 # TODO:
@@ -756,6 +770,7 @@ confusionMatrix(table(nb_best_model_pred, scaledRISK_test$suicidal_class))
 
 ###### 5.1.1.2 SVM 
 \
+
 ```{r Confusion Matrix of SVM,echo=FALSE, cache=TRUE}
 svm_best_model <- readRDS("svm_best_model.rda")
 
@@ -768,14 +783,18 @@ table(svm_best_model_pred, scaledRISK_test$suicidal_class, dnn=c("Prediction", "
 confusionMatrix(table(svm_best_model_pred, scaledRISK_test$suicidal_class))
 ```
 Given the Confusion Matrix we can see a Accuracy of around 60% meaning the predictions are around 60% correct. 
+\
 ---> todo:
 In this context, a p-value of less than 2.2e−16 for the hypothesis that "Accuracy is greater than No Information Rate" suggests that there is extremely strong statistical evidence that the accuracy of the model is better than what would be achieved by always predicting the most frequent class. This implies that the model has predictive power beyond mere chance and is effectively learning from the features in the dataset.
 
 
 ##### 5.1.2 Precision, Recall and F1-Score
 \
+
+
 ###### 5.1.2.1 Naive Bayes
 \
+
 ###### 5.1.2.2 SVM 
 \
 
@@ -817,6 +836,7 @@ for (i in 1:length(class_names)) {
 
 #### 5.2 Qualitative
 \
+
 We will compare our results with the results of svm models for non-scaled data.
 
 ##### 5.2.2 SVM without scaling 
@@ -843,12 +863,14 @@ svm_no_sc_best_hyperparameters <- svm_no_sc_best_model$bestTune
 
 plot(svm_no_sc_best_model$finalModel)
 ```
+\
 
 The best performing svm model on the non-scaled data is:
 
 
 #### 5.3 Overfitting 
 \
+
 Overfitting is a frequent problem in machine learning. It happens when a model learns the training data too well, including all its quirks and noise. As a result, its ability to generalize weakens. When the model is tested with new data, its performance often drops significantly. This is because it's overly tuned to the training data and doesn't adapt well to new, unseen data. We take a number of measures trying to prevent overfitting on our training data.
 \
 By employing Cross-Validation (CV) and utilizing a range of performance metrics such as recall, precision, and F1-score, we try to avoid overfitting in our models. Additionally, our experiments with different kernels reveal that the linear kernel maintains robust performance, even when compared to the more complex radial and polynomial kernels. Prior to modeling, we also took the precaution of reducing the number of features, which further diminishes the risk of overfitting. Moreover, setting the cost parameter C to a moderate level – in our case, 1, which is the default value – lessens the likelihood of overfitting. Considering these factors collectively, we are confident that our models are unlikely to overfit on our training data.
@@ -881,14 +903,17 @@ head(performance_linear$resampling)
 ```
 
 #### 5.4 ROC
+\
 
 To further visually assess our classifier we plot the ROC curves for our classes.
 
 #### 5.4.2 ROC for best Naive Bayes Model
+\
 
 todo
 
 #### 5.4.2 ROC for best SVM model
+\
 
 To plot the ROC curves, we need to get the probabilities for our model predictions.
 Since we set a seed, we can retrain on our best model and its hyperparameters to get the probabilities. Unfortunately, this was not possible as an upstream task.
@@ -897,9 +922,9 @@ Since we set a seed, we can retrain on our best model and its hyperparameters to
 levels(scaledRISK_train$suicidal_class) <- c("l1", "l2", "l3")
 scaledRISK_train$suicidal_class <- factor(scaledRISK_train$suicidal_class, ordered = TRUE)
 ```
-todo:
 
-```{r ROC curves, include=FALSE, cache=TRUE }
+
+```{r ROC curves, include=FALSE, echo=FALSE, cache=TRUE, eval=FALSE }
 library(pROC)
 library(nnet)  
 
@@ -956,7 +981,7 @@ dev.off()
 ## ** end of AI created code snipped ** 
 ```
 
-
+![SVM](roc_curves.png)
 
 
 ### 6. Visual Representation

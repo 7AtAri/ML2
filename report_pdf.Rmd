@@ -373,7 +373,7 @@ top_20_feature_names <- feature_names[order(-scores$attr_importance)[1:20]]
 named_top_20_features <- setNames(top_20_features , top_20_feature_names)
 
 print(named_top_20_features)
-rm(scores, sorted_scores, top_20_feature_names, top_20_features, feature_names)
+rm(scores, sorted_scores, top_20_feature_names, feature_names)
 ```
 \ 
 Information Gain can be used in the construction of decision trees but also for feature selection [[3]](#3). Therefore the informtaion gain for each variable with regard to the target variable is calculated.
@@ -519,6 +519,12 @@ scaleDataset <- function(dataset){
   scaledDataset <- cbind(scaled_num_cols, other_cols)
   return (scaledDataset)
 }
+
+source("factorize.R")
+
+# Use the function for a specific dataframe
+RISK_train <- convert_columns_to_factors("RISK_train")
+RISK_test <- convert_columns_to_factors("RISK_test")
 
 RISK_train$suicidal_class <- factor(RISK_train$suicidal_class, ordered = TRUE)
 RISK_test$suicidal_class <- factor(RISK_test$suicidal_class, ordered = TRUE)
@@ -721,10 +727,10 @@ saveRDS(svm_best_model, file = "svm_best_model.rda")
 
 ```{r plot cross-val hpo results svm, echo=FALSE, cache=TRUE}
 
-#set.seed(0)
-#library(caret)
-#svm_best_model <- readRDS("svm_best_model.rda")
-#plot(svm_best_model)
+set.seed(0)
+library(caret)
+svm_best_model <- readRDS("svm_best_model.rda")
+plot(svm_best_model, )
 ```
 
 

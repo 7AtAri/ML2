@@ -403,6 +403,7 @@ According to the data manual, "PSUs consist of counties, groups of smaller adjac
 # set up final variables
 final_vars<-c("q40", "suicidal_class", "q58", "q35", intersect(names(named_top_20_features), corr_vars))
 #final_vars<-c("psu", "q40", "q22", "suicidal_class", intersect(names(named_top_20_features), corr_vars))
+final_vars_names <-  
 final_vars$Stratum <- NULL
 final_vars$Prob <- NULL
 print(final_vars)
@@ -418,12 +419,13 @@ RISK_red<-RISK_reduced[,unlist(final_vars)]
 
 For an easy understanding of their values, the variables and levels are named according to their content. This is an optional step. Please uncomment the names.R file and source it if you want to name the encoded variables according to their content. It can lead to a better readability of our data frame.
 
-```{r naming variables, include=FALSE, cache=TRUE}
+```{r naming variables, include=FALSE, cache=TRUE, echo=FALSE}
 source("names.R") 
-rm(significant_vars, corr_vars, named_top_20_features, RISK_reduced)
+rm(significant_vars, corr_vars, named_top_20_features)
 write_csv(RISK_red, "RISK_red.csv")
+names(RISK_reduced)
 ```
-
+The above printed variable names, are the one left from feature selecting and name-mapping. "alcohol_age"
 #### 3.3 Splitting the Data
 
 \
@@ -555,8 +557,6 @@ constant_vars <- sapply(scaledRISK_train, function(x) all(duplicated(x)[-1L]))
 \
 
 Hyperparameter Optimization (HPO) enables the testing of various hyperparameter combinations to identify the optimal settings that maximize our target evaluation metric, namely the model's accuracy. The grid search method allows for the exhaustive pairing of each hyperparameter with every other, albeit at a significant computational cost. This approach, however, offers the advantage of explicitly specifying the values for testing. 
-\
-Additional to scaling we also use centering as a part of preprocessing. Centering the data ensures that each feature has a mean of zero. This is particularly useful when features are on different scales and can improve the performance by removing bias due to the scale of the features. 
 
 ##### 4.3.1 HPO of Naive Bayes
 \
@@ -636,22 +636,22 @@ For the SVM we examine three distinct kernel types - linear, radial, and polynom
 \
 Kernel and the cost parameter C have a significantly impact on the model's performance and need to be tuned carefully.
 \
-Additionally to scaling we're also centering the data, which involves subtracting the mean from each feature, ensuring that each feature has a mean of zero. This is particularly useful when features are on different scales and can improve the performance of support vector machines by removing bias due to the scale of the features. 
-For programming purposes we use the build-in preProcess parameter of the train function where the training data is automatically scaled and centered.
+Numerical values were already scaled, if they exist in the database, we set scale to FALSE. Using 5-fold cross validation testing different hyperparameters for each kernel with grid search. 
 \
 A large value of C leads to points within the margin or on the other side of the boundary being heavily penalized so there are few points in the margin/missclassified (Lecture 7, p.5)
 
 ```{r training svm, include=FALSE, cache=TRUE, warning=FALSE}
 set.seed(0)  # set the seed
-
+library(e1071)
 # linear kernel
-C <- c(0.001, 0.01, 0.1, 1, 10)
+C <- c(0.01, 0.1, 1, 10)
 gamma.range = (2^seq(-5, 0, 1))
 
 
 # Train models for each kernel
 model_linear <- tune.svm(suicidal_class ~., data = scaledRISK_train, method = "svmLinear", cost = C, scale=FALSE, cross=5)
-model_radial <- tune.svm(suicidal_class ~., data = scaledRISK_train, method = "svmRadial",cross=5, cost = C, gamma = gamma.range, scale=FALSE)
+model_radial <- tune.svm(suicidal_class ~., data = scaledRISK_train, method = "svmRadial",cross=5, cost = C,
+                         gamma = gamma.range, scale=FALSE)
 model_poly <-  tune.svm(suicidal_class ~., data = scaledRISK_train, method = "svmPoly", cross=5,cost = C,degree = c(1, 2, 3, 4), gamma = gamma.range, scale=FALSE)
 
 # save all models
@@ -662,14 +662,13 @@ saveRDS(model_poly, file = "models_poly.rda")
 svm_models <- list(linear = model_linear, radial = model_radial, polynomial = model_poly)
 ```
 
-Given the list of all resulting models, coming from the HPO of the SVM, we extract the best model for further inspection and results using Accuracy as our focused metric. Since our classes are balanced, Accuracy is the preferred testing metric.
+Here we also create a list of all resulting models, coming from the HPO of the SVM, the best model is identified and evaluated with different performance metrics. The tuned models contain the parameter $best.performance, which gives the classification error. The Accuracy can be calculated with 1 - classification eror. 
 
 ```{r metrics calc svm, include=FALSE, cache=TRUE, eval=FALSE}
 
-# Function to extract the best accuracy from each model
+# Function to extract the best accuracy from each model which states the classification error as performance measure. Accuracy = 1- classification error
 extract_best_accuracy <- function(model) {
-    max_accuracy <- max(model$best.performance)
-    print(max_accuracy)
+    max_accuracy <- 1- model$best.performance
     return(max_accuracy)
 }
 
@@ -691,12 +690,14 @@ cat(paste("Best hyperparameters for the model with", svm_best_model_name, "kerne
 
 # Print the name and details of the best model
 print(paste("Best performing model is:", svm_best_model_name))
-print(svm_best_model)
+svm_best_model
 print(paste("Accuracy:", max(svm_model_accuracies)))
 saveRDS(svm_best_model, file = "svm_best_model.rda")
 
 ```
-
+The best model was trained with a polynomial kernel, cost factor of 1 (which is also the default and a balanced approach) and  gamma value of 0.0312 suggests that the influence of each training example is moderate. Higher values would lead to narrower, more complex decision boundaries, while lower values result in broader, simpler decision boundaries.
+The degree of the polynomial kernel is set to 1. This means the polynomial kernel effectively becomes linear as it's raised only to the first power. Taking the best linear kernel having nearly the same accuracy, this is not surprising.
+With a degree of 1, the polynomial kernel equation simplifies to a linear relationship between the features. This suggests that, despite choosing a polynomial kernel, the model is using a linear decision boundary.
 
 ### 5. Comparison of the Models / Model's Performance on Test Data
 
@@ -735,10 +736,10 @@ confusionMatrix(table(nb_best_model_pred$class, scaledRISK_test$suicidal_class))
 
 \
 
-```{r Confusion Matrix of SVM,echo=FALSE, cache=TRUE}
+```{r Confusion Matrix of SVM,echo=FALSE, cache=TRUE, include=TRUE}
 set.seed(0) 
 
-#svm_best_model <- readRDS("svm_best_model.rda")
+svm_best_model <- readRDS("svm_best_model.rda")
 
 
 scaledRISK_test_no_target <- scaledRISK_test[, !names(scaledRISK_test) %in% c("suicidal_class")]
@@ -747,10 +748,7 @@ svm_best_model_pred <- predict(svm_best_model, scaledRISK_test_no_target)
 table(svm_best_model_pred, scaledRISK_test$suicidal_class, dnn=c("Prediction", "Actual"))   
 confusionMatrix(table(svm_best_model_pred, scaledRISK_test$suicidal_class))
 ```
-Given the Confusion Matrix we can see a Accuracy of around 60% meaning the predictions are around 60% correct. 
-\
----> todo:
-In this context, a p-value of less than 2.2e−16 for the hypothesis that "Accuracy is greater than No Information Rate" suggests that there is extremely strong statistical evidence that the accuracy of the model is better than what would be achieved by always predicting the most frequent class. This implies that the model has predictive power beyond mere chance and is effectively learning from the features in the dataset.
+Given the Confusion Matrix we can see a Accuracy of around 63.68% for the test data. The 95% confidence interval suggests that true accuracy of the model is likely between 58.77% and 68.39%. In this context, a p-value of less than 2.2e−16 for the hypothesis that "Accuracy is greater than No Information Rate" suggests that there is extremely strong statistical evidence that the accuracy of the model is better than what would be achieved by always random guessing (33%). This implies that the model has predictive power beyond mere chance and is effectively learning from the features in the dataset.
 
 ```{r plot svm, echo=FALSE, cache=TRUE}
 
@@ -758,18 +756,9 @@ set.seed(0)
 #library(caret)
 #svm_best_model <- readRDS("svm_best_model.rda")
 
-plot(svm_best_model, scaledRISK_train, col = svm_best_model_pred)
-
-
-library(ggplot2)
-
-# Assuming 'test_data' contains your test features and 'svm_pred' are the predictions
-ggplot() +
-  geom_point(data = test_data, aes(x = feature1, y = feature2, color = svm_pred)) +
-  # Add additional layers for decision boundaries, support vectors, etc.
+summary(svm_best_model)
 ```
 
-Given the Confusion Matrix we can see a Accuracy of around 60% meaning the predictions are around 60% correct. ---\> todo: In this context, a p-value of less than 2.2e−16 for the hypothesis that "Accuracy is greater than No Information Rate" suggests that there is extremely strong statistical evidence that the accuracy of the model is better than what would be achieved by always predicting the most frequent class. This implies that the model has predictive power beyond mere chance and is effectively learning from the features in the dataset.
 
 ##### 5.1.2 Precision, Recall and F1-Score
 
@@ -820,7 +809,7 @@ Since we have a multi class classification problem, we also evaluate our metrics
 
 todo: check why confusion matrix output above gives different results...
 
-```{r svm multiclass metrics, echo=FALSE, cache=TRUE}
+```{r svm multiclass metrics, echo=FALSE, cache=TRUE, include=TRUE}
 library(mltest)
 
 classifier_metrics <- ml_test(svm_best_model_pred, scaledRISK_test$suicidal_class, output.as.table = FALSE)
@@ -850,7 +839,12 @@ for (i in 1:length(class_names)) {
 }
 
 ```
+The classifier performs best for the "no risk" category, showing high effectiveness in both identifying actual no-risk cases and in ensuring that most of its no-risk predictions are correct.
+For "low to moderate risk" and "high risk" categories, the performance is moderate. The model is less effective in correctly identifying actual cases and ensuring the correctness of its predictions in these risk categories compared to the no-risk category.
+The F1 scores for all classes reflect a balance between recall and precision, but they highlight that the model is more reliable in identifying "no risk" cases than "low to moderate risk" or "high risk" cases.
+By highly sensible topics like suicide, these results indicate a need for improvement in the classifier's ability to identify and correctly classify individuals at various levels of suicide risk. While the model is relatively effective in identifying individuals with no risk, enhancing its capability to accurately identify and classify individuals at low to moderate and high risk is crucial for effective intervention and support. But also shows, that maybe even more features or more detailed answer options (more levels or non categorical could help the model to learn, when someone might in some kind of risk of suicide.
 
+<<<<<<< HEAD
 #### 5.2 Qualitative
 
 \
@@ -917,15 +911,15 @@ plot(svm_no_sc_best_model$finalModel)
 The best performing svm model on the non-scaled data is:
 
 
-#### 5.3 Overfitting
+#### 5.2 Overfitting
 
 \
 
 Overfitting is a frequent problem in machine learning. It happens when a model learns the training data too well, including all its quirks and noise. As a result, its ability to generalize weakens. When the model is tested with new data, its performance often drops significantly. This is because it's overly tuned to the training data and doesn't adapt well to new, unseen data. We take a number of measures trying to prevent overfitting on our training data.\
 By employing Cross-Validation (CV) and utilizing a range of performance metrics such as recall, precision, and F1-score, we try to avoid overfitting in our models. 
 
-##### 5.3.1 Naive Bayes
 
+<<<<<<< HEAD
 ```{r Train and Test curve of SVM, echo=FALSE, cache=TRUE, include=FALSE}
 # read the models:
 model_nb <- readRDS("model_nb.rda")
@@ -971,12 +965,15 @@ head(performance_linear$resampling)
 
 Considering these factors collectively, we are confident that our models are unlikely to overfit on our training data.
 
-#### 5.4 ROC
-\
+
+
+#### 5.3 ROC
+
 
 To further visually assess our classifier we plot the ROC curves for our classes.
 
-#### 5.4.1 ROC for best Naive Bayes Model
+#### 5.3.2 ROC for best Naive Bayes Model
+
 
 ```{r ROC curves nb, include=FALSE, echo=FALSE, cache=TRUE, eval=FALSE,  warning=FALSE}
 library(pROC)
@@ -997,6 +994,7 @@ for(i in 1:ncol(testing_res_binary)) {
 
 ```
 
+<<<<<<< HEAD
 ```{r plotting and saving the ROC curves, echo=FALSE, cache=TRUE}
 # ** this code snipped is created with the help of AI** ##
 # Set up the PNG output
@@ -1019,7 +1017,9 @@ dev.off()
 ```
 ![NB](roc_curves_nb.png)
 
-#### 5.4.2 ROC for best SVM model
+
+#### 5.3.2 ROC for best SVM model
+
 \
 
 To plot the ROC curves, we need to get the probabilities for our model predictions.
@@ -1029,26 +1029,10 @@ Since we set a seed, we can retrain on our best model and its hyperparameters to
 library(pROC)
 library(nnet)  
 
-train_control_probs <- trainControl(method = "cv",
-                              number = 5, 
-                              search = "grid",
-                              classProbs=TRUE)
-          
-train_svm_probs <- function(dataset, kernel, grid) {
-    train(suicidal_class ~ ., data = dataset,
-                   method = kernel,
-                   tuneGrid = grid, 
-                   metric="Accuracy",
-                   preProcess = c("center"),
-                   trControl = train_control_probs)
-}
-
-# retrain best model with best hp config for probabilities
-set.seed(0)
-model_radial_probs <- train_svm_probs(scaledRISK_train, "svmRadial", grid_radial)
-
 # get predictions from best model
-model_radial_probs_pred <- predict(model_radial_probs, newdata=scaledRISK_test_no_target, type = "prob")
+best_model_probs_pred <- predict(svm_best_model, newdata=scaledRISK_test_no_target, probabilities=TRUE)
+# binarize output
+best_model_probs_pred <- model.matrix(~ best_model_probs_pred - 1)
 
 # binarize output
 testing_res_binary <- model.matrix(~ scaledRISK_test$suicidal_class - 1)
@@ -1057,8 +1041,10 @@ testing_res_binary <- model.matrix(~ scaledRISK_test$suicidal_class - 1)
 # get ROC curve and AUC for each class
 roc_curves <- list()
 for(i in 1:ncol(testing_res_binary)) {
-  roc_curves[[i]] <- roc(testing_res_binary[,i], model_radial_probs_pred[,i])
+  roc_curves[[i]] <- roc(testing_res_binary[,i], best_model_probs_pred[,i])
 }
+
+roc_curves
 
 ```
 
@@ -1086,12 +1072,8 @@ dev.off()
 ![SVM](roc_curves.png)
 
 
-### 6. Visual Representation
-/ 
-todo: try to make svm plot (link above from Ari)
 
-
-### 7. Final Discussion
+### 6. Final Discussion
 
 After training, testing, and interpreting our final machine learning models, it becomes evident that these models do not achieve the necessary accuracy for practical application, particularly given the critical nature of the target variable.
 
@@ -1109,7 +1091,7 @@ The current dataset size of 2000 observations may be insufficient for training r
 \
 Overall, these proposed measures aim to address the current limitations and enhance the predictive power of your models, which is vital given the serious implications of misclassifying individuals at risk of suicide.
 
-### 8. References
+### 7. References
 
 > <a id="id_1">[1]</a> <https://www.cdc.gov/healthyyouth/data/yrbs/overview.htm>
 

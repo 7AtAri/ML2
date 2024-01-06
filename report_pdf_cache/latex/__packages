@@ -25,6 +25,8 @@ rJava
 lattice
 caret
 Metrics
+MASS
+klaR
 e1071
 mltest
 pROC

@@ -26,7 +26,3 @@ lattice
 caret
 Metrics
 e1071
-naivebayes
-mltest
-pROC
-nnet

@@ -8,6 +8,14 @@ safely_convert_to_factor <- function(df, column_name, ordered = FALSE) {
   if (column_name %in% names(df)) {
     df[[column_name]] <- factor(df[[column_name]], ordered = ordered)
   }
+  
+  # Check if the column is a factor and has two levels
+  if (is.factor(df[[column_name]]) && nlevels(df[[column_name]]) == 2) {
+    # Recode the factor levels to 0 and 1
+    levels(df[[column_name]]) <- c(0, 1)
+    df[[column_name]] <- as.logical(as.character(df[[column_name]]))
+  }
+  
 }
 
 # Main function to apply factor conversions
@@ -75,7 +83,7 @@ convert_columns_to_factors <- function(dataframe_name) {
     "q45", "marijuana", # q45 renamed to marijuana
     "q64", "Sex_of_sexual_contacts", # q64 renamed to Sex_of_sexual_contacts
     "raceeth", "q55", "q56", "q57", "q61", "q62", "q63", "q65", "q67", 
-    "q87", "q94", "stratum", "psu"
+    "q87", "q94", "stratum"#, "psu"
   )
   
   # Apply conversions

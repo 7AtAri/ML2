@@ -459,6 +459,9 @@ RISK_train <- RISK_red_new[inds$train, ]
 
 RISK_test <- RISK_red_new[inds$test, ]
 
+source("setLevels.R")
+
+RISK_test <- setLevels_train(RISK_train, RISK_test)
 
 
 rm(inds)
@@ -651,55 +654,23 @@ For programming purposes we use the build-in preProcess parameter of the train f
 A large value of C leads to points within the margin or on the other side of the boundary being heavily penalized so there are few points in the margin/missclassified (Lecture 7, p.5)
 
 ```{r training svm, include=FALSE, cache=TRUE}
-
+options( warn = -1 )
 set.seed(0)  # set the seed
-
-library(caret)
-
 
 # linear kernel
 C <- c(0.01, 0.1, 1, 10)
 
-grid_linear <- expand.grid(.C = C)
-
-# radial basis function kernel
-grid_radial <- expand.grid(.C = C, 
-                           .sigma = c(0.001, 0.01, 0.1))
-
-# polynomial kernel
-grid_poly <- expand.grid(.degree = c(2, 3, 4, 5),
-                         .scale = c(0.1, 0.5, 1),
-                         .C = C)
-
-
-train_control <- trainControl(method = "cv",
-                              number = 5, 
-                              search = "grid")
-                              #classProbs=TRUE)
-          
-train_svm <- function(dataset, kernel, grid) {
-    train(suicidal_class ~ ., data = dataset,
-                   method = kernel,
-                   tuneGrid = grid, 
-                   metric="Accuracy",
-                   preProcess = c("center"),
-                   trControl = train_control)
-}
-
-
 # Train models for each kernel
-model_linear <- train_svm(scaledRISK_train,"svmLinear", grid_linear)
-model_radial <- train_svm(scaledRISK_train, "svmRadial", grid_radial)
-model_poly <- train_svm(scaledRISK_train, "svmPoly", grid_poly)
+model_linear <- tune.svm(suicidal_class ~., data = scaledRISK_train, method = "svmLinear", cost = C)
+model_radial <- tune.svm(suicidal_class ~., data = scaledRISK_train, method = "svmRadial", cost = C, sigma = c(0.001, 0.01, 0.1))
+model_poly <-  tune.svm(suicidal_class ~., data = scaledRISK_train, method = "svmPoly", cost = C,degree = c(2, 3, 4, 5), scale = c(0.1, 0.5, 1))
 
 # save all models
 saveRDS(model_linear, file = "model_linear.rda")
 saveRDS(model_radial, file = "model_radial.rda")
 saveRDS(model_poly, file = "model_poly.rda")
 
-# output the best models and their performance
 svm_models <- list(linear = model_linear, radial = model_radial, polynomial = model_poly)
-
 ```
 
 Given the list of all resulting models, coming from the HPO of the SVM, we extract the best model for further inspection and results using Accuracy as our focused metric. Since our classes are balanced, Accuracy is the preferred testing metric.
@@ -721,7 +692,7 @@ svm_best_model <- svm_models[[svm_best_model_name]]
 # Extract the best hyperparameters
 svm_best_hyperparameters <- svm_best_model$bestTune
 
-svm_best_model <- svm_best_model$finalModel
+svm_best_model <- svm_best_model$best.model
 
 
 # Print the best hyperparameters
@@ -763,6 +734,7 @@ scaledRISK_test_no_target <- scaledRISK_test[, !names(scaledRISK_test) %in% c("s
 # TODO:
 nb_best_model_pred <- predict(nb_best_model, scaledRISK_test_no_target)
 
+
 table(nb_best_model_pred$class, scaledRISK_test$suicidal_class, dnn=c("Prediction", "Actual"))   
 
 confusionMatrix(table(nb_best_model_pred$class, scaledRISK_test$suicidal_class))
@@ -774,11 +746,14 @@ confusionMatrix(table(nb_best_model_pred$class, scaledRISK_test$suicidal_class))
 \
 
 ```{r Confusion Matrix of SVM,echo=FALSE, cache=TRUE}
-svm_best_model <- readRDS("svm_best_model.rda")
+set.seed(0) 
+
+#svm_best_model <- readRDS("svm_best_model.rda")
+
 
 scaledRISK_test_no_target <- scaledRISK_test[, !names(scaledRISK_test) %in% c("suicidal_class")]
 
-svm_best_model_pred <- predict(svm_best_model, newdata=scaledRISK_test_no_target)
+svm_best_model_pred <- predict(svm4$best.model, scaledRISK_test_no_target)
 table(svm_best_model_pred, scaledRISK_test$suicidal_class, dnn=c("Prediction", "Actual"))   
 confusionMatrix(table(svm_best_model_pred, scaledRISK_test$suicidal_class))
 ```
@@ -790,8 +765,8 @@ In this context, a p-value of less than 2.2e−16 for the hypothesis that "Accur
 ```{r plot svm, echo=FALSE, cache=TRUE}
 
 set.seed(0)
-library(caret)
-svm_best_model <- readRDS("svm_best_model.rda")
+#library(caret)
+#svm_best_model <- readRDS("svm_best_model.rda")
 
 plot(svm_best_model, scaledRISK_train, col = svm_best_model_pred)
 

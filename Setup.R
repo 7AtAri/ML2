@@ -3,7 +3,7 @@
 set.seed(0)  # set the seed
 
 # ---- Load needed libraries -----------------------------------------------------
-#install.packages("caret")
+#install.packages("klaR")
 
 
 library(readr) # for reading the data
@@ -25,6 +25,8 @@ library(FSelector)
 library(rJava)
 library(caret)
 library(Metrics)
+library(klaR)
+
 
 
 

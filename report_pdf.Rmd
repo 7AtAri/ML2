@@ -790,7 +790,8 @@ Given the Confusion Matrix we can see a Accuracy of around 60% meaning the predi
 \
 \
 
-###### 5.1.2.1 Naive Bayes\
+###### 5.1.2.1 Naive Bayes
+\
 
 ```{r nb multiclass metrics, echo=FALSE, cache=TRUE}
 library(mltest)

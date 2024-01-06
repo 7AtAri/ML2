@@ -59,11 +59,6 @@ It is a national survey conducted by the CDC (Center for Disease Control and Pre
 
 \
 
-```{r summary, include=FALSE, cache=TRUE}
-# possible summaries of the data:
-# summary(RISK) 
-# describe(RISK) # more detail
-```
 
 To preprocess the dataset, we first ran a summary of our dataset. The number of NAs seems to depend very much on the question. The variable "orig_rec" only contained NAs and has therefore been removed, as well as the variable "site" which only contained "XX" entries. Variables q4 and q5 are already aggregated in "raceeth" and have also been deleted. The variable "record" seems to be an ID for the observations. This also has to be deleted since IDs do not hold predictive information that can be used for machine learning.
 
@@ -574,11 +569,9 @@ It is a numeric parameter. We examine three common values for that parameter: 0 
 
 
 ```{r training naive bayes, include=FALSE, cache=TRUE, warning=FALSE}
-
 set.seed(0)  # set the seed
 
 library(caret)
-
 
 grid_nb <- expand.grid(.fL = c(0, 0.5, 1),
                          .usekernel = FALSE,
@@ -657,22 +650,23 @@ For programming purposes we use the build-in preProcess parameter of the train f
 \
 A large value of C leads to points within the margin or on the other side of the boundary being heavily penalized so there are few points in the margin/missclassified (Lecture 7, p.5)
 
-```{r training svm, include=FALSE, cache=TRUE}
-options( warn = -1 )
+```{r training svm, include=FALSE, cache=TRUE, warning=FALSE}
 set.seed(0)  # set the seed
 
 # linear kernel
-C <- c(0.01, 0.1, 1, 10)
+C <- c(0.001, 0.01, 0.1, 1, 10)
+gamma.range = (2^seq(-5, 0, 1))
+
 
 # Train models for each kernel
-model_linear <- tune.svm(suicidal_class ~., data = scaledRISK_train, method = "svmLinear", cost = C)
-model_radial <- tune.svm(suicidal_class ~., data = scaledRISK_train, method = "svmRadial", cost = C, sigma = c(0.001, 0.01, 0.1))
-model_poly <-  tune.svm(suicidal_class ~., data = scaledRISK_train, method = "svmPoly", cost = C,degree = c(2, 3, 4, 5), scale = c(0.1, 0.5, 1))
+model_linear <- tune.svm(suicidal_class ~., data = scaledRISK_train, method = "svmLinear", cost = C, scale=FALSE, cross=5)
+model_radial <- tune.svm(suicidal_class ~., data = scaledRISK_train, method = "svmRadial",cross=5, cost = C, gamma = gamma.range, scale=FALSE)
+model_poly <-  tune.svm(suicidal_class ~., data = scaledRISK_train, method = "svmPoly", cross=5,cost = C,degree = c(1, 2, 3, 4), gamma = gamma.range, scale=FALSE)
 
 # save all models
-saveRDS(model_linear, file = "model_linear.rda")
-saveRDS(model_radial, file = "model_radial.rda")
-saveRDS(model_poly, file = "model_poly.rda")
+saveRDS(model_linear, file = "models_linear.rda")
+saveRDS(model_radial, file = "models_radial.rda")
+saveRDS(model_poly, file = "models_poly.rda")
 
 svm_models <- list(linear = model_linear, radial = model_radial, polynomial = model_poly)
 ```
@@ -683,7 +677,8 @@ Given the list of all resulting models, coming from the HPO of the SVM, we extra
 
 # Function to extract the best accuracy from each model
 extract_best_accuracy <- function(model) {
-    max_accuracy <- max(model$results$Accuracy)
+    max_accuracy <- max(model$best.performance)
+    print(max_accuracy)
     return(max_accuracy)
 }
 
@@ -694,7 +689,7 @@ svm_model_accuracies <- sapply(svm_models, extract_best_accuracy)
 svm_best_model_name <- names(which.max(svm_model_accuracies))
 svm_best_model <- svm_models[[svm_best_model_name]]
 # Extract the best hyperparameters
-svm_best_hyperparameters <- svm_best_model$bestTune
+svm_best_hyperparameters <- svm_best_model$best.parameters
 
 svm_best_model <- svm_best_model$best.model
 
@@ -757,7 +752,7 @@ set.seed(0)
 
 scaledRISK_test_no_target <- scaledRISK_test[, !names(scaledRISK_test) %in% c("suicidal_class")]
 
-svm_best_model_pred <- predict(svm4$best.model, scaledRISK_test_no_target)
+svm_best_model_pred <- predict(svm_best_model, scaledRISK_test_no_target)
 table(svm_best_model_pred, scaledRISK_test$suicidal_class, dnn=c("Prediction", "Actual"))   
 confusionMatrix(table(svm_best_model_pred, scaledRISK_test$suicidal_class))
 ```
@@ -966,7 +961,7 @@ To further visually assess our classifier we plot the ROC curves for our classes
 
 #### 5.4.2 ROC for best Naive Bayes Model
 
-```{r ROC curves, include=FALSE, cache=TRUE }
+```{r ROC curves nb, include=FALSE, cache=TRUE }
 library(pROC)
 
 # get predictions from best model

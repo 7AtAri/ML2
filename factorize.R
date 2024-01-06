@@ -10,11 +10,11 @@ safely_convert_to_factor <- function(df, column_name, ordered = FALSE) {
   }
   
   # Check if the column is a factor and has two levels
-  if (is.factor(df[[column_name]]) && nlevels(df[[column_name]]) == 2) {
+  #if (is.factor(df[[column_name]]) && nlevels(df[[column_name]]) == 2) {
     # Recode the factor levels to 0 and 1
-    levels(df[[column_name]]) <- c(0, 1)
-    df[[column_name]] <- as.logical(as.character(df[[column_name]]))
-  }
+   # levels(df[[column_name]]) <- c(0, 1)
+  #  df[[column_name]] <- as.logical(as.character(df[[column_name]]))
+ # }
   
 }
 

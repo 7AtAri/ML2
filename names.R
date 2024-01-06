@@ -185,6 +185,22 @@ if (!("marijuana_synth_30d" %in% colnames(RISK_red)) && "q48" %in% colnames(RISK
   RISK_red <- RISK_red%>%
     rename(marijuana_synth_30d= q48)}
 
+if (!("times_pain_meds_without_perscription" %in% colnames(RISK_red)) && "q49" %in% colnames(RISK_red)) {
+  RISK_red <- RISK_red%>%
+    rename(times_pain_meds_without_perscription= q49)}
+
+if (!("age_group_first_sex" %in% colnames(RISK_red)) && "q58" %in% colnames(RISK_red)) {
+  RISK_red <- RISK_red%>%
+    rename(age_group_first_sex = q58)}
+
+if (!("times_breakfast_7d" %in% colnames(RISK_red)) && "q76" %in% colnames(RISK_red)) {
+  RISK_red <- RISK_red%>%
+    rename(times_breakfast_7d = q76)}
+
+if (!("avg_h_sleep" %in% colnames(RISK_red)) && "q86" %in% colnames(RISK_red)) {
+  RISK_red <- RISK_red%>%
+    rename(avg_h_sleep = q86)}
+
 if (!("Mental_health_during_pandemic" %in% colnames(RISK_red)) && "q93" %in% colnames(RISK_red)) {
   RISK_red<- RISK_red%>%
     rename(Mental_health_during_pandemic= q93)}

@@ -21,6 +21,7 @@ convert_columns_to_factors <- function(dataframe_name) {
   df <- get(dataframe_name)
   
   ordered_columns <- c(
+    "suicidal_class", # target variable
     "q1", "age",  
     "q3", "grade", # q3 renamed to grade
     "q8", "seat_belt",  # q8 renamed to seat_belt
@@ -49,12 +50,17 @@ convert_columns_to_factors <- function(dataframe_name) {
     "q46", "marijuana_age", # q46 renamed to marijuana_age
     "q47", "marijuana_30d", # q47 renamed to marijuana_30d
     "q48", "marijuana_synth_30d", # q48 renamed to marijuana_synth_30d
+    "q49", "times_pain_meds_without_perscription", #q49 renamed
     "q65", "Sexual_identity",# q65 renamed to Sexual_identity
     "q93", "Mental_health_during_pandemic", # q93 renamed to Mental_health_during_pandemic
     "q98", "Difficulty_concentrating", # q98 renamed to Difficulty_concentrating
     "q85", "Current_mental_health", # q85 renamed to Current_mental_health
-    "q58", "q59", "q60", "q66", "q68", "q69", "q70", "q71", "q72", "q73",
-    "q74", "q75", "q76", "q77", "q78", "q79", "q80", "q81", "q84", "q86",
+    "q58", "age_group_first_sex", # q58 renamed 
+    "q59", "q60", "q66", "q68", "q69", "q70", "q71", "q72", "q73",
+    "q74", "q75", 
+    "q76", "times_breakfast_7d", # q76 renamed
+    "q77", "q78", "q79", "q80", "q81", "q84", 
+    "q86", "avg_h_sleep", # q86 renamed
     "q88", "q89", "q90", "q91", "q92", "q95", "q96", "q97", "q99"
   )
   

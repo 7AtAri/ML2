@@ -140,7 +140,7 @@ RISK_s3 <- RISK_num
 RISK_s3$suicidal_class <- ifelse(RISK_s3$q29 > 1, 3,
                           ifelse(RISK_s3$q28 > 1, 3, 
                           ifelse(RISK_s3$q27 == 1, 3,
-                          ifelse(RISK_s3$q26 == 1, 2,
+                          ifelse(RISK_s3$q26 == 1, 3,
                           ifelse(RISK_s3$q25 == 1, 2,
                                                   1)))))
 
@@ -172,11 +172,11 @@ After creating the target variable we need to exclude the variables q25 to q29, 
 #### 2.4 Imputation
 
 
-```{r imputing, include= FALSE,cache=TRUE}
+```{r imputing, include= FALSE, cache=TRUE}
 set.seed(0)
 # the categorical variables are factorized in the setup.R file
-# RISK_imp_s3 <- missRanger(RISK_s3, pmm.k = 200, num.trees = 500, sample.fraction = 1)
-# write_csv(RISK_imp_s3, "RISK_imp_s3.csv")
+RISK_imp_s3 <- missRanger(RISK_s3, pmm.k = 200, num.trees = 500, sample.fraction = 1)
+#write_csv(RISK_imp_s3, "RISK_imp_s3.csv")
 ```
 \
 
@@ -196,7 +196,7 @@ RISK_imp_s3 <- read_csv("RISK_imp_s3.csv")
 size_per_class <- rep(666, times = 3) # 400 samples from each of 5 classes, adjust as needed
 sample_obj <- strata(RISK_imp_s3, stratanames = "suicidal_class", size = size_per_class, method = "srswor")
 RISK_2000_3 <- getdata(RISK_imp_s3, sample_obj)
-# write_csv(RISK_2000_3, "RISK_2000_3.csv")
+#write_csv(RISK_2000_3, "RISK_2000_3.csv")
 
 # *
 # clean up:
@@ -273,7 +273,7 @@ RISK_reduced <- RISK_2000_3[, !names(RISK_2000_3) %in% nzvFeatureNames]
 
 # ** end of AI produced code block **
 rm(nzvFeatures, constantFeatureNames, constantFeatures, nzvFeatureNames)
-write_csv(RISK_reduced,"RISK_2000_3s_red.csv")
+#write_csv(RISK_reduced,"RISK_2000_3s_red.csv")
 ```
 
 
@@ -301,7 +301,7 @@ RISK_reduced <-read_csv("RISK_2000_3s_red.csv", show_col_types = FALSE)
 #     tl.col = "black") 
 
 # delete the columns q6orig and q7orig, since not in description of dataset
-RISK_reduced[, c("q6orig", "q7orig")] <- NULL
+RISK_reduced[, c("q6orig", "q7orig", "Prob", "Stratum")] <- NULL
 
 # preprocessing for correlations:
 RISK_num <- as.data.frame(lapply(RISK_reduced, as.numeric)) # convert all variables to numeric
@@ -359,6 +359,9 @@ To capture non-linear relationships as well, information gain between the target
 set.seed(0)  # set the seed
 RISK_2000_3$Stratum <- NULL 
 RISK_2000_3$Prob <- NULL
+RISK_2000_3$q7orig <- NULL
+RISK_2000_3$q6orig <- NULL
+#note: q6orig and q7orig do not have descriptions in the data manual and were discarded
 
 # compute information gain
 scores <- information.gain(suicidal_class ~ ., RISK_2000_3)
@@ -389,7 +392,6 @@ Information Gain can be used in the construction of decision trees but also for 
 ```{r difference between correlation and information gain feature selection,echo=FALSE, include=FALSE, cache=TRUE}
 setdiff(names(named_top_20_features), corr_vars)
 
-#note: q6orig and q7orig do not have descriptions in the data manual and were discarded
 ```
 \
 
@@ -399,7 +401,8 @@ According to the data manual, "PSUs consist of counties, groups of smaller adjac
 ```{r setup final reduced dataframe, include=FALSE, cache=TRUE}
 
 # set up final variables
-final_vars<-c("psu", "q40", "q22", "suicidal_class", intersect(names(named_top_20_features), corr_vars))
+final_vars<-c("q40", "suicidal_class", "q58", "q35", intersect(names(named_top_20_features), corr_vars))
+#final_vars<-c("psu", "q40", "q22", "suicidal_class", intersect(names(named_top_20_features), corr_vars))
 final_vars$Stratum <- NULL
 final_vars$Prob <- NULL
 print(final_vars)
@@ -455,8 +458,6 @@ inds <- partition(RISK_red_new$suicidal_class, p = c(train = 0.8, test = 0.2))
 RISK_train <- RISK_red_new[inds$train, ]
 
 RISK_test <- RISK_red_new[inds$test, ]
-
-
 
 rm(inds)
 ```
@@ -545,7 +546,6 @@ scaledRISK_train$suicidal_class <- factor(scaledRISK_train$suicidal_class, order
 scaledRISK_test$suicidal_class <- factor(scaledRISK_test$suicidal_class, ordered = TRUE)
 
 constant_vars <- sapply(scaledRISK_train, function(x) all(duplicated(x)[-1L]))
-constant_vars
 ```
 
 

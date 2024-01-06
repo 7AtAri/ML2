@@ -633,16 +633,7 @@ print(paste("Laplace smoothing value of the best model is:", nb_best_model$tuneV
 saveRDS(nb_best_model, "nb_best_model.rda")
 ```
 
-According to our HPO the best value for the Laplace Smoothing is 0. This means that a smoothing term is not helpful in our case. The automatic bayes model type configuration gives us a gaussian naive bayes model.
-
-
-```{r plot cross-val hpo results, echo=FALSE, cache=TRUE, fig.width=11, fig.height=8}
-#todo: plotting is broken
-#nb_best_model <- readRDS("nb_best_model.rda")
-#par(mfrow=c(4,5))
-#plot(nb_best_model)
-#print(nb_best_model)
-```
+According to our HPO the best value for the Laplace Smoothing is 0. This means that a smoothing term is not helpful in our case. The automatic bayes model type configuration gives us a gaussian naive bayes model, with the most of our features being multinomial.
 
 ##### 4.3.2 HPO of SVM
 
@@ -878,6 +869,8 @@ set.seed(0)  # set the seed
 
 # Train models for each kernel
 model_nb <- train_nb(RISK_train)
+nb_best_model_no_sc <- model_nb$finalModel
+RISK_test_no_target <- RISK_test[, !names(RISK_test) %in% c("suicidal_class")]
 
 # Output the best model's performance
 
@@ -889,11 +882,16 @@ nb_no_sc_best_hyperparameters <- model_nb$bestTune
 
 The best performing nb model on the non-scaled data is:
 
-```{r plot best model performance, echo=FALSE, cache=TRUE}
+```{r plot best model performance, echo=FALSE, cache=TRUE, warning=FALSE}
 # Print the name and details of the best model
-# print(svm_no_sc_best_model)
-plot(model_nb$finalModel)
+nb_best_model_pred <- predict(nb_best_model, RISK_test_no_target)
+
+
+table(nb_best_model_pred$class, RISK_test$suicidal_class, dnn=c("Prediction", "Actual"))   
+
+confusionMatrix(table(nb_best_model_pred$class, scaledRISK_test$suicidal_class))
 ```
+Current model performs the same on scaled and non-scaled data, as it only includes factor data, which is inherently not scaled. Some of the data in the dataset is scaled, so if it were to be used, it should be noticeable here.
 
 ##### 5.2.2 SVM without scaling
 
@@ -929,13 +927,30 @@ The best performing svm model on the non-scaled data is:
 \
 
 Overfitting is a frequent problem in machine learning. It happens when a model learns the training data too well, including all its quirks and noise. As a result, its ability to generalize weakens. When the model is tested with new data, its performance often drops significantly. This is because it's overly tuned to the training data and doesn't adapt well to new, unseen data. We take a number of measures trying to prevent overfitting on our training data.\
-By employing Cross-Validation (CV) and utilizing a range of performance metrics such as recall, precision, and F1-score, we try to avoid overfitting in our models. Additionally, our experiments with different kernels reveal that the linear kernel maintains robust performance, even when compared to the more complex radial and polynomial kernels. Prior to modeling, we also took the precaution of reducing the number of features, which further diminishes the risk of overfitting. Moreover, setting the cost parameter C to a moderate level -- in our case, 1, which is the default value -- lessens the likelihood of overfitting. Considering these factors collectively, we are confident that our models are unlikely to overfit on our training data.
+By employing Cross-Validation (CV) and utilizing a range of performance metrics such as recall, precision, and F1-score, we try to avoid overfitting in our models. 
 
 ##### 5.3.1 Naive Bayes
 
-\
+```{r Train and Test curve of SVM, echo=FALSE, cache=TRUE, include=FALSE}
+# read the models:
+model_nb <- readRDS("model_nb.rda")
+
+# get performance results for each model
+extract_performance <- function(model) {
+    results <- model$results
+    resampling <- model$resample
+    list(results = results, resampling = resampling)
+}
+
+performance_nb <- extract_performance(model_nb)
+
+# show 
+str(performance_nb$resampling)
+head(performance_nb$resampling)
+```
 
 ##### 5.3.2 SVM
+Our experiments with different kernels reveal that the linear kernel maintains robust performance, even when compared to the more complex radial and polynomial kernels. Prior to modeling, we also took the precaution of reducing the number of features, which further diminishes the risk of overfitting. Moreover, setting the cost parameter C to a moderate level -- in our case, 1, which is the default value -- lessens the likelihood of overfitting.
 
 ```{r Train and Test curve of SVM, echo=FALSE, cache=TRUE, include=FALSE}
 # read the models:
@@ -959,41 +974,61 @@ str(performance_linear$resampling)
 head(performance_linear$resampling)
 ```
 
+Considering these factors collectively, we are confident that our models are unlikely to overfit on our training data.
+
 #### 5.4 ROC
 \
 
 To further visually assess our classifier we plot the ROC curves for our classes.
 
-#### 5.4.2 ROC for best Naive Bayes Model
+#### 5.4.1 ROC for best Naive Bayes Model
 
-```{r ROC curves, include=FALSE, cache=TRUE }
+```{r ROC curves, include=FALSE, echo=FALSE, cache=TRUE, eval=FALSE,  warning=FALSE}
 library(pROC)
+library(nnet)  
 
 # get predictions from best model
-nb_best_model_pred <- predict(nb_best_model, scaledRISK_test_no_target, type = "prob")
+nb_model_pred_prob <- predict(nb_best_model, newdata=scaledRISK_test_no_target, type = "prob")$posterior
 
 # binarize output
 testing_res_binary <- model.matrix(~ scaledRISK_test$suicidal_class - 1)
 
-roc_multiclass <- multiclass.roc(response = scaledRISK_test$suicidal_class, predictor = nb_best_model_pred,
-                                 levels = c("l1", "l2", "l3"))
 
-rs <- roc_multiclass[['rocs']]
+# get ROC curve and AUC for each class
+roc_curves <- list()
+for(i in 1:ncol(testing_res_binary)) {
+  roc_curves[[i]] <- roc(testing_res_binary[,i], nb_model_pred_prob[,i])
+}
 
-# TODO: plot roc curves
 ```
+
+```{r plotting and saving the ROC curves, echo=FALSE, cache=TRUE}
+# ** this code snipped is created with the help of AI** ##
+# Set up the PNG output
+png("roc_curves_nb.png", width = 800, height = 800)
+
+# Plot the first ROC curve
+plot(roc_curves[[1]], main = "ROC Curves", col = "red")
+
+# Add the next ROC curves with lines()
+lines(roc_curves[[2]], col = "blue")
+lines(roc_curves[[3]], col = "green")
+
+# Add a legend if needed
+legend("bottomright", legend = c("Class 1", "Class 2", "Class 3"),
+       col = c("red", "blue", "green"), lty = 1)
+# Close the PNG device
+dev.off()
+
+## ** end of AI created code snipped ** 
+```
+![NB](roc_curves_nb.png)
 
 #### 5.4.2 ROC for best SVM model
 \
 
 To plot the ROC curves, we need to get the probabilities for our model predictions.
 Since we set a seed, we can retrain on our best model and its hyperparameters to get the probabilities. Unfortunately, this was not possible as an upstream task.
-```{r rename target levels svm, include=FALSE, cache=TRUE}
-# rename target levels 
-levels(scaledRISK_train$suicidal_class) <- c("l1", "l2", "l3")
-scaledRISK_train$suicidal_class <- factor(scaledRISK_train$suicidal_class, ordered = TRUE)
-```
-
 
 ```{r ROC curves, include=FALSE, echo=FALSE, cache=TRUE, eval=FALSE }
 library(pROC)

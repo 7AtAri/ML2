@@ -459,7 +459,7 @@ RISK_train <- RISK_red_new[inds$train, ]
 
 RISK_test <- RISK_red_new[inds$test, ]
 
-rm(inds)
+rm(inds, RISK_red)
 ```
 
 

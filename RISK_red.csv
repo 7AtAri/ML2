@@ -1,4 +1,4 @@
-psu,alcohol_age,physical_dating_violence_12m,suicidal_class,Prob,Stratum,Current_mental_health,Mental_health_during_pandemic,Difficulty_concentrating,marijuana_age,marijuana,sexual_violence_12m,Sex_of_sexual_contacts,q65,tried_stop_tobacco_12m,bullied_electronically_12m,vapor_tried,vapor_access,forced_sex,vapor_use_30d,smoking_age,marijuana_30d
+psu,alcohol_age,physical_dating_violence_12m,suicidal_class,Prob,Stratum,Current_mental_health,Mental_health_during_pandemic,Difficulty_concentrating,marijuana_age,marijuana,sexual_violence_12m,Sex_of_sexual_contacts,Sexual_identity,tried_stop_tobacco_12m,bullied_electronically_12m,vapor_tried,vapor_access,forced_sex,vapor_use_30d,smoking_age,marijuana_30d
 87023,1,1,3,0.2851027397260274,1,1,2,2,5,2,1,1,1,1,2,2,1,2,1,1,1
 87023,5,2,3,0.2851027397260274,1,4,2,2,5,3,3,3,2,1,1,1,1,2,1,4,2
 87023,3,2,3,0.2851027397260274,1,3,4,1,1,1,1,2,1,1,2,2,1,2,1,1,1

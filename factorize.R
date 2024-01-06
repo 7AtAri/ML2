@@ -4,6 +4,7 @@
 
 # Function to safely convert to factor if the column exists
 safely_convert_to_factor <- function(df, column_name, ordered = FALSE) {
+  column_name
   if (column_name %in% names(df)) {
     df[[column_name]] <- factor(df[[column_name]], ordered = ordered)
   }
@@ -20,7 +21,7 @@ convert_columns_to_factors <- function(dataframe_name) {
   df <- get(dataframe_name)
   
   ordered_columns <- c(
-    "q1", "age",   # q1 renamed to age
+    "q1", "age",  
     "q3", "grade", # q3 renamed to grade
     "q8", "seat_belt",  # q8 renamed to seat_belt
     "q9", "drinking_driver_30d", # q9 renamed to drinking_driver_30d
@@ -48,6 +49,7 @@ convert_columns_to_factors <- function(dataframe_name) {
     "q46", "marijuana_age", # q46 renamed to marijuana_age
     "q47", "marijuana_30d", # q47 renamed to marijuana_30d
     "q48", "marijuana_synth_30d", # q48 renamed to marijuana_synth_30d
+    "q65", "Sexual_identity",# q65 renamed to Sexual_identity
     "q93", "Mental_health_during_pandemic", # q93 renamed to Mental_health_during_pandemic
     "q98", "Difficulty_concentrating", # q98 renamed to Difficulty_concentrating
     "q85", "Current_mental_health", # q85 renamed to Current_mental_health
@@ -78,10 +80,10 @@ convert_columns_to_factors <- function(dataframe_name) {
   
   # Apply conversions
   for (column_name in ordered_columns) {
-    safely_convert_to_factor(df, column_name, TRUE)
+    df[[column_name]] <- safely_convert_to_factor(df, column_name, TRUE)
   }
   for (column_name in regular_columns) {
-    safely_convert_to_factor(df, column_name)
+    df[[column_name]] <- safely_convert_to_factor(df, column_name)
   }
   
   # Return the modified dataframe

@@ -14,6 +14,7 @@ library(mltest)
 library(pROC) # for ROC and AUC 
 library(nnet) # for model.matrix
 library(naivebayes) # for naive bayes
+library(magick) # for printing saved pngs
 
 # ---- clean the workspace: ------------------------------------
 

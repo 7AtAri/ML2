@@ -505,11 +505,6 @@ and a radial Kernel $$ K(u,v)= \exp \left(-\gamma \sum_{i=1}^{p}(u_{i}-v_{i} \ri
 
 \
 
-todo maluna:
-svm in R tutorial + nice visualization:
-https://www.datacamp.com/tutorial/support-vector-machines-r
-\
-
 We scale the data as part of pre-processing. Scaling transforms the data to have unit variance, further contributing to uniformity across different scales and improving algorithm performance.
 
 Nevertheless our extracted top features consist only of (ordered) factors. But for the case of increasing the amount of features we keep the scaling function and apply it anyways. After that we check for constant variables. 
@@ -759,6 +754,7 @@ set.seed(0)
 
 summary(svm_best_model)
 ```
+\
 
 
 ##### 5.1.2 Precision, Recall and F1-Score
@@ -800,6 +796,7 @@ for (i in 1:length(class_names)) {
 }
 
 ```
+\
 
 
 ###### 5.1.2.2 SVM
@@ -808,7 +805,6 @@ for (i in 1:length(class_names)) {
 
 Since we have a multi class classification problem, we also evaluate our metrics separately for each of our classes.
 
-todo: check why confusion matrix output above gives different results...
 
 ```{r svm multiclass metrics, echo=FALSE, cache=TRUE, include=TRUE}
 library(mltest)
@@ -913,7 +909,7 @@ To further visually assess our classifier we plot the ROC curves for our classes
 #### 5.3.2 ROC for best Naive Bayes Model
 \
 
-```{r ROC curves nb, include=FALSE, echo=FALSE, cache=TRUE, eval=FALSE,  warning=FALSE}
+```{r ROC curves nb, echo=FALSE, cache=TRUE, include=FALSE, warning=FALSE, message=FALSE, results='hide'}
 library(pROC)
 library(nnet)  
 
@@ -925,25 +921,25 @@ testing_res_binary <- model.matrix(~ scaledRISK_test$suicidal_class - 1)
 
 
 # get ROC curve and AUC for each class
-roc_curves <- list()
+roc_curves_nb <- list()
 for(i in 1:ncol(testing_res_binary)) {
-  roc_curves[[i]] <- roc(testing_res_binary[,i], nb_model_pred_prob[,i])
+  roc_curves_nb[[i]] <- roc(testing_res_binary[,i], nb_model_pred_prob[,i])
 }
-
+roc_curves_nb
 ```
 
 
-```{r plotting and saving the ROC curves nb, echo=FALSE, cache=TRUE}
+```{r plotting and saving the ROC curves nb, echo=FALSE, cache=TRUE,results='hide', message=FALSE}
 # ** this code snipped is created with the help of AI** ##
 # Set up the PNG output
 png("roc_curves_nb.png", width = 800, height = 800)
 
 # Plot the first ROC curve
-plot(roc_curves[[1]], main = "ROC Curves", col = "red")
+plot(roc_curves_nb[[1]], main = "ROC Curves", col = "red")
 
 # Add the next ROC curves with lines()
-lines(roc_curves[[2]], col = "blue")
-lines(roc_curves[[3]], col = "green")
+lines(roc_curves_nb[[2]], col = "blue")
+lines(roc_curves_nb[[3]], col = "green")
 
 # Add a legend if needed
 legend("bottomright", legend = c("Class 1", "Class 2", "Class 3"),
@@ -953,17 +949,27 @@ dev.off()
 
 ## ** end of AI created code snipped ** 
 ```
-![NB](roc_curves_nb.png)
 
+
+```{r plot ROC nb, echo=FALSE, message=FALSE, results='hide'}
+
+library(magick)
+
+# Read the image
+img <- image_read("roc_curves_nb.png")
+
+# Plot the image
+plot(img)
+```
 
 #### 5.3.2 ROC for best SVM model
 
 \
 
 To plot the ROC curves, we need to get the probabilities for our model predictions.
-Since we set a seed, we can retrain on our best model and its hyperparameters to get the probabilities. Unfortunately, this was not possible as an upstream task.
+Since we set a seed, we can use our best model and its hyperparameters to get the probabilities. 
 
-```{r ROC curves, include=FALSE, echo=FALSE, cache=TRUE}
+```{r ROC curves, echo=FALSE,results='hide', message=FALSE, warning=FALSE, cache=TRUE, include=FALSE}
 library(pROC)
 library(nnet)  
 
@@ -986,7 +992,7 @@ for(i in 1:ncol(testing_res_binary)) {
 
 
 
-```{r plotting and saving the ROC curves, echo=FALSE, cache=TRUE}
+```{r plotting and saving the ROC curves, echo=FALSE, cache=TRUE, message=FALSE, warning=FALSE, results='hide'}
 # ** this code snipped is created with the help of AI** ##
 # Set up the PNG output
 png("roc_curves.png", width = 800, height = 800)
@@ -1006,12 +1012,23 @@ dev.off()
 
 ## ** end of AI created code snipped ** 
 ```
+```{r plot ROC svm, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
 
-![SVM](roc_curves.png)
+library(magick)
 
+# Read the image
+img_svm <- image_read("roc_curves.png")
 
+# Plot the image
+plot(img_svm)
+# Plot the image at a specific size
+#plot(1, type = "n", xlab = "", ylab = "", xlim = c(0, ncol(img_svm)/72), ylim = c(0, nrow(img_svm)/72), xaxt = "n", yaxt = "n", bty = "n", asp = 1)
+#rasterImage(img_svm, 0, 0, ncol(img_svm)/72, nrow(img_svm)/72)
+
+```
 
 ### 6. Final Discussion
+\
 
 After training, testing, and interpreting our final machine learning models, it becomes evident that these models do not achieve the necessary accuracy for practical application, particularly given the critical nature of the target variable.
 
@@ -1028,6 +1045,7 @@ Introducing an additional category in the target variable for missing responses 
 The current dataset size of 2000 observations may be insufficient for training robust models. A larger and more comprehensive dataset could significantly improve model performance. However, this expansion was not feasible in your current project due to computational limitations and project scope. For future iterations of the project, seeking larger datasets or finding ways to augment the existing dataset could be highly beneficial.
 \
 Overall, these proposed measures aim to address the current limitations and enhance the predictive power of your models, which is vital given the serious implications of misclassifying individuals at risk of suicide.
+
 
 ### 7. References
 

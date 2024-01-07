@@ -37,6 +37,7 @@ source("Setup.R")
 ```
 
 ### 1. Introduction
+\
 
 Our general idea was to work with LGBT-related data. This was not as easy as expected, since it seems there are not a lot of datasets openly available that have that kind of information. Finally, we found a US survey by the CDC, that regularly monitors the country's youth in a lot of dimensions, but among other questions also asks for sexual experiences and identification.
 
@@ -286,7 +287,7 @@ Since our dataset has lots of variables, we decided to start by excluding some v
 
 #### 3.1.1 Correlations
 
- 
+\
 
 Unfortunately at this point we have to many variables to do a pairs plot or correlation plot with a visually usable outcome. We will therefore perform a correlation analysis only with respect to the target variable and in numeric format instead of any visual plot.
 
@@ -480,7 +481,7 @@ In the following section we describe the two methods used for our machine learni
 
 #### 4.1.1 Naive Bayes Classification
 
- 
+\
 
 Ideally a classifier is able to detect the class k which maximizes the conditional probability $P(Y=k|X=x_{1},...,x_{p})$. A Bayes Classifier would calculate these probabilities for each of the classes exactly, but usually it is only possible to approximate those. The Naive Bayes Classifier is one method of approximation. It approximates by "naively" assuming the conditional independence of predictor variables. This leads to simpler calculations. The joint probability of two events A and B $P(A \cap B)= P(A \mid B) * P(B)$ can be simplified to $P(A \cap B)= P(A) * P(B)$ under the independence assumption, since conditional independence means $P(A \mid B) = P(A)$. The conditional probabilities of a class k can be calculated with the Bayes Theorem. It states that: $$P(k \mid X) = \frac {P(X\mid k) \cdot P(k)}{P(X)}$$ Since the denominator only uses our predictor variables, we only need to focus on the nominator and find the maximum class for each observation to be classified. We can express this relationship with the proportionality operator: $$P(k|X) \propto P(X|k) \cdot P(k)$$ At this point, the assumption of independent predictor variables simplifies the calculations if there is more than one predictor variable. Instead of calculating $P(k|x_{1},...,x_{p}) \propto P(x_{1},...,x_{p}|k) \cdot P(k)$ where $P(x_{1},...,x_{p}|k)$ is quite complicated to calculate because of all the possible dependencies among the variables, the independence assumption leads to: $$P(k|x_{1},...,x_{p}) \propto P(k) \cdot  \prod_{i=1}^{p} P(x_{i}|k) $$
 
@@ -707,6 +708,7 @@ With a degree of 1, the polynomial kernel equation simplifies to a linear relati
 \
 
 ##### 5.1.1 Confusion Matrix
+\
 
 A confusion matrix is a fundamental tool in statistical classification and machine learning, used to visualize the performance of an algorithm. It's a table used to describe the performance of a classification model on a set of test data for which the true values are known. Here’s a brief overview of its components:
 
@@ -844,71 +846,6 @@ For "low to moderate risk" and "high risk" categories, the performance is modera
 The F1 scores for all classes reflect a balance between recall and precision, but they highlight that the model is more reliable in identifying "no risk" cases than "low to moderate risk" or "high risk" cases.
 By highly sensible topics like suicide, these results indicate a need for improvement in the classifier's ability to identify and correctly classify individuals at various levels of suicide risk. While the model is relatively effective in identifying individuals with no risk, enhancing its capability to accurately identify and classify individuals at low to moderate and high risk is crucial for effective intervention and support. But also shows, that maybe even more features or more detailed answer options (more levels or non categorical could help the model to learn, when someone might in some kind of risk of suicide.
 
-<<<<<<< HEAD
-#### 5.2 Qualitative
-
-\
-
-We will compare our results with the results of svm models for non-scaled data.
-
-##### 5.2.1 NB without scaling
-
-```{r NB no scaling, echo=FALSE, cache=TRUE, eval=FALSE, warning=FALSE}
-set.seed(0)  # set the seed
-
-# Train models for each kernel
-model_nb <- train_nb(RISK_train)
-nb_best_model_no_sc <- model_nb$finalModel
-RISK_test_no_target <- RISK_test[, !names(RISK_test) %in% c("suicidal_class")]
-
-# Output the best model's performance
-
-nb_model_no_sc_accuracy <- extract_best_accuracy(model_nb)
-
-# Extract the best hyperparameters
-nb_no_sc_best_hyperparameters <- model_nb$bestTune
-```
-
-The best performing nb model on the non-scaled data is:
-
-```{r plot best model performance, echo=FALSE, cache=TRUE, warning=FALSE}
-# Print the name and details of the best model
-nb_best_model_pred <- predict(nb_best_model, RISK_test_no_target)
-
-
-table(nb_best_model_pred$class, RISK_test$suicidal_class, dnn=c("Prediction", "Actual"))   
-
-confusionMatrix(table(nb_best_model_pred$class, scaledRISK_test$suicidal_class))
-```
-Current model performs the same on scaled and non-scaled data, as it only includes factor data, which is inherently not scaled. Some of the data in the dataset is scaled, so if it were to be used, it should be noticeable here.
-
-##### 5.2.2 SVM without scaling
-
-```{r SVM no scaling, echo=FALSE, cache=TRUE, eval=FALSE}
-set.seed(0)  # set the seed
-
-# Train models for each kernel
-model_linear <- train_svm(RISK_train,"svmLinear", grid_linear)
-model_radial <- train_svm(RISK_train, "svmRadial", grid_radial)
-model_poly <- train_svm(RISK_train, "svmPoly", grid_poly)
-
-# Output the best models and their performance
-svm_no_sc_models <- list(linear = model_linear, radial = model_radial, polynomial = model_poly)
-
-svm_model_no_sc_accuracies <- sapply(svm_no_sc_models, extract_best_accuracy)
-
-# Identify the model with the highest accuracy
-svm_no_sc_best_model_name <- names(which.max(svm_model_no_sc_accuracies))
-svm_no_sc_best_model <- svm_no_sc_models[[svm_no_sc_best_model_name]]
-
-# Extract the best hyperparameters
-svm_no_sc_best_hyperparameters <- svm_no_sc_best_model$bestTune
-
-plot(svm_no_sc_best_model$finalModel)
-```
-\
-
-The best performing svm model on the non-scaled data is:
 
 
 #### 5.2 Overfitting
@@ -919,8 +856,8 @@ Overfitting is a frequent problem in machine learning. It happens when a model l
 By employing Cross-Validation (CV) and utilizing a range of performance metrics such as recall, precision, and F1-score, we try to avoid overfitting in our models. 
 
 
-<<<<<<< HEAD
-```{r Train and Test curve of SVM, echo=FALSE, cache=TRUE, include=FALSE}
+
+```{r extract performance nb, echo=FALSE, cache=TRUE, include=FALSE}
 # read the models:
 model_nb <- readRDS("model_nb.rda")
 
@@ -939,6 +876,8 @@ head(performance_nb$resampling)
 ```
 
 ##### 5.3.2 SVM
+\ 
+
 Our experiments with different kernels reveal that the linear kernel maintains robust performance, even when compared to the more complex radial and polynomial kernels. Prior to modeling, we also took the precaution of reducing the number of features, which further diminishes the risk of overfitting. Moreover, setting the cost parameter C to a moderate level -- in our case, 1, which is the default value -- lessens the likelihood of overfitting.
 
 ```{r Train and Test curve of SVM, echo=FALSE, cache=TRUE, include=FALSE}
@@ -968,12 +907,12 @@ Considering these factors collectively, we are confident that our models are unl
 
 
 #### 5.3 ROC
-
+\
 
 To further visually assess our classifier we plot the ROC curves for our classes.
 
 #### 5.3.2 ROC for best Naive Bayes Model
-
+\
 
 ```{r ROC curves nb, include=FALSE, echo=FALSE, cache=TRUE, eval=FALSE,  warning=FALSE}
 library(pROC)
@@ -994,8 +933,8 @@ for(i in 1:ncol(testing_res_binary)) {
 
 ```
 
-<<<<<<< HEAD
-```{r plotting and saving the ROC curves, echo=FALSE, cache=TRUE}
+
+```{r plotting and saving the ROC curves nb, echo=FALSE, cache=TRUE}
 # ** this code snipped is created with the help of AI** ##
 # Set up the PNG output
 png("roc_curves_nb.png", width = 800, height = 800)
@@ -1030,9 +969,9 @@ library(pROC)
 library(nnet)  
 
 # get predictions from best model
-best_model_probs_pred <- predict(svm_best_model, newdata=scaledRISK_test_no_target, probabilities=TRUE)
+best_model_probs_pred <- predict(svm_best_model, newdata=scaledRISK_test_no_target, type="prob")
 # binarize output
-best_model_probs_pred <- model.matrix(~ best_model_probs_pred - 1)
+# best_model_probs_pred <- model.matrix(~ best_model_probs_pred - 1)
 
 # binarize output
 testing_res_binary <- model.matrix(~ scaledRISK_test$suicidal_class - 1)

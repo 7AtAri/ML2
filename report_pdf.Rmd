@@ -24,7 +24,7 @@ output:
 \newpage
 ```
 
-------------------------------------------------------------------------
+
 
 ```{r setup, include=FALSE, cache=TRUE}
 params <- list(html=knitr::is_html_output())
@@ -38,7 +38,6 @@ source("Setup.R")
 
 ### 1. Introduction
 \
-
 Our general idea was to work with LGBT-related data. This was not as easy as expected, since it seems there are not a lot of datasets openly available that have that kind of information. Finally, we found a US survey by the CDC, that regularly monitors the country's youth in a lot of dimensions, but among other questions also asks for sexual experiences and identification.
 
 ### 2. The Dataset
@@ -72,11 +71,11 @@ na_ratio<-sum(is.na(RISK)==TRUE)/(dim(RISK)[1]*dim(RISK)[2])# ratio of NAs among
 print(na_ratio*100) # % percentage of NAs in data
 sum(is.na(RISK)==TRUE) # sum of NAs in dataset
 ```
-We will first exclude all the observations with NAs in all the target-related variables q25 to q29. Since we want to build our target variable on these questions, the target variable cannot all be empty. Since our target variable will be a score indicating the risk of suicide among teenagers, unfortunately it is probably not helpful for any relevant application of our Machine Learning model to define a specific missing category for the NAs related in the target variable, as discussed in the lecture.
+We will first exclude all the observations with NAs in all the target-related variables q25 to q29. Since we want to build our target variable on these questions, the target variable cannot all be empty. Since our target variable will be a score indicating the risk of suicide among teenagers, unfortunately, it is probably not helpful for any relevant application of our Machine Learning model to define a specific missing category for the NAs related in the target variable, as discussed in the lecture.
 \
 The amount of data available should be enough to just exclude these observations. After removing the observations that have NAs in all the variables, that are used to create our target variable, we still have around 13.7% NAs in the dataset.
 \
-What if we had just excluded every NA in the dataset? We will try and see if this is a viable option, since this woul not just be quick and easy, but we would also just have "real" answers. The exclusion of NAs leads to a severe reduction in the number of observations. The original data consisted of 17232 observations, if we reduce the target-related NAs only, we have 11753 observations left. If we omit all NAs, the reduced dataframe has 4334 observations.
+What if we had just excluded every NA in the dataset? We will try and see if this is a viable option since this would not just be quick and easy, but we would also just have "real" answers. The exclusion of NAs leads to a severe reduction in the number of observations. The original data consisted of 17232 observations, if we reduce the target-related NAs only, we have 11753 observations left. If we omit all NAs, the reduced dataframe has 4334 observations.
 \
 
 ```{r check exclude NAs, include=FALSE, cache=TRUE}
@@ -96,16 +95,16 @@ sum(is.na(RISK$q28)==TRUE)/17138
 ```
 
 #### 2.2.2 Discussion on omitting NAs vs data imputation for the target variable
-
 \
-If we can omit the NAs or if it may be necessary to impute the missing data points, in general depends on the type of missingness. If data is missing completely at random (MCAR), we can omit the NAs, if it is just missing at random (MAR) we would rather impute the data. If the data is missing not at random (MNAR), it would be a quite difficult problem because we cannot easily impute the missing data then. To find out if we can just omit the data without introducing any bias, an MCAR test was applied. 
+
+Whether we can omit the NAs or if it may be necessary to impute the missing data points, in general, depends on the type of missingness. If data is missing completely at random (MCAR), we can omit the NAs, if it is just missing at random (MAR) we would rather impute the data. If the data is missing not at random (MNAR), it would be a quite difficult problem because we cannot easily impute the missing data then. To find out if we can just omit the data without introducing any bias, an MCAR test was applied. 
 \
 We test the target-related variables q25 to q29 for potential pattern(s) in the target related missing data. This results in a p-value of 0, which indicates, that the data is not missing completely at random. Omitting all NAs can be problematic and lead to bias.
 \
 But imputing the target variable related data may be an arguable choice and quite challenging to do well. We therefore decide to use the information at hand to decide for a class of the target variable, starting with the most severe question (q29 to q25). This means we check if q29 ("If you attempted suicide...") was answered positively. If yes, we use the answer for the labeling, if not, we check the next less severe question to base our choice of class label on and so on. This means that NAs are treated similar than answering negatively to the question. We hope to introduce less bias this way. 
 
 
-```{r MCAR test for target columns, cache=TRUE}
+```{r MCAR test for target columns, cache=TRUE, echo=FALSE, include=FALSE}
 result <- mcar_test(RISK[, c("q25", "q26", "q27", "q28", "q29")])
 print(result)
 ```
@@ -239,10 +238,10 @@ variable_types[variable_types$skim_type=="numeric",]
         -   discrete variables: 96 (here all factor variables)
 
         -   continuous variables: 4 (here all numeric variables)
+        
+\
 
 ### 3. Additional Data Preparation
-
-\
 
 ```{r check for constant or near zero variance features and eliminate them, include=FALSE, cache=TRUE}
 
@@ -292,7 +291,7 @@ Since our dataset has lots of variables, we decided to start by excluding some v
 Unfortunately at this point we have to many variables to do a pairs plot or correlation plot with a visually usable outcome. We will therefore perform a correlation analysis only with respect to the target variable and in numeric format instead of any visual plot.
 
 ```{r, corr plot, echo=FALSE, cache=TRUE}
-#TODO:
+
 RISK_reduced <-read_csv("RISK_2000_3s_red.csv", show_col_types = FALSE)
 # plot_correlation(RISK_2000_3)
 #pairs(RISK) # -> non numeric arguments included
@@ -329,19 +328,19 @@ corr_vars <- corr_vars$var[!is.na(corr_vars$var)]
 
 # all variables highly correlated with target variable
 RISK_red<-RISK_reduced[, corr_vars] 
-#TODO: remove prob?
+
 RISK_red$Stratum <- NULL
 RISK_red$Prob <- NULL
 # correlations of these
-plot_correlation(RISK_red)
+plot_correlation(RISK_red, geom_text_args = list(size = 0))
 rm(sorted_corr_data, corr_data)
 ```
 
-```{r, include=FALSE, cache=TRUE, eval=FALSE}
+```{r, include=FALSE, cache=TRUE}
 print(corr_vars)
 ```
 
-The 18 variables with high correlations (\>0.25) with our target variable are: `q19`, `q20`, `q24`, `q30`, `q34`, `q35`, `q36`, `q39`, `q41`, `q43`, `q44`, `q45`, `q46`, `q47`, `q64`, `q85`, `q93`, `q98`.
+The 17 variables with high correlations (\>0.25) with our target variable are: q19, q20, q23, q24, q34, q39, q45, q46, q47, q49, q64, q65, q76, q85, q86, q93, q98.
 
 #### 3.1.2 Feature Selection Algorithm
 
@@ -352,19 +351,21 @@ Since the data still has a lot of variables, we need to use a feature selection 
 To capture non-linear relationships as well, information gain between the target and the predictor variables is measured as well. The variables with high information gain with respect to the target variable are kept, because they can contribute more in predicting the target variable.
 
 #### 3.1.3 Information gain for feature selection
-\
 
 ```{r mutual information, include=FALSE, cache=TRUE}
 
 set.seed(0)  # set the seed
-RISK_2000_3$Stratum <- NULL 
-RISK_2000_3$Prob <- NULL
-RISK_2000_3$q7orig <- NULL
-RISK_2000_3$q6orig <- NULL
+RISK_reduced <-read_csv("RISK_2000_3s_red.csv", show_col_types = FALSE)
+
+RISK_reduced$Stratum <- NULL 
+RISK_reduced$Prob <- NULL
+RISK_reduced$q7orig <- NULL
+RISK_reduced$q6orig <- NULL
+RISK_reduced$ID_unit <- NULL
 #note: q6orig and q7orig do not have descriptions in the data manual and were discarded
 
 # compute information gain
-scores <- information.gain(suicidal_class ~ ., RISK_2000_3)
+scores <- information.gain(suicidal_class ~ ., RISK_reduced)
 
 # sort the features regarding their information gain
 sorted_scores <- scores[order(-scores$attr_importance), ]
@@ -373,7 +374,7 @@ sorted_scores <- scores[order(-scores$attr_importance), ]
 top_20_features <- head(sorted_scores, 20)
 
 # Get the names of all features (excluding the target variable 'suicidal_class')
-feature_names <- setdiff(names(RISK_2000_3), "suicidal_class")
+feature_names <- setdiff(names(RISK_reduced), "suicidal_class")
 
 # Match the sorted scores with the correct feature names
 top_20_feature_names <- feature_names[order(-scores$attr_importance)[1:20]]
@@ -382,35 +383,35 @@ top_20_feature_names <- feature_names[order(-scores$attr_importance)[1:20]]
 named_top_20_features <- setNames(top_20_features , top_20_feature_names)
 
 print(named_top_20_features)
-rm(scores, sorted_scores, top_20_features, feature_names)
+rm(scores, sorted_scores, feature_names)
 ```
 \ 
+
 Information Gain can be used in the construction of decision trees but also for feature selection [[3]](#3). Therefore the information gain for each variable with regard to the target variable is calculated.
 
 #### 3.1.4 Domain knowledge for final feature selection
 
-```{r difference between correlation and information gain feature selection,echo=FALSE, include=FALSE, cache=TRUE}
+```{r difference between correlation and information gain feature selection,echo=FALSE, cache=TRUE}
 setdiff(names(named_top_20_features), corr_vars)
-
+setdiff(corr_vars, names(named_top_20_features))
 ```
 
 \
 
-If we compare the features that came up in the correlation analysis and in the information gain calculations, we find only three meaningful variables that come up, "PSU", "q22" and "q40".
-According to the data manual, "PSUs consist of counties, groups of smaller adjacent counties, or sub-areas of very large counties. “PSU” indicates the PSU the school the student attends was assigned to." (p.14). It is possible, that the district/locality of a school plays a role in the risk of suicide. For example for queer students in a very religious place. Q22 is the variable that describes physical dating violence. Therefore q22 is also a valid choice as a predictor variable for our suicidal score target variable. Q40 encodes the range of age when a student first got into contact with drinking alcohol. This might be an indicator for a negligent social surrounding if someone is exposed to an alcoholic drink in an early age and therefore also could be a valid predictor variable in our case. We will use the intersection of our tests and also the three extra variables. 
+If we compare the features that came up in the correlation analysis and in the information gain calculations, we find only five meaningful variables that come up, "q40", "psu", "weight","q2" and "q76" .
+According to the data manual, q40 encodes the range of age when a student first got into contact with drinking alcohol. This might be an indicator for a negligent social surrounding if someone is exposed to an alcoholic drink in an early age and therefore also could be a valid predictor variable in our case. "q2" is the sex of the student, "psu" is a regional code of the school the student attends and "q76" questions how regularly the student had breakfast. We will keep all the variables that came up, since they could carry helpful information.
 
 ```{r setup final reduced dataframe, include=FALSE, cache=TRUE}
 
 # set up final variables
-final_vars<-c("q40", "suicidal_class", "q58", "q35", intersect(names(named_top_20_features), corr_vars))
-#final_vars<-c("psu", "q40", "q22", "suicidal_class", intersect(names(named_top_20_features), corr_vars))
-final_vars_names <-  
+final_vars<-c("q40", "q2", "psu", "weight", "q76", "suicidal_class", intersect(names(named_top_20_features), corr_vars))
+
 final_vars$Stratum <- NULL
 final_vars$Prob <- NULL
 print(final_vars)
 
 # all variables highly correlated with target variable
-RISK_red<-RISK_reduced[,unlist(final_vars)] 
+RISK_red_new<-RISK_reduced[,unlist(final_vars)] 
 
 ```
 
@@ -418,36 +419,43 @@ RISK_red<-RISK_reduced[,unlist(final_vars)]
 
 \
 
-For an easy understanding of their values, the variables and levels are named according to their content. This is an optional step. Please uncomment the names.R file and source it if you want to name the encoded variables according to their content. It can lead to a better readability of our data frame.
+For an easy understanding of their values, the variables and levels are named according to their content. This is an optional step. It can lead to a better readability of our data frame.
 
-```{r naming variables, include=FALSE, cache=TRUE, echo=FALSE}
+```{r naming variables, cache=TRUE, echo=FALSE, warning=FALSE, results='asis', message=FALSE}
 source("names.R") 
 rm(significant_vars, corr_vars, named_top_20_features)
-write_csv(RISK_red, "RISK_red.csv")
-names(RISK_reduced)
+write_csv(RISK_red_new, "RISK_red_new.csv")
+cat(paste0("- ", names(RISK_red_new), "\n", collapse = ""))
+
+# knitr::kable(data.frame(variables=names(RISK_red)), align = "l")
+
 ```
-The above printed variable names, are the one left from feature selecting and name-mapping. "alcohol_age"
+\
+
+The above printed variable names, are the ones left from feature selecting and name-mapping. 
+\
+
 #### 3.3 Splitting the Data
 
 \
 
 According to the project requirements we split our data in 60% Training, 20% Validation and 20% Testing Data. 
-Since we want to do a cross validation we will split into 80% Training and 20% Testing Data.
+Since we want to do a cross validation we will split into 80% Training and 20% Testing Data [[4]](#4).
 
 ```{r splitting the data, cache=TRUE, include=FALSE}
 # import as dataframe
 # RISK_red <- read_csv("RISK_red.csv", show_col_types = FALSE)
 set.seed(0)  # set the seed
-RISK_red <- read_csv("RISK_red.csv", show_col_types = FALSE)
+RISK_red_new <- read_csv("RISK_red_new.csv", show_col_types = FALSE)
 
-print(sapply(RISK_red, class))
+print(sapply(RISK_red_new, class))
 
 
 # Source the factor conversion file
 source("factorize.R")
 
 # Use the function for a specific dataframe
-RISK_red_new <- convert_columns_to_factors("RISK_red")
+RISK_red_new <- convert_columns_to_factors("RISK_red_new")
 
 # ensure stratum and prob are not in the dataframe
 RISK_red_new$Stratum <- NULL
@@ -462,7 +470,7 @@ RISK_train <- RISK_red_new[inds$train, ]
 RISK_test <- RISK_red_new[inds$test, ]
 
 
-rm(inds, RISK_red)
+rm(inds, RISK_red, RISK_red_new)
 
 source("setLevels.R")
 
@@ -483,7 +491,7 @@ In the following section we describe the two methods used for our machine learni
 
 \
 
-Ideally a classifier is able to detect the class k which maximizes the conditional probability $P(Y=k|X=x_{1},...,x_{p})$. A Bayes Classifier would calculate these probabilities for each of the classes exactly, but usually it is only possible to approximate those. The Naive Bayes Classifier is one method of approximation. It approximates by "naively" assuming the conditional independence of predictor variables. This leads to simpler calculations. The joint probability of two events A and B $P(A \cap B)= P(A \mid B) * P(B)$ can be simplified to $P(A \cap B)= P(A) * P(B)$ under the independence assumption, since conditional independence means $P(A \mid B) = P(A)$. The conditional probabilities of a class k can be calculated with the Bayes Theorem. It states that: $$P(k \mid X) = \frac {P(X\mid k) \cdot P(k)}{P(X)}$$ Since the denominator only uses our predictor variables, we only need to focus on the nominator and find the maximum class for each observation to be classified. We can express this relationship with the proportionality operator: $$P(k|X) \propto P(X|k) \cdot P(k)$$ At this point, the assumption of independent predictor variables simplifies the calculations if there is more than one predictor variable. Instead of calculating $P(k|x_{1},...,x_{p}) \propto P(x_{1},...,x_{p}|k) \cdot P(k)$ where $P(x_{1},...,x_{p}|k)$ is quite complicated to calculate because of all the possible dependencies among the variables, the independence assumption leads to: $$P(k|x_{1},...,x_{p}) \propto P(k) \cdot  \prod_{i=1}^{p} P(x_{i}|k) $$
+Ideally, a classifier is able to detect the class k which maximizes the conditional probability $P(Y=k|X=x_{1},...,x_{p})$. A Bayes Classifier would calculate these probabilities for each of the classes exactly, but usually it is only possible to approximate those. The Naive Bayes Classifier is one method of approximation. It approximates by "naively" assuming the conditional independence of predictor variables. This leads to simpler calculations. The joint probability of two events A and B $P(A \cap B)= P(A \mid B) * P(B)$ can be simplified to $P(A \cap B)= P(A) * P(B)$ under the independence assumption, since conditional independence means $P(A \mid B) = P(A)$. The conditional probabilities of a class k can be calculated with the Bayes Theorem. It states that: $$P(k \mid X) = \frac {P(X\mid k) \cdot P(k)}{P(X)}$$ Since the denominator only uses our predictor variables, we only need to focus on the nominator and find the maximum class for each observation to be classified. We can express this relationship with the proportionality operator: $$P(k|X) \propto P(X|k) \cdot P(k)$$ At this point, the assumption of independent predictor variables simplifies the calculations if there is more than one predictor variable. Instead of calculating $P(k|x_{1},...,x_{p}) \propto P(x_{1},...,x_{p}|k) \cdot P(k)$ where $P(x_{1},...,x_{p}|k)$ is quite complicated to calculate because of all the possible dependencies among the variables, the independence assumption leads to: $$P(k|x_{1},...,x_{p}) \propto P(k) \cdot  \prod_{i=1}^{p} P(x_{i}|k) $$
 
 Often this yields good results even if the quite strong assumption of conditional independence is not met. If the dependencies do not contribute that much to the outcome, the approximation is still quite good.
 \
@@ -500,14 +508,14 @@ A linear Kernel $$ K(u,v) = \langle \mathbf u, \mathbf v \rangle = \sum_{j=1}^{p
 \
 a polynomial Kernel $$ K(u,v) = (c + \langle \mathbf u, \mathbf v \rangle)^{d}, \ with \ d > 1$$\
 and a radial Kernel $$ K(u,v)= \exp \left(-\gamma \sum_{i=1}^{p}(u_{i}-v_{i} \right)$$
+\
+
 
 #### 4.2 Preprocessing
 
 \
 
-We scale the data as part of pre-processing. Scaling transforms the data to have unit variance, further contributing to uniformity across different scales and improving algorithm performance.
-
-Nevertheless our extracted top features consist only of (ordered) factors. But for the case of increasing the amount of features we keep the scaling function and apply it anyways. After that we check for constant variables. 
+We scale the data as part of pre-processing. Scaling transforms the data to have unit variance, further contributing to uniformity across different scales and improving algorithm performance. After that we check for constant variables. 
 
 ```{r scaling and normalizing, include=FALSE, cache=TRUE}
 
@@ -699,10 +707,10 @@ With a degree of 1, the polynomial kernel equation simplifies to a linear relati
 
 \
 
-#### 5.1 Quantitative 
+#### 5.1 Metrics
 \
 
-##### 5.1.1 Confusion Matrix
+#### 5.1.1 Confusion Matrix
 \
 
 A confusion matrix is a fundamental tool in statistical classification and machine learning, used to visualize the performance of an algorithm. It's a table used to describe the performance of a classification model on a set of test data for which the true values are known. Here’s a brief overview of its components:
@@ -710,17 +718,19 @@ A confusion matrix is a fundamental tool in statistical classification and machi
 From the confusion matrix, various metrics such as accuracy, precision, recall (sensitivity), and F1-score can be calculated to evaluate the model’s performance. These metrics provide insights into aspects like how many instances are correctly classified, the balance between the sensitivity and precision of the model, and the overall effectiveness of the classifier.
 
 
-###### 5.1.1.2 Naive Bayes
+##### 5.1.1.2 Naive Bayes
+
 \
 
-```{r Confusion Matrix of Naive Bayes,echo=FALSE, cache=TRUE, warning=FALSE}
+```{r Confusion Matrix of Naive Bayes, echo=FALSE, cache=TRUE, warning=FALSE, results='asis'}
 set.seed(0)
 library(caret)
+library(klaR)
+library(e1071)
 nb_best_model <- readRDS("nb_best_model.rda")
 scaledRISK_test_no_target <- scaledRISK_test[, !names(scaledRISK_test) %in% c("suicidal_class")]
 
 nb_best_model_pred <- predict(nb_best_model, scaledRISK_test_no_target)
-
 
 table(nb_best_model_pred$class, scaledRISK_test$suicidal_class, dnn=c("Prediction", "Actual"))   
 
@@ -728,11 +738,11 @@ confusionMatrix(table(nb_best_model_pred$class, scaledRISK_test$suicidal_class))
 
 ```
 
-###### 5.1.1.2 SVM
+##### 5.1.1.2 SVM
 
 \
 
-```{r Confusion Matrix of SVM,echo=FALSE, cache=TRUE, include=TRUE}
+```{r Confusion Matrix of SVM,echo=FALSE, cache=TRUE, include=TRUE, results='asis'}
 set.seed(0) 
 
 svm_best_model <- readRDS("svm_best_model.rda")
@@ -744,9 +754,11 @@ svm_best_model_pred <- predict(svm_best_model, scaledRISK_test_no_target)
 table(svm_best_model_pred, scaledRISK_test$suicidal_class, dnn=c("Prediction", "Actual"))   
 confusionMatrix(table(svm_best_model_pred, scaledRISK_test$suicidal_class))
 ```
-Given the Confusion Matrix we can see a Accuracy of around 63.68% for the test data. The 95% confidence interval suggests that true accuracy of the model is likely between 58.77% and 68.39%. In this context, a p-value of less than 2.2e−16 for the hypothesis that "Accuracy is greater than No Information Rate" suggests that there is extremely strong statistical evidence that the accuracy of the model is better than what would be achieved by always random guessing (33%). This implies that the model has predictive power beyond mere chance and is effectively learning from the features in the dataset.
+\
+Given the Confusion Matrix, we can see an Accuracy of around 64.68% for the test data. The 95% confidence interval suggests that the true Accuracy of the model is likely between 59.79% and 69.35%. In this context, a p-value of less than 2.2e−16 for the hypothesis that "Accuracy is greater than No Information Rate" suggests that there is extremely strong statistical evidence that the accuracy of the model is better than what would be achieved by always random guessing (33%). This implies that the model has predictive power beyond mere chance and is effectively learning from the features in the dataset.
+\
 
-```{r plot svm, echo=FALSE, cache=TRUE}
+```{r plot svm, echo=FALSE, cache=TRUE, results='asis'}
 
 set.seed(0)
 #library(caret)
@@ -757,15 +769,18 @@ summary(svm_best_model)
 \
 
 
-##### 5.1.2 Precision, Recall and F1-Score
+#### 5.1.2 Precision, Recall and F1-Score
 
 \
 \
-
-###### 5.1.2.1 Naive Bayes
+Additionally, to the accuracy score, we also evaluate our model for Precision, Recall, and F1-score. These metrics are especially helpful for classification in medical-related fields, where it is important to look at Precision and Recall specifically.
+We therefore use multi-class metrics [[5]](#5).
 \
 
-```{r nb multiclass metrics, echo=FALSE, cache=TRUE}
+##### 5.1.2.1 Naive Bayes
+\
+
+```{r nb multiclass metrics, echo=FALSE, cache=TRUE, results='asis'}
 library(mltest)
 
 classifier_metrics <- ml_test(nb_best_model_pred$class, scaledRISK_test$suicidal_class, output.as.table = FALSE)
@@ -798,15 +813,14 @@ for (i in 1:length(class_names)) {
 ```
 \
 
-
-###### 5.1.2.2 SVM
+#### 5.1.2.2 SVM
 
 \
 
-Since we have a multi class classification problem, we also evaluate our metrics separately for each of our classes.
+Since we have a multi-class classification problem, we also evaluate our metrics separately for each of our classes.
+\
 
-
-```{r svm multiclass metrics, echo=FALSE, cache=TRUE, include=TRUE}
+```{r svm multiclass metrics, echo=FALSE, cache=TRUE, include=TRUE, results='asis'}
 library(mltest)
 
 classifier_metrics <- ml_test(svm_best_model_pred, scaledRISK_test$suicidal_class, output.as.table = FALSE)
@@ -836,6 +850,7 @@ for (i in 1:length(class_names)) {
 }
 
 ```
+\
 The classifier performs best for the "no risk" category, showing high effectiveness in both identifying actual no-risk cases and in ensuring that most of its no-risk predictions are correct.
 For "low to moderate risk" and "high risk" categories, the performance is moderate. The model is less effective in correctly identifying actual cases and ensuring the correctness of its predictions in these risk categories compared to the no-risk category.
 The F1 scores for all classes reflect a balance between recall and precision, but they highlight that the model is more reliable in identifying "no risk" cases than "low to moderate risk" or "high risk" cases.
@@ -847,7 +862,7 @@ By highly sensible topics like suicide, these results indicate a need for improv
 
 \
 
-Overfitting is a frequent problem in machine learning. It happens when a model learns the training data too well, including all its quirks and noise. As a result, its ability to generalize weakens. When the model is tested with new data, its performance often drops significantly. This is because it's overly tuned to the training data and doesn't adapt well to new, unseen data. We take a number of measures trying to prevent overfitting on our training data.\
+Overfitting is a frequent problem in machine learning. It happens when a model learns the training data too well, including all its quirks and noise. As a result, its ability to generalize weakens. When the model is tested with new data, its performance often drops significantly. This is because it's overly tuned to the training data and doesn't adapt well to new, unseen data. We take several measures trying to prevent overfitting on our training data.\
 By employing Cross-Validation (CV) and utilizing a range of performance metrics such as recall, precision, and F1-score, we try to avoid overfitting in our models. 
 
 
@@ -873,7 +888,7 @@ head(performance_nb$resampling)
 ##### 5.3.2 SVM
 \ 
 
-Our experiments with different kernels reveal that the linear kernel maintains robust performance, even when compared to the more complex radial and polynomial kernels. Prior to modeling, we also took the precaution of reducing the number of features, which further diminishes the risk of overfitting. Moreover, setting the cost parameter C to a moderate level -- in our case, 1, which is the default value -- lessens the likelihood of overfitting.
+Our experiments with different kernels reveal that the linear kernel maintains robust performance, even when compared to the more complex radial and polynomial kernels. Before modeling, we also took the precaution of reducing the number of features, which further diminishes the risk of overfitting. Moreover, setting the cost parameter C to a moderate level -- in our case, 1, which is the default value -- lessens the likelihood of overfitting.
 
 ```{r Train and Test curve of SVM, echo=FALSE, cache=TRUE, include=FALSE}
 # read the models:
@@ -900,13 +915,19 @@ head(performance_linear$resampling)
 Considering these factors collectively, we are confident that our models are unlikely to overfit on our training data.
 
 
-
 #### 5.3 ROC
+
 \
 
-To further visually assess our classifier we plot the ROC curves for our classes.
+To further visually assess our classifier we plot the ROC curves for our three classes.
+To plot the ROC curves, we need to get the probabilities for our model predictions.
+Since we set a seed, we can use our best model and its hyperparameters to get the probabilities. 
+\
+\newpage
+
 
 #### 5.3.2 ROC for best Naive Bayes Model
+
 \
 
 ```{r ROC curves nb, echo=FALSE, cache=TRUE, include=FALSE, warning=FALSE, message=FALSE, results='hide'}
@@ -951,23 +972,25 @@ dev.off()
 ```
 
 
-```{r plot ROC nb, echo=FALSE, message=FALSE, results='hide'}
+```{r plot ROC nb, echo=FALSE, message=FALSE, results='hide', fig.width=15, fig.height=10}
 
 library(magick)
 
 # Read the image
 img <- image_read("roc_curves_nb.png")
 
+# Resize the image
+img_resized <- image_resize(img, "1200x800")
+
 # Plot the image
-plot(img)
+plot(img_resized)
 ```
+\
+\newpage
 
 #### 5.3.2 ROC for best SVM model
 
 \
-
-To plot the ROC curves, we need to get the probabilities for our model predictions.
-Since we set a seed, we can use our best model and its hyperparameters to get the probabilities. 
 
 ```{r ROC curves, echo=FALSE,results='hide', message=FALSE, warning=FALSE, cache=TRUE, include=FALSE}
 library(pROC)
@@ -1012,7 +1035,7 @@ dev.off()
 
 ## ** end of AI created code snipped ** 
 ```
-```{r plot ROC svm, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+```{r plot ROC svm, echo=FALSE, message=FALSE, warning=FALSE, results='hide', fig.width=15, fig.height=10}
 
 library(magick)
 
@@ -1027,16 +1050,18 @@ plot(img_svm)
 
 ```
 
-### 6. Final Discussion
 \
 
+### 6. Final Discussion
+
+\
 After training, testing, and interpreting our final machine learning models, it becomes evident that these models do not achieve the necessary accuracy for practical application, particularly given the critical nature of the target variable.
 
 Misclassifying individuals, especially those at high risk of suicide, can lead to dire consequences. When someone at moderate to high risk (Class 3) is incorrectly categorized as low to moderate risk (Class 2) or no risk (Class 1), they may not receive the urgent care and intervention they need.
 
 Furthermore, it's crucial to understand that accuracy alone is not a sufficient metric in this context. Both Type I (False Positive) and Type II (False Negative) Errors need to be carefully considered. Here, Type II Errors are of greater significance than Type I Errors. While Type I errors might result in over-treatment or undue anxiety, Type II errors are more serious as they could lead to a lack of necessary support for individuals at high risk of suicide. Therefore, it is essential to particularly focus on minimizing Type II errors in predictive models dealing with mental health and suicide risk.
 \
-Given that the current models are not meeting the necessary standards, it's imperative to investigate other machine learning models. Each model has its strengths and weaknesses, and finding the right fit for your specific dataset is crucial. This exploration could include models that are potentially more adept at handling imbalanced datasets or complex patterns.
+Given that the current models are not meeting the necessary standards, it's imperative to investigate other machine-learning models. Each model has its strengths and weaknesses, and finding the right fit for your specific dataset is crucial. This exploration could include models that are potentially more adept at handling imbalanced datasets or complex patterns.
 \
 The method of handling missing data can significantly impact model performance. Current imputation techniques may be leading to the selection of non-representative features, adversely affecting the model's predictive ability. Testing different imputation methods could help in identifying more descriptive features, thereby enhancing model accuracy. This aspect might warrant a separate project due to its complexity and potential impact.
 \
@@ -1045,12 +1070,20 @@ Introducing an additional category in the target variable for missing responses 
 The current dataset size of 2000 observations may be insufficient for training robust models. A larger and more comprehensive dataset could significantly improve model performance. However, this expansion was not feasible in your current project due to computational limitations and project scope. For future iterations of the project, seeking larger datasets or finding ways to augment the existing dataset could be highly beneficial.
 \
 Overall, these proposed measures aim to address the current limitations and enhance the predictive power of your models, which is vital given the serious implications of misclassifying individuals at risk of suicide.
+\
 
+### 7. Use of AI in the project
+\
+For the project we used Grammarly and ChatGPT to correct the grammar and spelling in our texts. Also some code snippets were created with ChatGPT (see annotations), which was also used for debugging. 
 
-### 7. References
+### 8. References
 
 > <a id="id_1">[1]</a> <https://www.cdc.gov/healthyyouth/data/yrbs/overview.htm>
 
 > <a id="id_2">[2]</a> <https://www.cdc.gov/healthyyouth/data/yrbs/pdf/2021/2021_YRBS_Data_Users_Guide_508.pdf>
 
 > <a id="id_3">[3]</a> <https://machinelearningmastery.com/information-gain-and-mutual-information/>
+
+> <a id="id_4">[4]</a> <https://cran.r-project.org/web/packages/splitTools/vignettes/splitTools.html>
+
+> <a id="id_5">[5]</a> <https://rdrr.io/cran/mltest/man/ml_test.html>

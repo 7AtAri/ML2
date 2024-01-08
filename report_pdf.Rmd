@@ -630,7 +630,7 @@ print(paste("Laplace smoothing value of the best model is:", nb_best_model$tuneV
 saveRDS(nb_best_model, "nb_best_model.rda")
 ```
 
-According to our HPO the best value for the Laplace Smoothing is 0. This means that a smoothing term is not helpful in our case. The automatic bayes model type configuration gives us a gaussian naive bayes model, with the most of our features being multinomial.
+According to our HPO the best value for the Laplace Smoothing is 1. This means that a smoothing term is helpful in our case, most probably for preventing overfitting and adjusting to the unseen data. The automatic bayes model type configuration gives us a gaussian naive bayes model, with the most of our features being multinomial.
 
 ##### 4.3.2 HPO of SVM
 
@@ -737,7 +737,10 @@ table(nb_best_model_pred$class, scaledRISK_test$suicidal_class, dnn=c("Predictio
 confusionMatrix(table(nb_best_model_pred$class, scaledRISK_test$suicidal_class))
 
 ```
-
+\
+Given the Confusion Matrix, we can see an Accuracy of around 60.95% for the test data. The 95% confidence interval suggests that the true Accuracy of the model is between 55.99% and 65.74%. In this context, a p-value of less than 2.2e−16 for the hypothesis that "Accuracy is greater than No Information Rate" suggests that there is extremely strong statistical evidence that the accuracy of the model is better than what would be achieved by always random guessing (33%). This implies that the model has predictive power beyond mere chance and is effectively learning from the features in the dataset.
+In the same time, we see that the system performs  better on extreme classes - no suicide risk and high suicide risk. This may suggest that the data we have is better suited for a binary classification problem, rather than multiclass.
+\
 ##### 5.1.1.2 SVM
 
 \
@@ -812,6 +815,9 @@ for (i in 1:length(class_names)) {
 
 ```
 \
+As shown before, the classifier performs better on the extreme classes, especially "no-risk" class. The F1 scores for all classes reflect a balance between recall and precision.
+Suicide prevention is a topic that tends to favor, for understandable reasons, more sensitive toward suicide risk class classifiers over more specific ones. This implies that the model must either be simplified, not differentiating between low and high risk, or be further enhanced using better features or methods.
+Naive Bayes in general tends to serve as a baseline model, as it, by design, cannot capture the relationships between features. As such, other options, such as SVM should be better than it.
 
 #### 5.1.2.2 SVM
 

@@ -645,6 +645,12 @@ Numerical values were already scaled, if they exist in the database, we set scal
 A large value of C leads to points within the margin or on the other side of the boundary being heavily penalized so there are few points in the margin/missclassified (Lecture 7, p.5)
 
 ```{r training svm, include=FALSE, cache=TRUE, warning=FALSE}
+
+#model_linear <- readRDS(file = "models_linear.rda")
+#model_radial <- readRDS(file = "models_radial.rda")
+#model_poly <- readRDS(file = "models_poly.rda")
+
+#svm_models <- list(linear = model_linear, radial = model_radial, polynomial = model_poly)
 set.seed(0)  # set the seed
 library(e1071)
 # linear kernel
@@ -669,6 +675,8 @@ svm_models <- list(linear = model_linear, radial = model_radial, polynomial = mo
 Here we also create a list of all resulting models, coming from the HPO of the SVM, the best model is identified and evaluated with different performance metrics. The tuned models contain the parameter $best.performance, which gives the classification error. The Accuracy can be calculated with 1 - classification eror. 
 
 ```{r metrics calc svm, include=FALSE, cache=TRUE, eval=FALSE}
+
+
 
 # Function to extract the best accuracy from each model which states the classification error as performance measure. Accuracy = 1- classification error
 extract_best_accuracy <- function(model) {
@@ -897,9 +905,9 @@ Our experiments with different kernels reveal that the polynomial, which is with
 
 ```{r Train and Test curve of SVM, echo=FALSE, cache=TRUE, include=FALSE}
 # read the models:
-model_linear <- readRDS("model_linear.rda")
-model_radial <- readRDS("model_radial.rda")
-model_poly <- readRDS("model_poly.rda")
+model_linear <- readRDS("models_linear.rda")
+model_radial <- readRDS("models_radial.rda")
+model_poly <- readRDS("models_poly.rda")
 
 # get performance results for each model
 extract_performance <- function(model) {

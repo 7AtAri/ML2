@@ -1052,10 +1052,14 @@ plot(img_svm)
 
 \
 
+
 ### 6. Final Discussion
 
 \
-After training, testing, and interpreting our final machine learning models, it becomes evident that these models do not achieve the necessary accuracy for practical application, particularly given the critical nature of the target variable.
+
+We can say after the comparison of our models that the SVM performs slightly better than the Naive Bayes model, but both models only have an accuracy of between 60 and 65%. After closer inspection, one can see that the models can predict the low-risk class best, followed by the high-risk and the moderate-risk class. The fact that the results are so similar may be a hint, that the key to improving the results might be foremost related to the input data.
+
+It becomes evident that these models do not achieve the necessary accuracy for practical application, particularly given the critical nature of the target variable.
 
 Misclassifying individuals, especially those at high risk of suicide, can lead to dire consequences. When someone at moderate to high risk (Class 3) is incorrectly categorized as low to moderate risk (Class 2) or no risk (Class 1), they may not receive the urgent care and intervention they need.
 

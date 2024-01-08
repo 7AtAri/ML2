@@ -713,8 +713,6 @@ With a degree of 1, the polynomial kernel equation simplifies to a linear relati
 
 ### 5. Comparison of the Models / Model's Performance on Test Data
 
-\
-
 #### 5.1 Metrics
 \
 
@@ -746,8 +744,11 @@ confusionMatrix(table(nb_best_model_pred$class, scaledRISK_test$suicidal_class))
 
 ```
 \
+\
+\par
 Analyzing the performance of the Naive Bayes model, the Confusion Matrix reveals an Accuracy of approximately 60.95% for the test data. The 95% confidence interval indicates that the true Accuracy of the model lies between 55.99% and 65.74%. Remarkably, the p-value is less than 2.2e−16 for the hypothesis stating 'Accuracy is greater than No Information Rate'. This presents an extremely strong statistical evidence confirming that the accuracy of the Naive Bayes model significantly surpasses the baseline of random guessing (33%). It's clear that this model is effectively learning from the dataset's features, especially excelling in identifying cases with no suicide risk and high suicide risk.
 \
+
 ##### 5.1.1.2 SVM
 
 \
@@ -765,6 +766,8 @@ table(svm_best_model_pred, scaledRISK_test$suicidal_class, dnn=c("Prediction", "
 confusionMatrix(table(svm_best_model_pred, scaledRISK_test$suicidal_class))
 ```
 \
+\
+
 Evaluating the SVM model, the Confusion Matrix shows a higher Accuracy, around 64.68%, for the test data compared to the Naive Bayes model. The 95% confidence interval for the SVM model suggests its true Accuracy likely ranges between 59.79% and 69.35%. Similar to the Naive Bayes model, the p-value here is also less than 2.2e−16, supporting the hypothesis that 'Accuracy is greater than No Information Rate'. This indicates a very strong statistical evidence that the SVM model's accuracy significantly exceeds mere chance (33%). This points to the SVM's robust predictive capabilities and its effective utilization of dataset features, marking it as a potentially more reliable model in this context.
 \
 
@@ -822,9 +825,13 @@ for (i in 1:length(class_names)) {
 
 ```
 \
+\
+
 As shown before, the classifier performs better on the extreme classes, especially "no-risk" class. The F1 scores for all classes reflect a balance between recall and precision.
 Suicide prevention is a topic that tends to favor, for understandable reasons, more sensitive toward suicide risk class classifiers over more specific ones. This implies that the model must either be simplified, not differentiating between low and high risk, or be further enhanced using better features or methods.
 Naive Bayes in general tends to serve as a baseline model, as it, by design, cannot capture the relationships between features. As such, other options, such as SVM should be better than it.
+
+
 
 #### 5.1.2.2 SVM
 
@@ -863,6 +870,7 @@ for (i in 1:length(class_names)) {
 }
 
 ```
+\
 \
 The classifier performs best for the "no risk" category, showing high effectiveness in both identifying actual no-risk cases and in ensuring that most of its no-risk predictions are correct.
 For "low to moderate risk" and "high risk" categories, the performance is moderate. The model is less effective in correctly identifying actual cases and ensuring the correctness of its predictions in these risk categories compared to the no-risk category.
@@ -936,9 +944,8 @@ To further visually assess our classifier we plot the ROC curves for our three c
 To plot the ROC curves, we need to get the probabilities for our model predictions.
 Since we set a seed, we can use our best model and its hyperparameters to get the probabilities. 
 \
+
 \newpage
-
-
 #### 5.3.2 ROC for best Naive Bayes Model
 
 \
@@ -966,7 +973,7 @@ roc_curves_nb
 ```{r plotting and saving the ROC curves nb, echo=FALSE, cache=TRUE,results='hide', message=FALSE}
 # ** this code snipped is created with the help of AI** ##
 # Set up the PNG output
-png("roc_curves_nb.png", width = 800, height = 800)
+png("roc_curves_nb.png", width = 400, height = 400)
 
 # Plot the first ROC curve
 plot(roc_curves_nb[[1]], main = "ROC Curves", col = "red")
@@ -985,7 +992,7 @@ dev.off()
 ```
 
 
-```{r plot ROC nb, echo=FALSE, message=FALSE, results='hide', fig.width=15, fig.height=10}
+```{r plot ROC nb, echo=FALSE, message=FALSE, results='hide', fig.width=12, fig.height=7}
 
 library(magick)
 
@@ -993,13 +1000,10 @@ library(magick)
 img <- image_read("roc_curves_nb.png")
 
 # Resize the image
-img_resized <- image_resize(img, "1200x800")
-
+img_resized <- image_resize(img, "900x500")
 # Plot the image
 plot(img_resized)
 ```
-\
-\newpage
 
 #### 5.3.2 ROC for best SVM model
 
@@ -1031,7 +1035,7 @@ for(i in 1:ncol(testing_res_binary)) {
 ```{r plotting and saving the ROC curves, echo=FALSE, cache=TRUE, message=FALSE, warning=FALSE, results='hide'}
 # ** this code snipped is created with the help of AI** ##
 # Set up the PNG output
-png("roc_curves.png", width = 800, height = 800)
+png("roc_curves.png", width = 400, height = 400)
 
 # Plot the first ROC curve
 plot(roc_curves[[1]], main = "ROC Curves", col = "red")
@@ -1048,7 +1052,7 @@ dev.off()
 
 ## ** end of AI created code snipped ** 
 ```
-```{r plot ROC svm, echo=FALSE, message=FALSE, warning=FALSE, results='hide', fig.width=15, fig.height=10}
+```{r plot ROC svm, echo=FALSE, message=FALSE, warning=FALSE, results='hide', fig.width=12, fig.height=7}
 
 library(magick)
 

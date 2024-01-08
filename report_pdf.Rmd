@@ -648,7 +648,7 @@ A large value of C leads to points within the margin or on the other side of the
 set.seed(0)  # set the seed
 library(e1071)
 # linear kernel
-C <- c(0.01, 0.1, 1, 10)
+C <- c(0.1, 1, 10)
 gamma.range = (2^seq(-5, 0, 1))
 
 
@@ -656,7 +656,7 @@ gamma.range = (2^seq(-5, 0, 1))
 model_linear <- tune.svm(suicidal_class ~., data = scaledRISK_train, method = "svmLinear", cost = C, scale=FALSE, cross=5, probability=TRUE)
 model_radial <- tune.svm(suicidal_class ~., data = scaledRISK_train, method = "svmRadial",cross=5, cost = C,
                          gamma = gamma.range, scale=FALSE, probability=TRUE)
-model_poly <-  tune.svm(suicidal_class ~., data = scaledRISK_train, method = "svmPoly", cross=5,cost = C,degree = c(1, 2, 3, 4), gamma = gamma.range, scale=FALSE, probability=TRUE)
+model_poly <-  tune.svm(suicidal_class ~., data = scaledRISK_train, method = "svmPoly", cross=5,cost = C,degree = c(1, 2, 3), gamma = gamma.range, scale=FALSE, probability=TRUE)
 
 # save all models
 saveRDS(model_linear, file = "models_linear.rda")
@@ -738,8 +738,7 @@ confusionMatrix(table(nb_best_model_pred$class, scaledRISK_test$suicidal_class))
 
 ```
 \
-Given the Confusion Matrix, we can see an Accuracy of around 60.95% for the test data. The 95% confidence interval suggests that the true Accuracy of the model is between 55.99% and 65.74%. In this context, a p-value of less than 2.2e−16 for the hypothesis that "Accuracy is greater than No Information Rate" suggests that there is extremely strong statistical evidence that the accuracy of the model is better than what would be achieved by always random guessing (33%). This implies that the model has predictive power beyond mere chance and is effectively learning from the features in the dataset.
-In the same time, we see that the system performs  better on extreme classes - no suicide risk and high suicide risk. This may suggest that the data we have is better suited for a binary classification problem, rather than multiclass.
+Analyzing the performance of the Naive Bayes model, the Confusion Matrix reveals an Accuracy of approximately 60.95% for the test data. The 95% confidence interval indicates that the true Accuracy of the model lies between 55.99% and 65.74%. Remarkably, the p-value is less than 2.2e−16 for the hypothesis stating 'Accuracy is greater than No Information Rate'. This presents an extremely strong statistical evidence confirming that the accuracy of the Naive Bayes model significantly surpasses the baseline of random guessing (33%). It's clear that this model is effectively learning from the dataset's features, especially excelling in identifying cases with no suicide risk and high suicide risk.
 \
 ##### 5.1.1.2 SVM
 
@@ -758,7 +757,7 @@ table(svm_best_model_pred, scaledRISK_test$suicidal_class, dnn=c("Prediction", "
 confusionMatrix(table(svm_best_model_pred, scaledRISK_test$suicidal_class))
 ```
 \
-Given the Confusion Matrix, we can see an Accuracy of around 64.68% for the test data. The 95% confidence interval suggests that the true Accuracy of the model is likely between 59.79% and 69.35%. In this context, a p-value of less than 2.2e−16 for the hypothesis that "Accuracy is greater than No Information Rate" suggests that there is extremely strong statistical evidence that the accuracy of the model is better than what would be achieved by always random guessing (33%). This implies that the model has predictive power beyond mere chance and is effectively learning from the features in the dataset.
+Evaluating the SVM model, the Confusion Matrix shows a higher Accuracy, around 64.68%, for the test data compared to the Naive Bayes model. The 95% confidence interval for the SVM model suggests its true Accuracy likely ranges between 59.79% and 69.35%. Similar to the Naive Bayes model, the p-value here is also less than 2.2e−16, supporting the hypothesis that 'Accuracy is greater than No Information Rate'. This indicates a very strong statistical evidence that the SVM model's accuracy significantly exceeds mere chance (33%). This points to the SVM's robust predictive capabilities and its effective utilization of dataset features, marking it as a potentially more reliable model in this context.
 \
 
 ```{r plot svm, echo=FALSE, cache=TRUE, results='asis'}
@@ -894,7 +893,7 @@ head(performance_nb$resampling)
 ##### 5.3.2 SVM
 \ 
 
-Our experiments with different kernels reveal that the linear kernel maintains robust performance, even when compared to the more complex radial and polynomial kernels. Before modeling, we also took the precaution of reducing the number of features, which further diminishes the risk of overfitting. Moreover, setting the cost parameter C to a moderate level -- in our case, 1, which is the default value -- lessens the likelihood of overfitting.
+Our experiments with different kernels reveal that the polynomial, which is with degree 1 behaving like a linear kernel maintains robust performance, even when compared to the more complex radial and higher-degree polynomial kernels. Before modeling, we also took the precaution of reducing the number of features, which further diminishes the risk of overfitting. Moreover, setting the cost parameter C to a moderate level -- in our case, 1, which is the default value -- lessens the likelihood of overfitting.
 
 ```{r Train and Test curve of SVM, echo=FALSE, cache=TRUE, include=FALSE}
 # read the models:
@@ -1055,6 +1054,8 @@ plot(img_svm)
 #rasterImage(img_svm, 0, 0, ncol(img_svm)/72, nrow(img_svm)/72)
 
 ```
+
+Both models produce slightly similar ROC-Curves for each class. Like already seen in the confusion matrix, both Naive Bayes and SVM can produced best results in Class 1 - the "no suicide risk" Class. Class 2 performs worst in both cases. But all show that there are above the diagnoal grey line - which is the baseline / null model. 
 
 \
 

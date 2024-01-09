@@ -501,6 +501,9 @@ Often this yields good results even if the quite strong assumption of conditiona
 
 The name Support Vector Machines already describes some elements of this method. A certain number of data points will define the (linear) boundary between two classification regions, these are called the support vectors. The support vectors are the datapoints (observations) that lie closest to our decision boundary. The boundary in two dimensional space is a line, in three dimensions a plane and in more than three dimensional space a hyperplane. For our dataset, we need a multidimensional hyperplane. The number of dimensions depend on the number of our predictor variables. We need to find the hyperplane, that separate our data into the classes of our target variable best. The best hyperplane is the one that maximizes the margin between the support vectors of the different classes. The margin is a strip on each of the boundaries sides. In the case of a hard classifier this strip does not contain any points. But we will have a soft classifier with the cost C as a hyperparameter. This cost C describes a budget that we allow for points within the margin or on the other side of the boundary. Depending on the position of the point, the amount it attributes to the total cost changes. A point on the correct side of the margin will not attribute to the total cost at all. If it is in the margin, but on the correct side of the boundary it will attribute between zero and one, if on the wrong side of the boundary but within the margin it will attribute with one to two and if on the wrong side of the margin it will cost more than two. Mathematically we need to maximize the Margin M with respect to $\alpha_{0}, \alpha_{i}$ and $\epsilon_{i}$ in the following objective function: $$y_{i}\left(\alpha_{0}+\sum_{j=1}^{n} \alpha_{i} K(\mathbf x_{i}, \mathbf x_{j})\right ) \ge M(1-\epsilon_{i})$$ The following constraints are given: $\sum_{i=1}^{n} \alpha_{i}^{2}=1$ , $\epsilon_{i} \ge 0$ and $\sum_{i=1}^{n} \epsilon_{i} < C$ with C $\ge 0$ and $i=1,...,n$\
 
+In SVM something called "the kernel trick" is used to tackle non-linearity in the data. It works by mapping the original non-linear data into a higher-dimensional space where it becomes linearly separable, thus allowing for effective classification without explicitly performing the computationally expensive transformation.
+\
+
 For our SVM approach, we will try different kernels K as hyperparameters:
 
 \
@@ -1095,6 +1098,8 @@ The current dataset size of 2000 observations may be insufficient for training r
 Overall, these proposed measures aim to address the current limitations and enhance the predictive power of your models, which is vital given the serious implications of misclassifying individuals at risk of suicide.
 \
 
+You can find our source code on GitHub [[6]](#6). 
+
 ### 7. Use of AI in the project
 \
 For the project we used Grammarly and ChatGPT to correct the grammar and spelling in our texts. Also some code snippets were created with ChatGPT (see annotations), which was also used for debugging. 
@@ -1110,3 +1115,5 @@ For the project we used Grammarly and ChatGPT to correct the grammar and spellin
 > <a id="id_4">[4]</a> <https://cran.r-project.org/web/packages/splitTools/vignettes/splitTools.html>
 
 > <a id="id_5">[5]</a> <https://rdrr.io/cran/mltest/man/ml_test.html>
+
+> <a id="id_6">[6]</a> <https://github.com/7AtAri/ML2>

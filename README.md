@@ -18,7 +18,7 @@ categorical (classification problem)
 - 1st model from ML2 course: naive bayes 
 - 2nd model from ML2 course: SVM 
 
-### Report: as pdf
+### Report: as [pdf](https://github.com/7AtAri/ML2/blob/main/report_pdf.pdf) 
 
 **deadline: 9th of january**
  project report will include:

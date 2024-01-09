@@ -32,6 +32,6 @@ categorical (classification problem)
 
 ## submission
  to submit your work, you should upload in Moodle:
-- your report in a standard format (such as PDF format),
-- your data set and
-- your R code in a script file. The R script should include code to read in the data, indicate the main parts using comments and run without errors.
+- your [report](https://github.com/7AtAri/ML2/blob/main/report_pdf.pdf) in a standard format (such as PDF format),
+- your [data set](https://github.com/7AtAri/ML2/blob/main/RISK_red_new.csv) and
+- your [R code in a script file](https://github.com/7AtAri/ML2/blob/main/report_pdf.Rmd). The R script should include code to read in the data, indicate the main parts using comments and run without errors.

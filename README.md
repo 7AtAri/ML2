@@ -1,4 +1,4 @@
-# ML2 Project
+# ML2 Project Guidelines
 
 TODOS:
 - find dataset (between 500 and 2000 observations, at least 5 predictor variables and an outcome variable -> supervised)
@@ -15,29 +15,19 @@ TODOS:
 - Do not attach the data, but do have the file available to send, if requested, in a form that can be
 easily read into R as a data frame.
 
-## specifics:
-- we have to split the data into three parts: 60% training data, 20% validation data and 20% test data
 
 ### Dataset choice:
 
 - https://www.cdc.gov/healthyyouth/data/yrbs/data.htm
 
-### Dataset ideas:
-- https://www.kaggle.com/datasets/keremkurt/diversity-equity-and-inclusion-measures-dataset                                                              --simulated data
-- https://www.kaggle.com/datasets/vencerlanz09/lgbt-tweets                                                                                               --good for nlp, not that much for this task
-- https://www.kaggle.com/datasets/maddalenamariano/eu-lgbti-survey-2020 -> may not be suited for task (aggregated observations)                          --aggreagates
-- https://www.kaggle.com/datasets/ruslankl/european-union-lgbt-survey-2012?select=LGBT_Survey_TransgenderSpecificQuestions.csv -> not suited for task?   --aggregates
-- https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/FXXLTS  (weird format)
-- www.lgbtdata.com/data.html
-- https://socialjusticesexuality.com/projects/ (sav format + some conversion error that seems harder to fix)
-
 ### Target variable
 
+categorical (classification problem)
 -> risk of suicide score aggregated among q25-q29 variables (questions related to suicide) of the dataset
 
 ### Regression / Classification methods Ideas:
-- 1st model from ML2 course: naive bayes ?
-- 2nd model from ML2 course: SVM or LDA ?
+- 1st model from ML2 course: naive bayes 
+- 2nd model from ML2 course: SVM 
 
 Your two ML methods should be from the following list, one must be from ML2.
 
@@ -53,12 +43,6 @@ Your two ML methods should be from the following list, one must be from ML2.
 - Support vector regression (An extension SVM applied to regression data) (ML2) 
 - Projection pursuit regression (ML2)
 
-Note that two bullet points should be chosen, so for example ridge regression and the lasso count as two variants of one method.
-
-for classification:
-- **Most Interpretable**: Logistic Regression, Naive Bayes, and Linear Discriminant Analysis are often considered highly interpretable.
-- **Moderately Interpretable**: Decision Trees, especially shallow ones, and Generalized Additive Models provide a good balance between interpretability and complexity.
-- **Moderate to Low Interpretable**: Support Vector Machines and Support Vector Regression, as well as ensemble methods like Random Forests or Gradient Boosting, can be less interpretable, especially as model complexity increases.
 
 ### Report: as pdf
 
